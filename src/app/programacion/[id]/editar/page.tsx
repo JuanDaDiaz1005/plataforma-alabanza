@@ -6,7 +6,7 @@ import { useParams, useRouter, useSearchParams } from 'next/navigation'
 import Link from 'next/link'
 import Layout from '@/components/Layout'
 import { ArrowLeft, Save, Loader2 } from 'lucide-react'
-import { getReturnUrl, getReturnText } from '@/lib/utils';
+import { getReturnUrl } from '@/lib/utils';
 
 const TIPOS_SERVICIO = [
   { value: 'MIERCOLES', label: 'Miércoles' },

@@ -6,7 +6,7 @@ import { useSession } from 'next-auth/react'
 import Layout from '@/components/Layout'
 import { ArrowLeft, Save, Loader2 } from 'lucide-react'
 import Link from 'next/link'
-import { getReturnUrl, getReturnText } from '@/lib/utils';
+import { getReturnUrl } from '@/lib/utils';
 import { useSearchParams } from 'next/navigation';
 
 interface FormularioCancion {

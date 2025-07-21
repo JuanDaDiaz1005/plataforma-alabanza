@@ -5,9 +5,7 @@ import { useSession } from 'next-auth/react'
 import Layout from '@/components/Layout'
 import { 
   User, 
-  Mail, 
   Shield, 
-  Volume2, 
   Save, 
   Loader2, 
   Eye, 

@@ -20,7 +20,6 @@ import {
 } from 'lucide-react'
 import AudioPlayer, { RHAP_UI } from 'react-h5-audio-player'
 import 'react-h5-audio-player/lib/styles.css'
-import { useAudioPlayer } from './audio/AudioPlayerContext';
 
 interface RecursoMusical {
   id: string
@@ -74,8 +73,6 @@ export default function GestorRecursosMusicales({
     titulo: '',
     descripcion: ''
   })
-
-  const { setTrack } = useAudioPlayer();
 
   useEffect(() => {
     cargarRecursos()
@@ -227,7 +224,7 @@ export default function GestorRecursosMusicales({
     return grupos
   }, {} as { [key: string]: { config: unknown; recursos: RecursoMusical[] } })
 
-  const reproducirRecurso = async (recurso: RecursoMusical, grupoLabel: string) => {
+  const reproducirRecurso = async (recurso: RecursoMusical) => {
     let url = recurso.url;
     if (url && (url.includes('r2.dev') || url.includes('cloudflarestorage.com') || url.includes('pistas-jalal'))) {
       let key = '';
@@ -257,13 +254,13 @@ export default function GestorRecursosMusicales({
         url = signedUrl;
       }
     }
-    setTrack({
-      id: recurso.id,
-      title: cancionTitulo,
-      artist: cancionArtista,
-      url,
-      cover: undefined
-    });
+    // setTrack({
+    //   id: recurso.id,
+    //   title: cancionTitulo,
+    //   artist: cancionArtista,
+    //   url,
+    //   cover: undefined
+    // });
   };
 
   const puedeSubirArchivo = puedeGestionar
@@ -501,7 +498,7 @@ export default function GestorRecursosMusicales({
                       {recurso.plataforma === 'MP3_LOCAL' && typeof recurso.url === 'string' && recurso.url && (
                         <button
                           className="p-2 text-blue-600 hover:bg-blue-100 rounded-lg transition-colors"
-                          onClick={async () => await reproducirRecurso(recurso, grupo.config.label)}
+                          onClick={async () => await reproducirRecurso(recurso)}
                           title="Reproducir"
                         >
                           <Play className="h-4 w-4" />

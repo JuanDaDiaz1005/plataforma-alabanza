@@ -9,7 +9,6 @@ import {
   Music, 
   Calendar, 
   Users, 
-  PlayCircle, 
   Clock,
   CheckCircle,
   Plus,
@@ -60,7 +59,6 @@ interface MiembroEquipo {
 
 export default function DashboardLider() {
   const { data: session } = useSession()
-  const router = useRouter()
   const [estadisticas, setEstadisticas] = useState<EstadisticasLider | null>(null)
   const [proximoServicio, setProximoServicio] = useState<ProximoServicio | null>(null)
   const [equipoEstado, setEquipoEstado] = useState<MiembroEquipo[]>([])

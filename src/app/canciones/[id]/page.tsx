@@ -13,17 +13,14 @@ import {
   Calendar, 
   Clock, 
   FileText, 
-  Download,
-  Play,
-  Edit,
-  Trash2,
-  MessageSquare,
-  Album,
   Volume2,
   ExternalLink,
-  Eye
+  Play,
+  Edit,
+  MessageSquare,
+  Album
 } from 'lucide-react'
-import { formatearFecha, formatearDuracion, getReturnUrl, getReturnText } from '@/lib/utils'
+import { formatearFecha, formatearDuracion } from '@/lib/utils'
 import { useSearchParams } from 'next/navigation'
 
 interface Cancion {
@@ -186,8 +183,6 @@ export default function DetalleCancion({ params }: { params: Promise<{ id: strin
 
   // Permisos
   const puedeEditar = session?.user?.role === 'ADMINISTRADOR' || session?.user?.role === 'LIDER_ALABANZA'
-  const puedeEliminar = session?.user?.role === 'ADMINISTRADOR'
-  const puedeGestionarVideoDanza = session?.user?.role === 'LIDER_DANZA'
   const esRolDanza = session?.user?.role === 'DANZA' || session?.user?.role === 'LIDER_DANZA'
 
   if (cargando) {
@@ -232,7 +227,7 @@ export default function DetalleCancion({ params }: { params: Promise<{ id: strin
         {/* Header */}
         <div className="bg-gradient-to-r from-blue-50 to-purple-50 rounded-xl p-6 mb-8 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
           <div className="flex items-center gap-4">
-            <Link href={getReturnUrl(searchParams)} className="flex items-center gap-2 text-blue-600 hover:text-blue-800 font-medium transition">
+            <Link href={getReturnUrl()} className="flex items-center gap-2 text-blue-600 hover:text-blue-800 font-medium transition">
               <ArrowLeft className="h-5 w-5" />
             </Link>
             <div>

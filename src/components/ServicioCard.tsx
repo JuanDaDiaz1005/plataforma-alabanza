@@ -1,5 +1,5 @@
 import Link from 'next/link';
-import { Calendar, Music, Edit, Trash2 } from 'lucide-react';
+import { Calendar, Music } from 'lucide-react';
 import React from 'react';
 
 interface Cancion {

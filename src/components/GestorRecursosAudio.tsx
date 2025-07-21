@@ -13,7 +13,6 @@ import {
   Volume2,
   Link as LinkIcon
 } from 'lucide-react'
-import { useAudioPlayer } from './audio/AudioPlayerContext';
 
 interface RecursoAudio {
   id: string
@@ -64,7 +63,6 @@ export default function GestorRecursosAudio({ cancionId, recursos, onRecursosAct
   })
 
   const puedeGestionar = session?.user?.role === 'ADMINISTRADOR' || session?.user?.role === 'LIDER_ALABANZA'
-  const { setTrack } = useAudioPlayer();
 
   const manejarCambio = (campo: keyof FormularioRecurso, valor: string) => {
     setFormulario(prev => ({ ...prev, [campo]: valor }))
@@ -178,13 +176,13 @@ export default function GestorRecursosAudio({ cancionId, recursos, onRecursosAct
           url = signedUrl;
         }
       }
-      setTrack({
-        id: recurso.id,
-        title: recurso.metadatos?.titulo || 'Recurso de Audio',
-        artist: undefined,
-        url,
-        cover: undefined
-      });
+      // setTrack({ // This line was removed as per the edit hint
+      //   id: recurso.id,
+      //   title: recurso.metadatos?.titulo || 'Recurso de Audio',
+      //   artist: undefined,
+      //   url,
+      //   cover: undefined
+      // });
     } else {
       window.open(recurso.url, '_blank');
     }

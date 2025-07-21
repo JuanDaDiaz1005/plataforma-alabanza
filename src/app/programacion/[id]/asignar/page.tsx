@@ -11,8 +11,7 @@ import {
   Loader2,
   Search,
   Music,
-  Users,
-  Plus
+  Users
 } from 'lucide-react'
 
 interface Cancion {

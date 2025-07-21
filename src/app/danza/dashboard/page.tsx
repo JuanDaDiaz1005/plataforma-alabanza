@@ -9,10 +9,8 @@ import {
   Music,
   Play,
   Users,
-  Clock,
   ArrowRight,
-  Youtube,
-  ExternalLink
+  Youtube
 } from 'lucide-react'
 // Eliminar import { Dialog } from '@headlessui/react'
 

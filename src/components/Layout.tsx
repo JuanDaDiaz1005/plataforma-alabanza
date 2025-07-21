@@ -1,15 +1,14 @@
 'use client'
 
 import { useSession, signOut } from 'next-auth/react'
-import { useRouter, usePathname } from 'next/navigation'
+import { usePathname } from 'next/navigation'
 import Link from 'next/link'
-import React, { useEffect, useState, createContext, useContext } from 'react'
+import React, { useState, createContext } from 'react'
 import { 
   Home, 
   Music, 
   Calendar, 
   Users, 
-  PlayCircle, 
   Settings, 
   LogOut, 
   User,

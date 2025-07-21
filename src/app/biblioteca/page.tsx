@@ -1,21 +1,17 @@
 'use client'
 
-import { useState, useEffect, useRef } from 'react'
+import { useState, useEffect } from 'react'
 import { useSession } from 'next-auth/react'
 import Layout from '@/components/Layout'
 import Link from 'next/link'
 import { 
   Play, 
-  Pause, 
   SkipForward, 
   SkipBack, 
-  Volume2, 
-  VolumeX,
   Music,
   Search,
   Filter,
   ExternalLink,
-  Download,
   Clock,
   Mic2,
   Headphones,
@@ -23,8 +19,7 @@ import {
   Edit,
   Save,
   X,
-  Plus,
-  RotateCcw
+  Plus
 } from 'lucide-react'
 import { useAudioPlayer } from '@/components/audio/AudioPlayerContext';
 
@@ -82,16 +77,6 @@ export default function BibliotecaPage() {
   const [totalPaginas, setTotalPaginas] = useState(1)
   
   // Estado del reproductor
-  const [player, setPlayer] = useState<AudioPlayerState>({
-    isPlaying: false,
-    currentTime: 0,
-    duration: 0,
-    volume: 0.7,
-    isMuted: false,
-    currentSong: null,
-    currentResource: null
-  })
-  const [isLoop, setIsLoop] = useState(false)
   const [cargandoAudio, setCargandoAudio] = useState(false)
 
   // Estados para gestión de videos de danza
@@ -190,31 +175,6 @@ export default function BibliotecaPage() {
     } finally {
       setCargandoAudio(false)
     }
-  }
-
-  const togglePlayPause = () => {
-    // This function is now handled by the global audio player context
-  }
-
-  const cambiarVolumen = (nuevoVolumen: number) => {
-    // This function is now handled by the global audio player context
-  }
-
-  const toggleMute = () => {
-    // This function is now handled by the global audio player context
-  }
-
-  // Handlers de eventos del audio
-  const handleTimeUpdate = () => {
-    // This function is now handled by the global audio player context
-  }
-
-  const handleLoadedMetadata = () => {
-    // This function is now handled by the global audio player context
-  }
-
-  const handleEnded = () => {
-    // This function is now handled by the global audio player context
   }
 
   const formatearDuracion = (segundos: number) => {

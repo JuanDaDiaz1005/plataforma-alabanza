@@ -1,13 +1,11 @@
 "use client"
 
-import { useSession } from 'next-auth/react'
 import { useEffect, useState } from 'react'
 import Layout from '@/components/Layout'
 import Link from 'next/link'
 import { Calendar, Music, ArrowRight } from 'lucide-react'
 
 export default function DashboardMusico() {
-  const { data: session } = useSession()
   const [proximoServicio, setProximoServicio] = useState<unknown>(null)
   const [cargando, setCargando] = useState(true)
 

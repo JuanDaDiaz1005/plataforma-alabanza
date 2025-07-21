@@ -12,8 +12,7 @@ import {
   AlertCircle,
   User,
   Volume2,
-  Info,
-  ExternalLink
+  Info
 } from 'lucide-react'
 import { formatearFecha } from '@/lib/utils'
 import Link from 'next/link';
