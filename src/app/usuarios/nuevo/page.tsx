@@ -107,7 +107,7 @@ export default function NuevoUsuario() {
       // Redirigir a la lista de usuarios
       router.push('/usuarios')
 
-    } catch (error: any) {
+    } catch (error: unknown) {
       setError(error.message)
     } finally {
       setCargando(false)

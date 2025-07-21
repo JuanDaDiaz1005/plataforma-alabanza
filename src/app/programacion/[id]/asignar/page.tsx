@@ -58,7 +58,7 @@ export default function AsignarCancion() {
   const router = useRouter()
   const programacionId = params?.id as string
 
-  const [programacion, setProgramacion] = useState<any>(null)
+  const [programacion, setProgramacion] = useState<unknown>(null)
   const [canciones, setCanciones] = useState<Cancion[]>([])
   const [cantantes, setCantantes] = useState<Usuario[]>([])
   const [cargando, setCargando] = useState(true)

@@ -93,8 +93,8 @@ export default function DashboardLider() {
       const programaciones = programacionesData.programaciones || []
       const hoy = new Date()
       const proximasProgramaciones = programaciones
-        .filter((p: any) => new Date(p.fecha) >= hoy)
-        .sort((a: any, b: any) => new Date(a.fecha).getTime() - new Date(b.fecha).getTime())
+        .filter((p: unknown) => new Date(p.fecha) >= hoy)
+        .sort((a: unknown, b: unknown) => new Date(a.fecha).getTime() - new Date(b.fecha).getTime())
 
       if (proximasProgramaciones.length > 0) {
         const proxima = proximasProgramaciones[0]
@@ -104,7 +104,7 @@ export default function DashboardLider() {
         const asignacionesData = await asignacionesRes.json()
         
         const asignaciones = asignacionesData.asignaciones || []
-        const asignacionesPendientes = asignaciones.filter((a: any) => a.estadoPreparacion === 'PENDIENTE').length
+        const asignacionesPendientes = asignaciones.filter((a: unknown) => a.estadoPreparacion === 'PENDIENTE').length
 
         setProximoServicio({
           id: proxima.id,
@@ -122,7 +122,7 @@ export default function DashboardLider() {
 
         // Procesar estado del equipo
         const equipoMap = new Map()
-        asignaciones.forEach((asignacion: any) => {
+        asignaciones.forEach((asignacion: unknown) => {
           const usuarioId = asignacion.usuario.id
           if (!equipoMap.has(usuarioId)) {
             equipoMap.set(usuarioId, {

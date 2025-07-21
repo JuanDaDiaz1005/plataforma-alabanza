@@ -519,7 +519,7 @@ export default function CancionesPage() {
                           const res = await fetch(`/api/canciones/${asignacion.cancion.id}/recursos`);
                           if (!res.ok) return;
                           const recursos = await res.json();
-                          const recursoYT = recursos.find((r: unknown) => (r as any).tipo === 'CANCION_ORIGINAL' && (r as any).plataforma === 'YOUTUBE');
+                          const recursoYT = recursos.find((r: unknown) => (r as unknown).tipo === 'CANCION_ORIGINAL' && (r as unknown).plataforma === 'YOUTUBE');
                           if (recursoYT && recursoYT.url) window.open(recursoYT.url, '_blank');
                           else {
                             setMensajeCard(prev => ({ ...prev, [asignacion.id]: 'No hay enlace de YouTube configurado para esta canción.' }));
@@ -540,7 +540,7 @@ export default function CancionesPage() {
                           const res = await fetch(`/api/canciones/${asignacion.cancion.id}/recursos`);
                           if (!res.ok) return;
                           const recursos = await res.json();
-                          const recurso = recursos.find((r: unknown) => (r as any).tipo === 'PISTA_INSTRUMENTAL' && (r as any).plataforma === 'MP3_LOCAL');
+                          const recurso = recursos.find((r: unknown) => (r as unknown).tipo === 'PISTA_INSTRUMENTAL' && (r as unknown).plataforma === 'MP3_LOCAL');
                           if (!recurso) {
                             setMensajeCard(prev => ({ ...prev, [asignacion.id]: 'No hay pista instrumental disponible para esta canción.' }));
                             if (timeoutRef.current[asignacion.id]) clearTimeout(timeoutRef.current[asignacion.id]);

@@ -91,7 +91,7 @@ export default function PerfilPage() {
       setGuardando(true)
       setError('')
 
-      const datosActualizados: any = {
+      const datosActualizados: unknown = {
         nombre: nuevoNombre.trim(),
         email: nuevoEmail.trim()
       }

@@ -8,7 +8,7 @@ import { Calendar, Music, ArrowRight } from 'lucide-react'
 
 export default function DashboardMusico() {
   const { data: session } = useSession()
-  const [proximoServicio, setProximoServicio] = useState<any>(null)
+  const [proximoServicio, setProximoServicio] = useState<unknown>(null)
   const [cargando, setCargando] = useState(true)
 
   useEffect(() => {
@@ -77,7 +77,7 @@ export default function DashboardMusico() {
                     Canciones Programadas:
                   </h4>
                   <div className="space-y-2">
-                    {proximoServicio.asignaciones?.map((a: any) => (
+                    {proximoServicio.asignaciones?.map((a: unknown) => (
                       <div key={a.cancion.id} className="bg-white rounded-lg p-3 border border-gray-100 shadow-sm">
                         <p className="font-medium text-gray-900">{a.cancion.titulo}</p>
                         <p className="text-sm text-gray-500">{a.cancion.artista}</p>

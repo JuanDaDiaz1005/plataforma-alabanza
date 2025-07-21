@@ -12,7 +12,7 @@ export async function GET(request: NextRequest, { params }: { params: Promise<{ 
     }
     const { id: programacionId } = await params
     // Traer líderes de danza por canción para el servicio
-    const lideres = await prisma.liderDanzaAsignacion.findMany({
+    const lideres = await prisma.liderDanzaAsignacion.findMunknown({
       where: { programacionId },
       include: {
         usuario: { select: { id: true, nombre: true } },
@@ -48,9 +48,9 @@ export async function POST(request: NextRequest, { params }: { params: Promise<{
       return NextResponse.json({ error: 'Datos incompletos' }, { status: 400 })
     }
     // Eliminar líderes previos para esa canción/servicio
-    await prisma.liderDanzaAsignacion.deleteMany({ where: { programacionId, cancionId } })
+    await prisma.liderDanzaAsignacion.deleteMunknown({ where: { programacionId, cancionId } })
     // Crear nuevas asignaciones
-    const nuevas = await prisma.liderDanzaAsignacion.createMany({
+    const nuevas = await prisma.liderDanzaAsignacion.createMunknown({
       data: usuarioIds.map((usuarioId: string) => ({ programacionId, cancionId, usuarioId }))
     })
     return NextResponse.json({ mensaje: 'Líderes de danza asignadas', creadas: nuevas.count })
@@ -73,7 +73,7 @@ export async function DELETE(request: NextRequest, { params }: { params: Promise
     if (!cancionId || !usuarioId) {
       return NextResponse.json({ error: 'Datos incompletos' }, { status: 400 })
     }
-    await prisma.liderDanzaAsignacion.deleteMany({ where: { programacionId, cancionId, usuarioId } })
+    await prisma.liderDanzaAsignacion.deleteMunknown({ where: { programacionId, cancionId, usuarioId } })
     return NextResponse.json({ mensaje: 'Líder de danza eliminada' })
   } catch (error) {
     console.error('Error al eliminar líder de danza:', error)

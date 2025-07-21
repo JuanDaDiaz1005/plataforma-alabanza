@@ -25,7 +25,7 @@ export async function GET(request: NextRequest) {
     
     if (busqueda) {
       const busquedaLower = busqueda.toLowerCase()
-      (filtros as any).OR = [
+      (filtros as unknown).OR = [
         { titulo: { contains: busquedaLower } },
         { artista: { contains: busquedaLower } },
         { album: { contains: busquedaLower } }
@@ -34,7 +34,7 @@ export async function GET(request: NextRequest) {
 
     // Obtener canciones con al menos un recurso de audio
     const [canciones, total] = await Promise.all([
-      prisma.cancion.findMany({
+      prisma.cancion.findMunknown({
         where: {
           ...filtros,
           recursosAudio: {

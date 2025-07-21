@@ -318,7 +318,7 @@ export default function DashboardCantante() {
                       <div className="space-y-3">
                         {(() => {
                           // Agrupar asignaciones por canción
-                          const cancionesAgrupadas = proximoServicio.todasLasCanciones.reduce((acc: any, asignacion: any) => {
+                          const cancionesAgrupadas = proximoServicio.todasLasCanciones.reduce((acc: unknown, asignacion: unknown) => {
                             const cancionId = asignacion.cancion.id
                             if (!acc[cancionId]) {
                               acc[cancionId] = {
@@ -334,14 +334,14 @@ export default function DashboardCantante() {
                           }, {})
 
                           const cancionesArray = Object.values(cancionesAgrupadas)
-                          return cancionesArray.slice(0, 3).map((item: any, index: number) => (
+                          return cancionesArray.slice(0, 3).map((item: unknown, index: number) => (
                             <div key={index} className="bg-white rounded-lg p-3 border border-gray-100 shadow-sm">
                               <div className="flex items-center gap-2 mb-2">
                                 <div className="w-2 h-2 bg-blue-500 rounded-full"></div>
                                 <p className="font-semibold text-gray-900 text-sm">{item.cancion.titulo}</p>
                               </div>
                               <div className="ml-4 space-y-1">
-                                {item.cantantes.map((cantante: any, cantanteIndex: number) => (
+                                {item.cantantes.map((cantante: unknown, cantanteIndex: number) => (
                                   <div key={cantanteIndex} className="flex items-center gap-2">
                                     <User className="h-3 w-3 text-gray-400" />
                                     <span className="text-xs text-gray-600 font-medium">{cantante.nombre}</span>

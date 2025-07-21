@@ -24,7 +24,7 @@ export async function GET(request: NextRequest) {
     const filtros: unknown = {}
     
     if (busqueda) {
-      (filtros as any).OR = [
+      (filtros as unknown).OR = [
         { nombre: { contains: busqueda } },
         { email: { contains: busqueda } }
       ]
@@ -32,23 +32,23 @@ export async function GET(request: NextRequest) {
 
     // Si el filtro de rol es para asignaciones, mostrar múltiples roles
     if (rol === 'CANTANTE,LIDER_ALABANZA') {
-      (filtros as any).OR = [
+      (filtros as unknown).OR = [
         { rol: 'CANTANTE' },
         { rol: 'LIDER_ALABANZA' }
       ]
     } else if (rol === 'DANZA,LIDER_DANZA') {
-      (filtros as any).OR = [
+      (filtros as unknown).OR = [
         { rol: 'DANZA' },
         { rol: 'LIDER_DANZA' }
       ]
     } else if (rol) {
-      (filtros as any).rol = rol
+      (filtros as unknown).rol = rol
     }
 
     // Obtener usuarios con paginación
     const [usuarios, total] = await Promise.all([
-      prisma.usuario.findMany({
-        where: filtros as any,
+      prisma.usuario.findMunknown({
+        where: filtros as unknown,
         skip: offset,
         take: limite,
         orderBy: { fechaCreacion: 'desc' },
@@ -67,7 +67,7 @@ export async function GET(request: NextRequest) {
           }
         }
       }),
-      prisma.usuario.count({ where: filtros as any })
+      prisma.usuario.count({ where: filtros as unknown })
     ])
 
     return NextResponse.json({

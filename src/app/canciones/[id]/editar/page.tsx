@@ -88,7 +88,7 @@ export default function EditarCancion({ params }: { params: Promise<{ id: string
         acordes: data.acordes || '',
         tonalidad: data.tonalidad || ''
       })
-    } catch (error: any) {
+    } catch (error: unknown) {
       setError(error.message)
     } finally {
       setCargando(false)
@@ -156,7 +156,7 @@ export default function EditarCancion({ params }: { params: Promise<{ id: string
       const cancionActualizada = await response.json()
       router.push(`/canciones/${cancionActualizada.id}`)
 
-    } catch (error: any) {
+    } catch (error: unknown) {
       setError(error.message)
     } finally {
       setGuardando(false)

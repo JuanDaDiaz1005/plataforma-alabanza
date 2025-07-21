@@ -225,7 +225,7 @@ export default function GestorRecursosMusicales({
     }
     grupos[recurso.tipo].recursos.push(recurso)
     return grupos
-  }, {} as { [key: string]: { config: any; recursos: RecursoMusical[] } })
+  }, {} as { [key: string]: { config: unknown; recursos: RecursoMusical[] } })
 
   const reproducirRecurso = async (recurso: RecursoMusical, grupoLabel: string) => {
     let url = recurso.url;

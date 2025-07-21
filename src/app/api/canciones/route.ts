@@ -23,7 +23,7 @@ export async function GET(request: NextRequest) {
     const filtros: unknown = {}
     
     if (busqueda) {
-      (filtros as any).OR = [
+      (filtros as unknown).OR = [
         { titulo: { contains: busqueda } },
         { artista: { contains: busqueda } },
         { letra: { contains: busqueda } }
@@ -32,8 +32,8 @@ export async function GET(request: NextRequest) {
 
     // Obtener canciones con paginación
     const [canciones, total] = await Promise.all([
-      prisma.cancion.findMany({
-        where: filtros as any,
+      prisma.cancion.findMunknown({
+        where: filtros as unknown,
         skip: offset,
         take: limite,
         orderBy: { fechaCreacion: 'desc' },
@@ -47,7 +47,7 @@ export async function GET(request: NextRequest) {
           }
         }
       }),
-      prisma.cancion.count({ where: filtros as any })
+      prisma.cancion.count({ where: filtros as unknown })
     ])
 
     return NextResponse.json({

@@ -20,7 +20,7 @@ interface RecursoAudio {
   tipo: string
   plataforma: string
   url: string
-  metadatos?: any
+  metadatos?: unknown
   fechaCreacion: string
 }
 

@@ -17,7 +17,7 @@ export async function GET(
 
     const { id } = await params
 
-    const recursos = await prisma.recursoAudio.findMany({
+    const recursos = await prisma.recursoAudio.findMunknown({
       where: { 
         cancionId: id,
         activo: true

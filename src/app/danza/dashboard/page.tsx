@@ -35,7 +35,7 @@ interface Asignacion {
 export default function DashboardDanza() {
   const { data: sesion } = useSession()
   const [proximosServicios, setProximosServicios] = useState<ServicioDanza[]>([])
-  const [cancionesConVideo, setCancionesConVideo] = useState<any[]>([])
+  const [cancionesConVideo, setCancionesConVideo] = useState<unknown[]>([])
   const [cargando, setCargando] = useState(true)
   const [lideresPorCancion, setLideresPorCancion] = useState<Record<string, { cancionId: string, titulo: string, lideres: Array<{ id: string, nombre: string }> }>>({})
 
@@ -60,7 +60,7 @@ export default function DashboardDanza() {
       
       if (respuestaCanciones.ok) {
         const datosCanciones = await respuestaCanciones.json()
-        const conVideo = datosCanciones.canciones.filter((c: any) => c.videoDanza).slice(0, 5)
+        const conVideo = datosCanciones.canciones.filter((c: unknown) => c.videoDanza).slice(0, 5)
         setCancionesConVideo(conVideo)
       }
 
@@ -76,7 +76,7 @@ export default function DashboardDanza() {
     if (res.ok) {
       const data = await res.json()
       const porCancion: Record<string, { cancionId: string, titulo: string, lideres: Array<{ id: string, nombre: string }> }> = {}
-      data.forEach((c: any) => { porCancion[c.cancionId] = c })
+      data.forEach((c: unknown) => { porCancion[c.cancionId] = c })
       setLideresPorCancion(prev => ({ ...prev, ...porCancion }))
     }
   }

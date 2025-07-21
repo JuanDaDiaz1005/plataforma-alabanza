@@ -52,7 +52,7 @@ export default function ConfiguracionPage() {
     rangoVocal: ''
   })
 
-  const [usuario, setUsuario] = useState<any>(null)
+  const [usuario, setUsuario] = useState<unknown>(null)
 
   useEffect(() => {
     if (session?.user?.id) {
@@ -82,7 +82,7 @@ export default function ConfiguracionPage() {
         confirmarPassword: '',
         rangoVocal: data.rangoVocal || ''
       })
-    } catch (error: any) {
+    } catch (error: unknown) {
       setError(error.message)
     } finally {
       setCargando(false)
@@ -138,7 +138,7 @@ export default function ConfiguracionPage() {
       }
 
       // Preparar datos para envío
-      const datosActualizacion: any = {
+      const datosActualizacion: unknown = {
         nombre: formulario.nombre.trim(),
         email: formulario.email.trim().toLowerCase(),
         rangoVocal: formulario.rangoVocal || null
@@ -189,7 +189,7 @@ export default function ConfiguracionPage() {
         setCambiarPassword(false)
       }
 
-    } catch (error: any) {
+    } catch (error: unknown) {
       setError(error.message)
     } finally {
       setGuardando(false)

@@ -152,7 +152,7 @@ export async function GET(
     }
 
     // Obtener asignaciones
-    const asignaciones = await prisma.asignacionCancion.findMany({
+    const asignaciones = await prisma.asignacionCancion.findMunknown({
       where: { programacionId },
       include: {
         usuario: {

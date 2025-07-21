@@ -97,7 +97,7 @@ export default function DetalleProgramacion() {
   const [mostrarFormularioAsignacion, setMostrarFormularioAsignacion] = useState(false)
   const [lideresPorCancion, setLideresPorCancion] = useState<Record<string, { cancionId: string, titulo: string, lideres: Array<{ id: string, nombre: string }> }>>({})
   const [modalDanza, setModalDanza] = useState<{ visible: boolean, cancionId: string, cancionTitulo: string }>({ visible: false, cancionId: '', cancionTitulo: '' })
-  const [danzoras, setDanzoras] = useState<any[]>([])
+  const [danzoras, setDanzoras] = useState<unknown[]>([])
   const [seleccionadas, setSeleccionadas] = useState<string[]>([])
   const [guardando, setGuardando] = useState(false)
   const [cargandoModal, setCargandoModal] = useState(false)
@@ -274,7 +274,7 @@ export default function DetalleProgramacion() {
       if (res.ok) {
         const data = await res.json()
         const porCancion: Record<string, { cancionId: string, titulo: string, lideres: Array<{ id: string, nombre: string }> }> = {}
-        data.forEach((c: any) => { porCancion[c.cancionId] = c })
+        data.forEach((c: unknown) => { porCancion[c.cancionId] = c })
         setLideresPorCancion(porCancion)
       } else {
         console.error('Error al cargar líderes de danza:', res.statusText)
@@ -362,12 +362,12 @@ export default function DetalleProgramacion() {
   }
 
   // Función para reproducir recurso de audio
-  const reproducirRecurso = async (cancionId: any, cancionTitulo: any, cancionArtista: any, tipo: any) => {
+  const reproducirRecurso = async (cancionId: unknown, cancionTitulo: unknown, cancionArtista: unknown, tipo: unknown) => {
     try {
       const res = await fetch(`/api/canciones/${cancionId}/recursos`);
       if (!res.ok) return;
-      const recursos: any[] = await res.json();
-      const recurso = recursos.find((r: any) => r.tipo === tipo && r.plataforma === 'MP3_LOCAL');
+      const recursos: unknown[] = await res.json();
+      const recurso = recursos.find((r: unknown) => r.tipo === tipo && r.plataforma === 'MP3_LOCAL');
       if (!recurso) return;
       // Obtener URL firmada si es necesario
       let url = recurso.url;
@@ -375,11 +375,11 @@ export default function DetalleProgramacion() {
         let key = '';
         if (url.includes('r2.dev')) {
           const urlParts = url.split('/');
-          const bucketIndex = urlParts.findIndex((part: any) => part.includes('r2.dev'));
+          const bucketIndex = urlParts.findIndex((part: unknown) => part.includes('r2.dev'));
           if (bucketIndex !== -1) key = urlParts.slice(bucketIndex + 2).join('/');
         } else if (url.includes('cloudflarestorage.com')) {
           const urlParts = url.split('/');
-          const bucketIndex = urlParts.findIndex((part: any) => part.includes('cloudflarestorage.com'));
+          const bucketIndex = urlParts.findIndex((part: unknown) => part.includes('cloudflarestorage.com'));
           if (bucketIndex !== -1) key = urlParts.slice(bucketIndex + 2).join('/');
         }
         if (!key) key = url;
@@ -628,16 +628,16 @@ export default function DetalleProgramacion() {
                 </div>
               ) : (
                 <div className="space-y-4">
-                  {Object.entries(programacion.asignaciones.reduce((acc: any, asignacion: any) => {
+                  {Object.entries(programacion.asignaciones.reduce((acc: unknown, asignacion: unknown) => {
                     const id = asignacion.cancion.id
                     if (!acc[id]) acc[id] = { cancion: asignacion.cancion, asignaciones: [] }
                     acc[id].asignaciones.push(asignacion)
                     return acc
-                  }, {} as any)).map(([cancionId, { cancion, asignaciones }]: any) => (
+                  }, {} as unknown)).map(([cancionId, { cancion, asignaciones }]: unknown) => (
                     <div key={cancionId} className="bg-green-50 border border-green-200 shadow rounded-xl p-6 mb-6 flex flex-col md:flex-row md:items-center md:justify-between gap-4 min-w-0 w-full max-w-full overflow-x-hidden">
                       <div className="flex-1 min-w-0">
                         <p className="font-bold text-gray-900 text-base mb-1 break-words">{cancion.titulo} <span className="text-gray-500 font-normal">por {cancion.artista}</span> {cancion.tonalidad && (<span className="ml-2 bg-gray-100 text-gray-700 px-2 py-1 rounded text-xs">{cancion.tonalidad}</span>)}</p>
-                        {asignaciones.map((asig: any) => (
+                        {asignaciones.map((asig: unknown) => (
                           <div key={asig.id} className="flex flex-wrap items-center gap-2 text-xs sm:text-sm mb-1 min-w-0">
                             <span className="text-gray-800 font-medium flex items-center gap-1 min-w-0"><User className="h-4 w-4" />{asig.usuario.nombre}</span>
                             <span className="text-gray-500 flex items-center gap-1 min-w-0"><Music className="h-4 w-4" />{formatearRol(asig.rolCancion)}</span>
@@ -693,7 +693,7 @@ export default function DetalleProgramacion() {
                             const res = await fetch(`/api/canciones/${cancion.id}/recursos`);
                             if (!res.ok) return;
                             const recursos = await res.json();
-                            const recursoYT = recursos.find((r: any) => r.tipo === 'CANCION_ORIGINAL' && r.plataforma === 'YOUTUBE');
+                            const recursoYT = recursos.find((r: unknown) => r.tipo === 'CANCION_ORIGINAL' && r.plataforma === 'YOUTUBE');
                             if (recursoYT && recursoYT.url) window.open(recursoYT.url, '_blank');
                             else {
                               setMensajeCard(prev => ({ ...prev, [cancionId]: 'No hay enlace de YouTube configurado para esta canción.' }));
@@ -714,7 +714,7 @@ export default function DetalleProgramacion() {
                             const res = await fetch(`/api/canciones/${cancion.id}/recursos`);
                             if (!res.ok) return;
                             const recursos = await res.json();
-                            const recurso = recursos.find((r: any) => r.tipo === 'PISTA_INSTRUMENTAL' && r.plataforma === 'MP3_LOCAL');
+                            const recurso = recursos.find((r: unknown) => r.tipo === 'PISTA_INSTRUMENTAL' && r.plataforma === 'MP3_LOCAL');
                             if (!recurso) {
                               setMensajeCard(prev => ({ ...prev, [cancionId]: 'No hay pista instrumental disponible para esta canción.' }));
                               if (timeoutRef.current[cancionId]) clearTimeout(timeoutRef.current[cancionId]);
@@ -794,16 +794,16 @@ export default function DetalleProgramacion() {
                 </div>
               ) : (
                 <div className="space-y-4">
-                  {(Object.entries(programacion.asignaciones.reduce((acc: any, asignacion: any) => {
+                  {(Object.entries(programacion.asignaciones.reduce((acc: unknown, asignacion: unknown) => {
                     const id = asignacion.cancion.id
                     if (!acc[id]) acc[id] = { cancion: asignacion.cancion, asignaciones: [] }
                     acc[id].asignaciones.push(asignacion)
                     return acc
-                  }, {} as any)) as any[]).map(([cancionId, { cancion, asignaciones }]: any) => (
+                  }, {} as unknown)) as unknown[]).map(([cancionId, { cancion, asignaciones }]: unknown) => (
                     <div key={cancionId} className="bg-gray-50 rounded-lg p-4 flex flex-col md:flex-row md:items-center md:justify-between gap-4">
                       <div className="flex-1">
                         <p className="font-bold text-gray-900 text-base mb-1">{cancion.titulo} <span className="text-gray-500 font-normal">por {cancion.artista}</span> {cancion.tonalidad && (<span className="ml-2 bg-gray-100 text-gray-700 px-2 py-1 rounded text-xs">{cancion.tonalidad}</span>)}</p>
-                        {asignaciones.map((asig: any) => (
+                        {asignaciones.map((asig: unknown) => (
                           <div key={asig.id} className="flex items-center gap-2 text-sm mb-1">
                             <span className="text-gray-800 font-medium flex items-center gap-1"><User className="h-4 w-4" />{asig.usuario.nombre}</span>
                             <span className="text-gray-500 flex items-center gap-1"><Music className="h-4 w-4" />{formatearRol(asig.rolCancion)}</span>
@@ -859,7 +859,7 @@ export default function DetalleProgramacion() {
                             const res = await fetch(`/api/canciones/${cancion.id}/recursos`);
                             if (!res.ok) return;
                             const recursos = await res.json();
-                            const recursoYT = recursos.find((r: any) => r.tipo === 'CANCION_ORIGINAL' && r.plataforma === 'YOUTUBE');
+                            const recursoYT = recursos.find((r: unknown) => r.tipo === 'CANCION_ORIGINAL' && r.plataforma === 'YOUTUBE');
                             if (recursoYT && recursoYT.url) window.open(recursoYT.url, '_blank');
                             else {
                               setMensajeCard(prev => ({ ...prev, [cancionId]: 'No hay enlace de YouTube configurado para esta canción.' }));
@@ -880,7 +880,7 @@ export default function DetalleProgramacion() {
                             const res = await fetch(`/api/canciones/${cancion.id}/recursos`);
                             if (!res.ok) return;
                             const recursos = await res.json();
-                            const recurso = recursos.find((r: any) => r.tipo === 'PISTA_INSTRUMENTAL' && r.plataforma === 'MP3_LOCAL');
+                            const recurso = recursos.find((r: unknown) => r.tipo === 'PISTA_INSTRUMENTAL' && r.plataforma === 'MP3_LOCAL');
                             if (!recurso) {
                               setMensajeCard(prev => ({ ...prev, [cancionId]: 'No hay pista instrumental disponible para esta canción.' }));
                               if (timeoutRef.current[cancionId]) clearTimeout(timeoutRef.current[cancionId]);
@@ -960,7 +960,7 @@ export default function DetalleProgramacion() {
                       <p className="text-sm text-gray-500">No se encontraron usuarios de danza</p>
                     </div>
                   ) : (
-                    danzoras.map((d: any) => (
+                    danzoras.map((d: unknown) => (
                     <label key={d.id} className="flex items-center gap-4 p-4 hover:bg-gray-50 rounded-xl cursor-pointer border border-gray-100 hover:border-gray-200 transition-all duration-200">
                       <input
                         type="checkbox"
