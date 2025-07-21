@@ -85,7 +85,14 @@ export async function POST(
     // Para AUDIO/MP3, permitir cualquier URL (por ejemplo, Cloudflare)
 
     // Crear recurso
-    const data: any = {
+    const data: {
+      cancionId: string;
+      tipo: string;
+      plataforma: string;
+      url: string;
+      titulo?: string;
+      descripcion?: string;
+    } = {
       cancionId: id,
       tipo,
       plataforma: tipo === 'VIDEO' ? 'YOUTUBE' : 'MP3_LOCAL',

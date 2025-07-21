@@ -100,8 +100,8 @@ export default function NuevaCancion() {
       const nuevaCancion = await response.json()
       router.push(`/canciones/${nuevaCancion.id}`)
 
-    } catch (error: any) {
-      setError(error.message)
+    } catch (error: unknown) {
+      setError(error instanceof Error ? error.message : 'Error desconocido')
     } finally {
       setCargando(false)
     }

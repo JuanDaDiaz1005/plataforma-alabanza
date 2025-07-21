@@ -49,12 +49,12 @@ export async function PUT(
     }
 
     // Actualizar recurso
-    const data: any = {
+    const data: unknown = {
       tipo,
       url: url.trim()
     }
-    if (titulo && titulo.trim() !== '') data.titulo = titulo.trim()
-    if (descripcion && descripcion.trim() !== '') data.descripcion = descripcion.trim()
+    if (titulo && titulo.trim() !== '') (data as unknown as { titulo?: string }).titulo = titulo.trim()
+    if (descripcion && descripcion.trim() !== '') (data as unknown as { descripcion?: string }).descripcion = descripcion.trim()
 
     const recursoActualizado = await prisma.recursoAudio.update({
       where: { id: recursoId },

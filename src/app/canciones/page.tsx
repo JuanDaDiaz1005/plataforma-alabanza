@@ -17,6 +17,7 @@ import {
 } from 'lucide-react'
 import { formatearFecha } from '@/lib/utils'
 import { useAudioPlayer } from '@/components/audio/AudioPlayerContext';
+import Link from 'next/link'
 
 interface AsignacionCantante {
   id: string
@@ -413,12 +414,12 @@ export default function CancionesPage() {
                       <div>
                         <div className="flex items-center gap-3 mb-2">
                           <h4 className="font-bold text-gray-900 text-lg">
-                            <a 
+                            <Link 
                               href={`/canciones/${asignacion.cancion.id}?from=asignaciones`}
                               className="hover:text-green-600 transition-colors cursor-pointer"
                             >
                               {asignacion.cancion.titulo}
-                            </a>
+                            </Link>
                           </h4>
                           {editandoEstado === asignacion.id ? (
                             <div className="flex items-center gap-2">
@@ -503,14 +504,14 @@ export default function CancionesPage() {
                           </span>
                         </div>
                       )}
-                      <a 
+                      <Link 
                         href={`/canciones/${asignacion.cancion.id}?from=asignaciones`}
                         className="flex items-center gap-2 px-3 py-2 sm:px-6 sm:py-4 text-gray-600 hover:text-green-700 hover:bg-green-50 rounded-xl transition-all duration-200 border-2 border-gray-200 hover:border-green-300 font-semibold shadow-sm hover:shadow-md active:scale-95 min-h-[40px] text-xs sm:text-sm flex-1 sm:flex-none"
                         title="Ver detalles de la canción"
                       >
                         <Info className="h-5 w-5" />
                         <span className="text-xs sm:text-sm font-semibold">Detalles</span>
-                      </a>
+                      </Link>
                       <button
                         className="flex items-center gap-2 px-3 py-2 sm:px-6 sm:py-4 text-blue-700 hover:text-white hover:bg-blue-600 rounded-xl border border-blue-200 font-semibold shadow-sm transition-all duration-200 min-h-[40px] text-xs sm:text-sm flex-1 sm:flex-none"
                         title="Ver en YouTube"
@@ -518,7 +519,7 @@ export default function CancionesPage() {
                           const res = await fetch(`/api/canciones/${asignacion.cancion.id}/recursos`);
                           if (!res.ok) return;
                           const recursos = await res.json();
-                          const recursoYT = recursos.find((r: any) => r.tipo === 'CANCION_ORIGINAL' && r.plataforma === 'YOUTUBE');
+                          const recursoYT = recursos.find((r: unknown) => (r as any).tipo === 'CANCION_ORIGINAL' && (r as any).plataforma === 'YOUTUBE');
                           if (recursoYT && recursoYT.url) window.open(recursoYT.url, '_blank');
                           else {
                             setMensajeCard(prev => ({ ...prev, [asignacion.id]: 'No hay enlace de YouTube configurado para esta canción.' }));
@@ -539,7 +540,7 @@ export default function CancionesPage() {
                           const res = await fetch(`/api/canciones/${asignacion.cancion.id}/recursos`);
                           if (!res.ok) return;
                           const recursos = await res.json();
-                          const recurso = recursos.find((r: any) => r.tipo === 'PISTA_INSTRUMENTAL' && r.plataforma === 'MP3_LOCAL');
+                          const recurso = recursos.find((r: unknown) => (r as any).tipo === 'PISTA_INSTRUMENTAL' && (r as any).plataforma === 'MP3_LOCAL');
                           if (!recurso) {
                             setMensajeCard(prev => ({ ...prev, [asignacion.id]: 'No hay pista instrumental disponible para esta canción.' }));
                             if (timeoutRef.current[asignacion.id]) clearTimeout(timeoutRef.current[asignacion.id]);
@@ -599,12 +600,12 @@ export default function CancionesPage() {
                       <div>
                         <div className="flex items-center gap-3 mb-2">
                           <h4 className="font-bold text-gray-900 text-lg">
-                            <a 
+                            <Link 
                               href={`/canciones/${asignacion.cancion.id}?from=asignaciones-danza`}
                               className="hover:text-purple-600 transition-colors cursor-pointer"
                             >
                               {asignacion.cancion.titulo}
-                            </a>
+                            </Link>
                           </h4>
                           <div className="flex items-center gap-2">
                             <span className="bg-purple-100 text-purple-700 px-3 py-1 rounded-full text-sm font-medium border border-purple-200">
@@ -638,16 +639,16 @@ export default function CancionesPage() {
                     </div>
 
                     <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-3 w-full lg:w-auto">
-                      <a 
+                      <Link 
                         href={`/canciones/${asignacion.cancion.id}?from=asignaciones-danza`}
                         className="flex items-center justify-center gap-2 px-6 py-4 text-gray-600 hover:text-purple-700 hover:bg-purple-50 rounded-xl transition-all duration-200 border-2 border-gray-200 hover:border-purple-300 font-semibold shadow-sm hover:shadow-md active:scale-95 min-h-[48px] flex-1 sm:flex-none"
                         title="Ver detalles de la canción"
                       >
                         <Info className="h-5 w-5" />
                         <span className="text-sm font-semibold">Detalles</span>
-                      </a>
+                      </Link>
                       {asignacion.cancion.videoDanza && (
-                        <a 
+                        <Link 
                           href={asignacion.cancion.videoDanza}
                           target="_blank"
                           rel="noopener noreferrer"
@@ -656,7 +657,7 @@ export default function CancionesPage() {
                         >
                           <PlayCircle className="h-5 w-5" />
                           <span className="text-sm font-semibold">Video</span>
-                        </a>
+                        </Link>
                       )}
                     </div>
                   </div>
@@ -674,7 +675,7 @@ export default function CancionesPage() {
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
             {esDanza ? (
               <>
-                <a 
+                <Link 
                   href="/servicios"
                   className="flex items-center gap-3 p-4 border-2 border-dashed border-gray-200 rounded-lg hover:border-purple-300 hover:bg-purple-50 transition-colors"
                 >
@@ -683,9 +684,9 @@ export default function CancionesPage() {
                     <p className="font-medium text-gray-900">Asignar Canciones</p>
                     <p className="text-sm text-gray-500">Ver servicios y asignar danzas</p>
                   </div>
-                </a>
+                </Link>
 
-                <a 
+                <Link 
                   href="/biblioteca"
                   className="flex items-center gap-3 p-4 border-2 border-dashed border-gray-200 rounded-lg hover:border-pink-300 hover:bg-pink-50 transition-colors"
                 >
@@ -694,11 +695,11 @@ export default function CancionesPage() {
                     <p className="font-medium text-gray-900">Gestionar Videos</p>
                     <p className="text-sm text-gray-500">Agregar videos de danza</p>
                   </div>
-                </a>
+                </Link>
               </>
             ) : (
               <>
-                <a 
+                <Link 
                   href="/biblioteca"
                   className="flex items-center gap-3 p-4 border-2 border-dashed border-gray-200 rounded-lg hover:border-blue-300 hover:bg-blue-50 transition-colors"
                 >
@@ -707,9 +708,9 @@ export default function CancionesPage() {
                     <p className="font-medium text-gray-900">Biblioteca</p>
                     <p className="text-sm text-gray-500">Escuchar canciones completas</p>
                   </div>
-                </a>
+                </Link>
 
-                <a 
+                <Link 
                   href="/servicios"
                   className="flex items-center gap-3 p-4 border-2 border-dashed border-gray-200 rounded-lg hover:border-green-300 hover:bg-green-50 transition-colors"
                 >
@@ -718,7 +719,7 @@ export default function CancionesPage() {
                     <p className="font-medium text-gray-900">Servicios</p>
                     <p className="text-sm text-gray-500">Ver todos los servicios programados</p>
                   </div>
-                </a>
+                </Link>
               </>
             )}
           </div>

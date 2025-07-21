@@ -235,17 +235,17 @@ export async function PUT(
     }
 
     // Preparar datos para actualización
-    const datosActualizacion: any = {}
+    const datosActualizacion: unknown = {}
 
     if (datos.hasOwnProperty('preparado')) {
       // Convertir boolean a enum para retrocompatibilidad
-      datosActualizacion.estadoPreparacion = datos.preparado ? 'PREPARADO' : 'PENDIENTE'
+      (datosActualizacion as any).estadoPreparacion = datos.preparado ? 'PREPARADO' : 'PENDIENTE'
     } else if (datos.estadoPreparacion) {
-      datosActualizacion.estadoPreparacion = datos.estadoPreparacion
+      (datosActualizacion as any).estadoPreparacion = datos.estadoPreparacion
     }
 
     if (datos.notasPersonales !== undefined) {
-      datosActualizacion.notasPersonales = datos.notasPersonales
+      (datosActualizacion as any).notasPersonales = datos.notasPersonales
     }
 
     // Actualizar asignación

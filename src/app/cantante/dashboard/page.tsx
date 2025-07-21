@@ -110,7 +110,7 @@ export default function DashboardCantante() {
     return null
   }
 
-  const [proximoServicio, setProximoServicio] = useState<any>(null)
+  const [proximoServicio, setProximoServicio] = useState<unknown>(null)
 
   useEffect(() => {
     const fetchProximoServicio = async () => {

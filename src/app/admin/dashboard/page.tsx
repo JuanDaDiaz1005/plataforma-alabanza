@@ -54,18 +54,18 @@ export default function DashboardAdmin() {
       ])
 
       // Calcular estadísticas
-      const programacionesActivas = programacionesData.programaciones?.filter((p: any) => p.activa && new Date(p.fecha) >= new Date()).length || 0
+      const programacionesActivas = programacionesData.programaciones?.filter((p: unknown) => (p as any).activa && new Date((p as any).fecha) >= new Date()).length || 0
       
       let asignacionesPendientes = 0
       let proximoServicio = null
 
       // Encontrar próximo servicio y contar asignaciones pendientes
-      const programacionesFuturas = programacionesData.programaciones?.filter((p: any) => 
-        p.activa && new Date(p.fecha) >= new Date()
-      ).sort((a: any, b: any) => new Date(a.fecha).getTime() - new Date(b.fecha).getTime()) || []
+      const programacionesFuturas = programacionesData.programaciones?.filter((p: unknown) => 
+        (p as any).activa && new Date((p as any).fecha) >= new Date()
+      ).sort((a: unknown, b: unknown) => new Date((a as any).fecha).getTime() - new Date((b as any).fecha).getTime()) || []
 
       if (programacionesFuturas.length > 0) {
-        const proxima = programacionesFuturas[0]
+        const proxima = programacionesFuturas[0] as any
         proximoServicio = {
           id: proxima.id,
           fecha: new Date(proxima.fecha).toLocaleDateString('es-ES', { 
@@ -80,9 +80,9 @@ export default function DashboardAdmin() {
       }
 
       // Contar asignaciones pendientes en todas las programaciones futuras
-      programacionesFuturas.forEach((prog: any) => {
-        prog.asignaciones?.forEach((asig: any) => {
-          if (asig.estadoPreparacion === 'PENDIENTE') {
+      programacionesFuturas.forEach((prog: unknown) => {
+        (prog as any).asignaciones?.forEach((asig: unknown) => {
+          if ((asig as any).estadoPreparacion === 'PENDIENTE') {
             asignacionesPendientes++
           }
         })

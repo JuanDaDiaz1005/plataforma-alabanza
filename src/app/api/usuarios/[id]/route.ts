@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from 'next/server'
 import { getServerSession } from 'next-auth'
 import { prisma } from '@/lib/prisma'
 import { authOptions } from '@/lib/auth'
+import bcrypt from 'bcryptjs'
 
 // GET /api/usuarios/[id] - Obtener usuario específico
 export async function GET(
@@ -77,7 +78,7 @@ export async function PUT(
     }
 
     // Validaciones y actualización solo para nombre, email, rol y contraseñas
-    const datosActualizacion: any = {};
+    const datosActualizacion: Record<string, unknown> = {};
     if (nombre) datosActualizacion.nombre = nombre;
     if (email) datosActualizacion.email = email;
 
@@ -88,7 +89,6 @@ export async function PUT(
 
     // Manejar cambio de contraseña
     if (passwordActual && passwordNueva) {
-      const bcrypt = require('bcryptjs')
       
       // Verificar contraseña actual
       const usuarioExistente = await prisma.usuario.findUnique({

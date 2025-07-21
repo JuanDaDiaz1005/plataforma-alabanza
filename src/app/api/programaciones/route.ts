@@ -25,20 +25,20 @@ export async function GET(request: NextRequest) {
     const skip = (pagina - 1) * limite
 
     // Construir filtros
-    const filtros: any = {}
+    const filtros: unknown = {}
     
     if (fechaDesde || fechaHasta) {
-      filtros.fecha = {}
-      if (fechaDesde) filtros.fecha.gte = new Date(fechaDesde)
-      if (fechaHasta) filtros.fecha.lte = new Date(fechaHasta)
+      (filtros as any).fecha = {}
+      if (fechaDesde) (filtros as any).fecha.gte = new Date(fechaDesde)
+      if (fechaHasta) (filtros as any).fecha.lte = new Date(fechaHasta)
     }
 
     if (tipoServicio) {
-      filtros.tipoServicio = tipoServicio
+      (filtros as any).tipoServicio = tipoServicio
     }
 
     if (activa !== null && activa !== undefined) {
-      filtros.activa = activa === 'true'
+      (filtros as any).activa = activa === 'true'
     }
 
     // Si se solicita por cantante, devolver asignaciones específicas
