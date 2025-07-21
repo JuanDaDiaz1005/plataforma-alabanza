@@ -21,11 +21,11 @@ export async function GET(request: NextRequest) {
     const offset = (page - 1) * limite
 
     // Construir filtros (SQLite no soporta mode: insensitive)
-    const filtros: any = {}
+    const filtros: unknown = {}
     
     if (busqueda) {
       const busquedaLower = busqueda.toLowerCase()
-      filtros.OR = [
+      (filtros as any).OR = [
         { titulo: { contains: busquedaLower } },
         { artista: { contains: busquedaLower } },
         { album: { contains: busquedaLower } }

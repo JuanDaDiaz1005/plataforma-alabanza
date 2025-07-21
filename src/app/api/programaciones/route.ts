@@ -28,17 +28,17 @@ export async function GET(request: NextRequest) {
     const filtros: unknown = {}
     
     if (fechaDesde || fechaHasta) {
-      (filtros as any).fecha = {}
-      if (fechaDesde) (filtros as any).fecha.gte = new Date(fechaDesde)
-      if (fechaHasta) (filtros as any).fecha.lte = new Date(fechaHasta)
+      (filtros as unknown as { fecha?: { gte?: Date; lte?: Date } }).fecha = {}
+      if (fechaDesde) (filtros as unknown as { fecha?: { gte?: Date; lte?: Date } }).fecha.gte = new Date(fechaDesde)
+      if (fechaHasta) (filtros as unknown as { fecha?: { gte?: Date; lte?: Date } }).fecha.lte = new Date(fechaHasta)
     }
 
     if (tipoServicio) {
-      (filtros as any).tipoServicio = tipoServicio
+      (filtros as unknown as { tipoServicio?: string }).tipoServicio = tipoServicio
     }
 
     if (activa !== null && activa !== undefined) {
-      (filtros as any).activa = activa === 'true'
+      (filtros as unknown as { activa?: boolean }).activa = activa === 'true'
     }
 
     // Si se solicita por cantante, devolver asignaciones específicas

@@ -21,10 +21,10 @@ export async function GET(request: NextRequest) {
     const offset = (page - 1) * limite
 
     // Construir filtros
-    const filtros: any = {}
+    const filtros: unknown = {}
     
     if (busqueda) {
-      filtros.OR = [
+      (filtros as any).OR = [
         { nombre: { contains: busqueda } },
         { email: { contains: busqueda } }
       ]
@@ -32,23 +32,23 @@ export async function GET(request: NextRequest) {
 
     // Si el filtro de rol es para asignaciones, mostrar múltiples roles
     if (rol === 'CANTANTE,LIDER_ALABANZA') {
-      filtros.OR = [
+      (filtros as any).OR = [
         { rol: 'CANTANTE' },
         { rol: 'LIDER_ALABANZA' }
       ]
     } else if (rol === 'DANZA,LIDER_DANZA') {
-      filtros.OR = [
+      (filtros as any).OR = [
         { rol: 'DANZA' },
         { rol: 'LIDER_DANZA' }
       ]
     } else if (rol) {
-      filtros.rol = rol
+      (filtros as any).rol = rol
     }
 
     // Obtener usuarios con paginación
     const [usuarios, total] = await Promise.all([
       prisma.usuario.findMany({
-        where: filtros,
+        where: filtros as any,
         skip: offset,
         take: limite,
         orderBy: { fechaCreacion: 'desc' },
@@ -67,7 +67,7 @@ export async function GET(request: NextRequest) {
           }
         }
       }),
-      prisma.usuario.count({ where: filtros })
+      prisma.usuario.count({ where: filtros as any })
     ])
 
     return NextResponse.json({

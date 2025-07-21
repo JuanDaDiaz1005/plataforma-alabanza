@@ -13,6 +13,7 @@ import {
   User,
   FileMusic
 } from 'lucide-react'
+import Link from 'next/link'
 
 interface EstadisticasDashboard {
   totalUsuarios: number
@@ -255,7 +256,7 @@ export default function DashboardAdmin() {
             Acciones Rápidas
           </h3>
           <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-            <a 
+            <Link 
               href="/canciones/nueva"
               className="flex items-center gap-3 p-4 border-2 border-dashed border-gray-200 rounded-lg hover:border-blue-300 hover:bg-blue-50 transition-colors"
             >
@@ -264,9 +265,9 @@ export default function DashboardAdmin() {
                 <p className="font-medium text-gray-900">Agregar Canción</p>
                 <p className="text-sm text-gray-500">Expandir repertorio</p>
               </div>
-            </a>
+            </Link>
 
-            <a 
+            <Link 
                                   href="/servicios"
               className="flex items-center gap-3 p-4 border-2 border-dashed border-gray-200 rounded-lg hover:border-green-300 hover:bg-green-50 transition-colors"
             >
@@ -275,9 +276,9 @@ export default function DashboardAdmin() {
                 <p className="font-medium text-gray-900">Nueva Programación</p>
                 <p className="text-sm text-gray-500">Planificar servicio</p>
               </div>
-            </a>
+            </Link>
 
-            <a 
+            <Link 
               href="/usuarios"
               className="flex items-center gap-3 p-4 border-2 border-dashed border-gray-200 rounded-lg hover:border-purple-300 hover:bg-purple-50 transition-colors"
             >
@@ -286,7 +287,7 @@ export default function DashboardAdmin() {
                 <p className="font-medium text-gray-900">Gestionar Usuarios</p>
                 <p className="text-sm text-gray-500">Administrar equipo</p>
               </div>
-            </a>
+            </Link>
           </div>
         </div>
       </div>

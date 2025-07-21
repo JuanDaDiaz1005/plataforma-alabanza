@@ -239,13 +239,13 @@ export async function PUT(
 
     if (datos.hasOwnProperty('preparado')) {
       // Convertir boolean a enum para retrocompatibilidad
-      (datosActualizacion as any).estadoPreparacion = datos.preparado ? 'PREPARADO' : 'PENDIENTE'
+      (datosActualizacion as unknown as { estadoPreparacion?: string }).estadoPreparacion = datos.preparado ? 'PREPARADO' : 'PENDIENTE'
     } else if (datos.estadoPreparacion) {
-      (datosActualizacion as any).estadoPreparacion = datos.estadoPreparacion
+      (datosActualizacion as unknown as { estadoPreparacion?: string }).estadoPreparacion = datos.estadoPreparacion
     }
 
     if (datos.notasPersonales !== undefined) {
-      (datosActualizacion as any).notasPersonales = datos.notasPersonales
+      (datosActualizacion as unknown as { notasPersonales?: string | null }).notasPersonales = datos.notasPersonales
     }
 
     // Actualizar asignación

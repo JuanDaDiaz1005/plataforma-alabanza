@@ -20,10 +20,10 @@ export async function GET(request: NextRequest) {
     const offset = (page - 1) * limite
 
     // Construir filtros dinámicamente
-    const filtros: any = {}
+    const filtros: unknown = {}
     
     if (busqueda) {
-      filtros.OR = [
+      (filtros as any).OR = [
         { titulo: { contains: busqueda } },
         { artista: { contains: busqueda } },
         { letra: { contains: busqueda } }
@@ -33,7 +33,7 @@ export async function GET(request: NextRequest) {
     // Obtener canciones con paginación
     const [canciones, total] = await Promise.all([
       prisma.cancion.findMany({
-        where: filtros,
+        where: filtros as any,
         skip: offset,
         take: limite,
         orderBy: { fechaCreacion: 'desc' },
@@ -47,7 +47,7 @@ export async function GET(request: NextRequest) {
           }
         }
       }),
-      prisma.cancion.count({ where: filtros })
+      prisma.cancion.count({ where: filtros as any })
     ])
 
     return NextResponse.json({
