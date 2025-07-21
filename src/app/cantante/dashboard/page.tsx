@@ -16,6 +16,7 @@ import {
   ExternalLink
 } from 'lucide-react'
 import { formatearFecha } from '@/lib/utils'
+import Link from 'next/link';
 
 interface AsignacionCantante {
   id: string
@@ -504,13 +505,13 @@ export default function DashboardCantante() {
                       </div>
 
                       <div className="flex items-center gap-2 ml-4">
-                        <a 
+                        <Link 
                           href={`/canciones/${asignacion.cancion.id}?from=cantante-dashboard`}
                           className="p-2 text-gray-400 hover:text-green-600 hover:bg-green-50 rounded-lg transition-colors"
                           title="Ver detalles de la canción"
                         >
                           <Info className="h-5 w-5" />
-                        </a>
+                        </Link>
                         <button className="p-2 text-gray-400 hover:text-blue-600 hover:bg-blue-50 rounded-lg transition-colors">
                           <PlayCircle className="h-5 w-5" />
                         </button>
@@ -541,7 +542,7 @@ export default function DashboardCantante() {
           </div>
           
           <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-            <a 
+            <Link 
               href="/biblioteca"
               className="bg-gradient-to-r from-blue-50 to-indigo-50 rounded-xl p-6 border border-blue-100 hover:border-blue-200 hover:shadow-md transition-all duration-300 group"
             >
@@ -554,9 +555,9 @@ export default function DashboardCantante() {
                   <p className="text-sm text-gray-600">Escuchar canciones asignadas</p>
                 </div>
               </div>
-            </a>
+            </Link>
 
-            <a 
+            <Link 
               href="/canciones"
               className="bg-gradient-to-r from-green-50 to-emerald-50 rounded-xl p-6 border border-green-100 hover:border-green-200 hover:shadow-md transition-all duration-300 group"
             >
@@ -569,9 +570,9 @@ export default function DashboardCantante() {
                   <p className="text-sm text-gray-600">Explorar letras y acordes</p>
                 </div>
               </div>
-            </a>
+            </Link>
 
-            <a
+            <Link
               href="/servicios"
               className="bg-gradient-to-r from-purple-50 to-pink-50 rounded-xl p-6 border border-purple-100 hover:border-purple-200 hover:shadow-md transition-all duration-300 group"
             >
@@ -584,7 +585,7 @@ export default function DashboardCantante() {
                   <p className="text-sm text-gray-600">Ver todos los servicios programados</p>
                 </div>
               </div>
-            </a>
+            </Link>
           </div>
         </div>
       </div>

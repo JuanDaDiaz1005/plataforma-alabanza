@@ -423,7 +423,7 @@ export default function DetalleCancion({ params }: { params: Promise<{ id: strin
             <div className="bg-white rounded-lg p-6 max-w-md w-full mx-4">
               <h3 className="text-lg font-semibold text-gray-900 mb-4">Confirmar Eliminación</h3>
               <p className="text-gray-600 mb-6">
-                ¿Estás seguro de que quieres eliminar la canción "{cancion.titulo}"? 
+                ¿Estás seguro de que quieres eliminar la canción &quot;{cancion.titulo}&quot;? 
                 Esta acción no se puede deshacer.
               </p>
               <div className="flex justify-end gap-3">

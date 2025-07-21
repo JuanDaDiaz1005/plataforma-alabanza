@@ -34,6 +34,7 @@ interface Cancion {
 export default function EditarCancion({ params }: { params: Promise<{ id: string }> }) {
   const { data: session } = useSession()
   const router = useRouter()
+  const searchParams = useSearchParams();
   const [cargando, setCargando] = useState(true)
   const [guardando, setGuardando] = useState(false)
   const [error, setError] = useState('')
@@ -198,8 +199,6 @@ export default function EditarCancion({ params }: { params: Promise<{ id: string
       </Layout>
     )
   }
-
-  const searchParams = useSearchParams();
 
   return (
     <Layout titulo={`Editar: ${cancion.titulo}`}>

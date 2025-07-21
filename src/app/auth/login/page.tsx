@@ -6,6 +6,7 @@ import { useRouter } from 'next/navigation'
 import Link from 'next/link'
 import { Music, Eye, EyeOff, AlertCircle, Loader2 } from 'lucide-react'
 import { useAudioPlayer } from '@/components/audio/AudioPlayerContext';
+import Image from 'next/image';
 
 export default function PaginaLogin() {
   const [email, setEmail] = useState('')
@@ -60,7 +61,7 @@ export default function PaginaLogin() {
         {/* Header */}
         <div className="text-center">
           <div className="flex justify-center">
-            <img src="/logo.png" alt="logo Casa de Amor" className="w-24 h-24 object-contain" />
+            <Image src="/logo.png" alt="logo Casa de Amor" width={96} height={96} className="w-24 h-24 object-contain" />
           </div>
           <h2 className="mt-6 text-3xl font-bold text-gray-900">
             Iniciar Sesión

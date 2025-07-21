@@ -4,6 +4,7 @@ import { useAudioPlayer } from './AudioPlayerContext';
 import { Play, Pause, Volume2, VolumeX, Download, RotateCcw } from 'lucide-react';
 import { useSession } from 'next-auth/react';
 import { SidebarContext } from '../Layout';
+import Image from 'next/image';
 
 export default function AudioPlayer() {
   const { data: session, status } = useSession();
@@ -80,7 +81,7 @@ export default function AudioPlayer() {
         onPause={() => setIsPlaying(false)}
       />
       {currentTrack.cover && (
-        <img src={currentTrack.cover} alt="cover" className="w-10 h-10 rounded object-cover" />
+        <Image src={currentTrack.cover} alt="cover" width={40} height={40} className="w-10 h-10 rounded object-cover" />
       )}
       <div className="flex flex-wrap items-center gap-2 w-full justify-center sm:justify-start">
         <button

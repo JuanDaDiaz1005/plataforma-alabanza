@@ -17,6 +17,7 @@ import {
   Menu,
   X
 } from 'lucide-react'
+import Image from 'next/image';
 
 interface MenuItem {
   nombre: string
@@ -118,7 +119,7 @@ export default function Layout({ children, titulo }: LayoutProps) {
           {/* Logo mejorado */}
           <div className="flex items-center justify-between px-6 py-6 border-b border-gray-200 bg-gradient-to-r from-blue-600 to-purple-600">
             <div className="flex items-center gap-3">
-              <img src="/logo.png" alt="logo Casa de Amor" className="w-12 h-12 object-contain rounded-full bg-white/80 p-1" />
+              <Image src="/logo.png" alt="logo Casa de Amor" width={48} height={48} className="w-12 h-12 object-contain rounded-full bg-white/80 p-1" />
               <div>
                 <h1 className="font-bold text-white text-lg">ICCAP</h1>
               </div>
