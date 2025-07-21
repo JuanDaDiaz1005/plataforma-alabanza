@@ -1,0 +1,18 @@
+# Copiar este contenido a .env.local
+
+# Base de datos
+DATABASE_URL="file:./dev.db"
+
+# NextAuth.js
+NEXTAUTH_SECRET="super-secret-key-para-desarrollo-local-cambiar-en-produccion"
+NEXTAUTH_URL="http://localhost:3000"
+
+# APIs Externas (configurar cuando sea necesario)
+SPOTIFY_CLIENT_ID=""
+SPOTIFY_CLIENT_SECRET=""
+YOUTUBE_API_KEY=""
+
+# Almacenamiento de archivos (configurar más adelante)
+AWS_ACCESS_KEY_ID=""
+AWS_SECRET_ACCESS_KEY=""
+AWS_BUCKET_NAME="" 

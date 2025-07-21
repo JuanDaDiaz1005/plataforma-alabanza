@@ -21,6 +21,6 @@
 
 body {
   background: var(--background);
-  color: var(--foreground);
+  /* Removido color global para evitar conflictos con Tailwind */
   font-family: Arial, Helvetica, sans-serif;
 }

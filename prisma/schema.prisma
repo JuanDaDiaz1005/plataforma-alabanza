@@ -1,0 +1,225 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "sqlite"
+  url      = "file:./dev.db"
+}
+
+// Modelo de Usuario
+model Usuario {
+  id                String   @id @default(cuid())
+  email             String   @unique
+  nombre            String
+  telefono          String?
+  passwordHash      String
+  rol               RolUsuario @default(CANTANTE)
+  instrumentos      String?  // JSON array de instrumentos
+  disponibilidad    String?  // JSON de días disponibles
+  activo            Boolean  @default(true)
+  fechaCreacion     DateTime @default(now())
+  fechaActualizacion DateTime @updatedAt
+
+  // Relaciones
+  asignaciones      AsignacionCancion[]
+  notificaciones    Notificacion[]
+  comentarios       Comentario[]
+  lideresDanza      LiderDanzaAsignacion[]
+  @@map("usuarios")
+}
+
+// Modelo de Canción
+model Cancion {
+  id                String   @id @default(cuid())
+  titulo            String
+  artista           String
+  album             String?
+  duracionSegundos  Int?
+  letra             String?
+  acordes           String?
+  tonalidad         String?
+  videoDanza        String?  // URL del video de danza en YouTube
+
+  fechaCreacion     DateTime @default(now())
+  fechaActualizacion DateTime @updatedAt
+
+  // Relaciones
+  asignaciones      AsignacionCancion[]
+  recursosAudio     RecursoAudio[]
+  comentarios       Comentario[]
+  lideresDanza      LiderDanzaAsignacion[]
+
+  @@map("canciones")
+}
+
+// Modelo de Programación
+model Programacion {
+  id                String   @id @default(cuid())
+  fecha             DateTime
+  tipoServicio      TipoServicio
+  notas             String?
+  activa            Boolean  @default(true)
+  fechaCreacion     DateTime @default(now())
+  fechaActualizacion DateTime @updatedAt
+
+  // Relaciones
+  asignaciones      AsignacionCancion[]
+  comentarios       Comentario[]
+  lideresDanza      LiderDanzaAsignacion[]
+
+  @@map("programaciones")
+}
+
+// Modelo de Asignación de Canciones
+model AsignacionCancion {
+  id                String   @id @default(cuid())
+  usuarioId         String
+  cancionId         String
+  programacionId    String
+  rolCancion        RolCancion
+  estadoPreparacion EstadoPreparacion @default(PENDIENTE)
+  notasPersonales   String?
+  fechaCreacion     DateTime @default(now())
+  fechaActualizacion DateTime @updatedAt
+
+  // Relaciones
+  usuario           Usuario     @relation(fields: [usuarioId], references: [id], onDelete: Cascade)
+  cancion           Cancion     @relation(fields: [cancionId], references: [id], onDelete: Cascade)
+  programacion      Programacion @relation(fields: [programacionId], references: [id], onDelete: Cascade)
+
+  @@unique([usuarioId, cancionId, programacionId])
+  @@map("asignaciones_canciones")
+}
+
+// Modelo de Recursos de Audio
+model RecursoAudio {
+  id                String   @id @default(cuid())
+  cancionId         String
+  tipo              TipoRecurso
+  plataforma        PlataformaAudio
+  url               String? // Hacer opcional
+  titulo            String?  // Título descriptivo del recurso (ej: "Tutorial Guitarra - Acústica")
+  descripcion       String?  // Descripción adicional
+  metadatos         String?  // JSON con información adicional
+  activo            Boolean  @default(true)
+  fechaCreacion     DateTime @default(now())
+  fechaActualizacion DateTime @updatedAt
+
+  // Relaciones
+  cancion           Cancion  @relation(fields: [cancionId], references: [id], onDelete: Cascade)
+
+  @@map("recursos_audio")
+}
+
+// Modelo de Notificaciones
+model Notificacion {
+  id                String   @id @default(cuid())
+  usuarioId         String
+  titulo            String
+  mensaje           String
+  tipo              TipoNotificacion
+  leida             Boolean  @default(false)
+  fechaCreacion     DateTime @default(now())
+
+  // Relaciones
+  usuario           Usuario  @relation(fields: [usuarioId], references: [id], onDelete: Cascade)
+
+  @@map("notificaciones")
+}
+
+// Modelo de Comentarios
+model Comentario {
+  id                String   @id @default(cuid())
+  usuarioId         String
+  cancionId         String?
+  programacionId    String?
+  contenido         String
+  fechaCreacion     DateTime @default(now())
+
+  // Relaciones
+  usuario           Usuario      @relation(fields: [usuarioId], references: [id], onDelete: Cascade)
+  cancion           Cancion?     @relation(fields: [cancionId], references: [id], onDelete: Cascade)
+  programacion      Programacion? @relation(fields: [programacionId], references: [id], onDelete: Cascade)
+
+  @@map("comentarios")
+}
+
+// Modelo de Liderazgo de Danza por Canción y Servicio
+model LiderDanzaAsignacion {
+  id              String   @id @default(cuid())
+  programacionId  String
+  cancionId       String
+  usuarioId       String // Danzora líder
+  fechaCreacion   DateTime @default(now())
+
+  // Relaciones
+  programacion    Programacion @relation(fields: [programacionId], references: [id], onDelete: Cascade)
+  cancion         Cancion      @relation(fields: [cancionId], references: [id], onDelete: Cascade)
+  usuario         Usuario      @relation(fields: [usuarioId], references: [id], onDelete: Cascade)
+
+  @@unique([programacionId, cancionId, usuarioId])
+  @@map("lideres_danza_asignacion")
+}
+
+// Enums
+enum RolUsuario {
+  ADMINISTRADOR
+  LIDER_ALABANZA
+  CANTANTE
+  LIDER_DANZA
+  DANZA
+  MUSICO
+}
+
+
+
+enum TipoServicio {
+  MIERCOLES
+  DOMINGO
+  SABADO
+  JUEVES
+  ESPECIAL
+}
+
+enum RolCancion {
+  CANTANTE_PRINCIPAL
+  COROS
+  ARMONIAS
+  RESPALDO
+}
+
+enum EstadoPreparacion {
+  PENDIENTE
+  EN_PRACTICA
+  PREPARADO
+  NECESITA_AYUDA
+}
+
+enum TipoRecurso {
+  CANCION_ORIGINAL
+  PISTA_INSTRUMENTAL
+  MULTITRACK
+  TUTORIAL_VOCES
+  TUTORIAL_GUITARRA
+  TUTORIAL_BAJO
+  TUTORIAL_BATERIA
+  TUTORIAL_TECLADO
+  TUTORIAL_VIOLIN
+}
+
+enum PlataformaAudio {
+  MP3_LOCAL
+  SPOTIFY
+  YOUTUBE
+}
+
+enum TipoNotificacion {
+  NUEVA_ASIGNACION
+  CAMBIO_PROGRAMACION
+  RECORDATORIO_ENSAYO
+  MENSAJE_GENERAL
+}
