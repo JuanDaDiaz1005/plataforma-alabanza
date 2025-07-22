@@ -43,7 +43,7 @@ export async function GET(request: NextRequest) {
 
     // Si se solicita por cantante, devolver asignaciones específicas
     if (cantanteId) {
-      const asignaciones = await prisma.asignacionCancion.findMunknown({
+      const asignaciones = await prisma.asignacionCancion.findMany({
         where: {
           usuarioId: cantanteId,
           programacion: {
@@ -106,7 +106,7 @@ export async function GET(request: NextRequest) {
 
     // Obtener programaciones
     const [programaciones, total] = await Promise.all([
-      prisma.programacion.findMunknown({
+      prisma.programacion.findMany({
         where: filtros,
         include: {
           asignaciones: {

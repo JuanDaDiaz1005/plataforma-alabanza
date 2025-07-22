@@ -5,9 +5,9 @@ import { useSession } from 'next-auth/react'
 import { useParams, useRouter } from 'next/navigation'
 import Link from 'next/link'
 import Layout from '@/components/Layout'
-import { 
-  ArrowLeft, 
-  Calendar, 
+import {
+  ArrowLeft,
+  Calendar,
   Clock,
   Users,
   Music,
@@ -110,7 +110,7 @@ export default function DetalleProgramacion() {
     try {
       setCargando(true)
       const response = await fetch(`/api/programaciones/${programacionId}`)
-      
+
       if (!response.ok) {
         if (response.status === 404) {
           throw new Error('Programación no encontrada')
@@ -120,7 +120,7 @@ export default function DetalleProgramacion() {
 
       const data = await response.json()
       setProgramacion(data)
-      
+
     } catch (error) {
       setError(error instanceof Error ? error.message : 'Error al cargar la programación')
     } finally {
@@ -145,7 +145,7 @@ export default function DetalleProgramacion() {
       }
 
       router.push('/servicios')
-      
+
     } catch (error) {
       console.error('Error al eliminar:', error)
       alert(error instanceof Error ? error.message : 'Error al eliminar la programación')
@@ -173,7 +173,7 @@ export default function DetalleProgramacion() {
 
       // Recargar datos
       cargarProgramacion()
-      
+
     } catch (error) {
       console.error('Error al actualizar estado:', error)
       alert(error instanceof Error ? error.message : 'Error al actualizar estado de preparación')
@@ -202,7 +202,7 @@ export default function DetalleProgramacion() {
 
       // Recargar datos
       cargarProgramacion()
-      
+
     } catch (error) {
       console.error('Error al eliminar asignación:', error)
       alert(error instanceof Error ? error.message : 'Error al eliminar asignación')
@@ -224,7 +224,7 @@ export default function DetalleProgramacion() {
     const tipos: { [key: string]: string } = {
       'MIERCOLES': 'Miércoles',
       'DOMINGO': 'Domingo',
-      'SABADO': 'Sábado', 
+      'SABADO': 'Sábado',
       'JUEVES': 'Jueves',
       'ESPECIAL': 'Especial'
     }
@@ -245,14 +245,13 @@ export default function DetalleProgramacion() {
   // Cargar líderes de danza
   const cargarLideresDanza = async () => {
     if (!programacion) return
-    
+
     try {
       const res = await fetch(`/api/programaciones/${programacion.id}/danzas-lideres`)
       if (res.ok) {
         const data = await res.json()
         const porCancion: Record<string, { cancionId: string, titulo: string, lideres: Array<{ id: string, nombre: string }> }> = {}
-        (data as Array<{ cancionId: string, titulo: string, lideres: Array<{ id: string, nombre: string }> }>)
-          .forEach((c: { cancionId: string, titulo: string, lideres: Array<{ id: string, nombre: string }> }) => { porCancion[c.cancionId] = c });
+        Array.isArray(data) && data.forEach((c: { cancionId: string, titulo: string, lideres: Array<{ id: string, nombre: string }> }) => { porCancion[c.cancionId] = c });
         setLideresPorCancion(prev => ({ ...prev, ...porCancion }))
       } else {
         console.error('Error al cargar líderes de danza:', res.statusText)
@@ -268,7 +267,7 @@ export default function DetalleProgramacion() {
   const abrirModalDanza = async (cancionId: string, cancionTitulo: string) => {
     setModalDanza({ visible: true, cancionId, cancionTitulo })
     setCargandoModal(true)
-    
+
     try {
       // Cargar danzoras y líder de danza
       const res = await fetch('/api/usuarios?rol=DANZA,LIDER_DANZA&limite=50')
@@ -279,7 +278,7 @@ export default function DetalleProgramacion() {
         console.error('Error al cargar usuarios de danza:', res.statusText)
         setDanzoras([])
       }
-      
+
       // Cargar líderes actuales
       await cargarLideresDanza()
       setSeleccionadas(lideresPorCancion[cancionId]?.lideres.map(l => l.id) || [])
@@ -301,15 +300,15 @@ export default function DetalleProgramacion() {
   // Guardar líderes de danza
   const guardarLideresDanza = async () => {
     if (!programacion) return
-    
+
     setGuardando(true)
     try {
       await fetch(`/api/programaciones/${programacion.id}/danzas-lideres`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ 
-          cancionId: modalDanza.cancionId, 
-          usuarioIds: seleccionadas 
+        body: JSON.stringify({
+          cancionId: modalDanza.cancionId,
+          usuarioIds: seleccionadas
         })
       })
       await cargarLideresDanza()
@@ -424,7 +423,7 @@ export default function DetalleProgramacion() {
         <div className="bg-gradient-to-r from-purple-600 to-pink-600 rounded-xl p-6 text-white">
           <div className="flex items-start justify-between">
             <div className="flex items-center gap-4">
-              <Link 
+              <Link
                 href="/servicios?from=servicios"
                 className="p-2 text-white/80 hover:text-white hover:bg-white/20 rounded-lg transition-all duration-200"
               >
@@ -443,11 +442,10 @@ export default function DetalleProgramacion() {
 
             <div className="flex items-center gap-3">
               <span
-                className={`px-4 py-2 rounded-full text-sm font-semibold ${
-                  programacion.activa
+                className={`px-4 py-2 rounded-full text-sm font-semibold ${programacion.activa
                     ? 'bg-green-500 text-white shadow-lg'
                     : 'bg-gray-500 text-white'
-                }`}
+                  }`}
               >
                 {programacion.activa ? 'Activa' : 'Inactiva'}
               </span>
@@ -612,7 +610,7 @@ export default function DetalleProgramacion() {
                     acc[id].asignaciones.push(asignacion);
                     return acc;
                   }, {} as Record<string, { cancion: Asignacion['cancion'], asignaciones: Asignacion[] }>)).map(([cancionId, { cancion, asignaciones }]) => (
-                    <div key={cancionId} className="bg-green-50 border border-green-200 shadow rounded-xl p-6 mb-6 flex flex-col md:flex-row md:items-center md:justify-between gap-4 min-w-0 w-full max-w-full overflow-x-hidden">
+                    <div key={cancionId} className="bg-green-50 border border-green-200 shadow rounded-xl p-6 mb-6 flex md:items-center md:justify-between gap-4 min-w-0 w-full max-w-full overflow-x-hidden">
                       <div className="flex-1 min-w-0">
                         <p className="font-bold text-gray-900 text-base mb-1 break-words">{cancion.titulo} <span className="text-gray-500 font-normal">por {cancion.artista}</span> {cancion.tonalidad && (<span className="ml-2 bg-gray-100 text-gray-700 px-2 py-1 rounded text-xs">{cancion.tonalidad}</span>)}</p>
                         {asignaciones.map((asig: Asignacion) => (
@@ -740,10 +738,10 @@ export default function DetalleProgramacion() {
         ) : (
           <div className="bg-white rounded-xl shadow-sm border border-gray-100">
             <div className="flex items-center gap-3 p-6 border-b border-gray-200">
-                <div className="bg-gradient-to-br from-green-500 to-green-600 p-2 rounded-lg">
-                  <Users className="h-5 w-5 text-white" />
-                </div>
-                <h2 className="text-xl font-semibold text-gray-900">Asignaciones de Cantantes</h2>
+              <div className="bg-gradient-to-br from-green-500 to-green-600 p-2 rounded-lg">
+                <Users className="h-5 w-5 text-white" />
+              </div>
+              <h2 className="text-xl font-semibold text-gray-900">Asignaciones de Cantantes</h2>
               {puedeAsignar && (
                 <Link
                   href={`/programacion/${programacion.id}/asignar`}
@@ -772,11 +770,11 @@ export default function DetalleProgramacion() {
                 </div>
               ) : (
                 <div className="space-y-4">
-                  {(Object.entries(programacion.asignaciones.reduce((acc: Record<string, { cancion: Asignacion['cancion'], asignaciones: Asignacion[] }>, asignacion: Asignacion) => {
-                    const id = asignacion.cancion.id
-                    if (!acc[id]) acc[id] = { cancion: asignacion.cancion, asignaciones: [] }
-                    acc[id].asignaciones.push(asignacion)
-                    return acc
+                  {Object.entries(programacion.asignaciones.reduce((acc: Record<string, { cancion: Asignacion['cancion'], asignaciones: Asignacion[] }>, asignacion: Asignacion) => {
+                    const id = asignacion.cancion.id;
+                    if (!acc[id]) acc[id] = { cancion: asignacion.cancion, asignaciones: [] };
+                    acc[id].asignaciones.push(asignacion);
+                    return acc;
                   }, {} as Record<string, { cancion: Asignacion['cancion'], asignaciones: Asignacion[] }>)).map(([cancionId, { cancion, asignaciones }]) => (
                     <div key={cancionId} className="bg-gray-50 rounded-lg p-4 flex flex-col md:flex-row md:items-center md:justify-between gap-4">
                       <div className="flex-1">
@@ -802,17 +800,17 @@ export default function DetalleProgramacion() {
                               </span>
                             )}
                             {(session?.user?.role === 'LIDER_ALABANZA' || session?.user?.role === 'ADMINISTRADOR') && (
-                        <button
+                              <button
                                 onClick={() => eliminarAsignacion(asig.id)}
                                 className="text-gray-400 hover:text-red-600 p-1"
                                 title="Eliminar asignación"
-                        >
+                              >
                                 <Trash2 className="h-4 w-4" />
-                        </button>
-              )}
-            </div>
+                              </button>
+                            )}
+                          </div>
                         ))}
-          </div>
+                      </div>
                       <div className="flex gap-2 mt-2 md:mt-0 relative">
                         {/* Mensaje contextual sobre el card */}
                         {mensajeCard[cancionId] && (
@@ -820,8 +818,8 @@ export default function DetalleProgramacion() {
                             <span className="bg-yellow-100 text-yellow-800 px-4 py-2 rounded-xl border border-yellow-300 shadow text-xs sm:text-sm font-semibold">
                               {mensajeCard[cancionId]}
                             </span>
-                </div>
-              )}
+                          </div>
+                        )}
                         <Link
                           href={`/canciones/${cancion.id}?from=programacion&id=${programacion.id}`}
                           className="flex items-center gap-2 px-6 py-3 bg-white border-2 border-gray-200 rounded-xl shadow hover:bg-gray-50 transition-all duration-200 font-semibold text-gray-700 text-base"
@@ -830,7 +828,7 @@ export default function DetalleProgramacion() {
                           <Info className="h-5 w-5" />
                           <span>Detalles</span>
                         </Link>
-                          <button
+                        <button
                           className="flex items-center gap-2 px-6 py-3 bg-white border-2 border-blue-200 rounded-xl shadow hover:bg-blue-50 transition-all duration-200 font-semibold text-blue-700 text-base"
                           title="Ver en YouTube"
                           onClick={async () => {
@@ -847,11 +845,11 @@ export default function DetalleProgramacion() {
                               }, 3500);
                             }
                           }}
-                          >
+                        >
                           <ExternalLink className="h-5 w-5" />
                           <span>Canción</span>
-                          </button>
-                          <button
+                        </button>
+                        <button
                           className="flex items-center gap-2 px-6 py-3 bg-white border-2 border-green-200 rounded-xl shadow hover:bg-green-50 transition-all duration-200 font-semibold text-green-700 text-base"
                           title="Reproducir pista instrumental"
                           onClick={async () => {
@@ -892,10 +890,10 @@ export default function DetalleProgramacion() {
                             }
                             reproducirRecurso(cancion.id, cancion.titulo, cancion.artista, 'PISTA_INSTRUMENTAL');
                           }}
-                          >
+                        >
                           <Headphones className="h-5 w-5" />
                           <span>Pista</span>
-                          </button>
+                        </button>
                       </div>
                     </div>
                   ))}
@@ -924,7 +922,7 @@ export default function DetalleProgramacion() {
                 </div>
               </div>
               <button onClick={cerrarModalDanza} className="absolute top-4 right-4 text-gray-400 hover:text-gray-700 text-2xl font-bold">×</button>
-              
+
               <div className="mb-3">
                 <p className="text-sm text-gray-700 mb-2">Selecciona quién liderará esta canción:</p>
                 <div className="space-y-2 max-h-60 overflow-y-auto">
@@ -939,34 +937,33 @@ export default function DetalleProgramacion() {
                     </div>
                   ) : (
                     (danzoras as Array<{ id: string, nombre: string, rol: string }>).map((d) => (
-                    <label key={d.id} className="flex items-center gap-4 p-4 hover:bg-gray-50 rounded-xl cursor-pointer border border-gray-100 hover:border-gray-200 transition-all duration-200">
-                      <input
-                        type="checkbox"
-                        checked={seleccionadas.includes(d.id)}
-                        onChange={e => {
-                          if (e.target.checked) setSeleccionadas(prev => [...prev, d.id])
-                          else setSeleccionadas(prev => prev.filter(id => id !== d.id))
-                        }}
-                        className="w-5 h-5 rounded border-gray-300 text-pink-600 focus:ring-pink-500 focus:ring-2"
-                      />
-                      <div className="flex-1">
-                        <span className="text-base font-semibold text-gray-900">{d.nombre}</span>
-                        <span className={`inline-block mt-1 px-3 py-1 text-sm rounded-full font-medium ${
-                          d.rol === 'LIDER_DANZA' 
-                            ? 'bg-pink-100 text-pink-700' 
-                            : 'bg-purple-100 text-purple-700'
-                        }`}>
-                          {d.rol === 'LIDER_DANZA' ? 'Líder de Danza' : 'Danzora'}
-                        </span>
-                      </div>
-                    </label>
-                  ))
+                      <label key={d.id} className="flex items-center gap-4 p-4 hover:bg-gray-50 rounded-xl cursor-pointer border border-gray-100 hover:border-gray-200 transition-all duration-200">
+                        <input
+                          type="checkbox"
+                          checked={seleccionadas.includes(d.id)}
+                          onChange={e => {
+                            if (e.target.checked) setSeleccionadas(prev => [...prev, d.id])
+                            else setSeleccionadas(prev => prev.filter(id => id !== d.id))
+                          }}
+                          className="w-5 h-5 rounded border-gray-300 text-pink-600 focus:ring-pink-500 focus:ring-2"
+                        />
+                        <div className="flex-1">
+                          <span className="text-base font-semibold text-gray-900">{d.nombre}</span>
+                          <span className={`inline-block mt-1 px-3 py-1 text-sm rounded-full font-medium ${d.rol === 'LIDER_DANZA'
+                              ? 'bg-pink-100 text-pink-700'
+                              : 'bg-purple-100 text-purple-700'
+                            }`}>
+                            {d.rol === 'LIDER_DANZA' ? 'Líder de Danza' : 'Danzora'}
+                          </span>
+                        </div>
+                      </label>
+                    ))
                   )}
                 </div>
               </div>
               <div className="flex flex-col sm:flex-row justify-end gap-3 mt-6 pt-4 border-t border-gray-200">
-                <button 
-                  onClick={cerrarModalDanza} 
+                <button
+                  onClick={cerrarModalDanza}
                   className="w-full sm:w-auto px-8 py-4 rounded-xl bg-gray-100 hover:bg-gray-200 text-gray-700 font-semibold transition-all duration-200 border-2 border-gray-200 hover:border-gray-300 active:scale-95"
                 >
                   Cancelar
@@ -991,5 +988,5 @@ export default function DetalleProgramacion() {
         )}
       </div>
     </Layout>
-  );
+  )
 }

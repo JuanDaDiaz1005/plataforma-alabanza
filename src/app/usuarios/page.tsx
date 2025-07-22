@@ -26,6 +26,7 @@ import {
   CheckCircle,
   AlertTriangle
 } from 'lucide-react'
+import Link from 'next/link'
 
 interface Usuario {
   id: string
@@ -315,10 +316,10 @@ export default function PaginaUsuarios() {
           </div>
           
           {puedeEditar && (
-            <button className="inline-flex items-center gap-2 bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700 transition-colors">
+            <Link href="/usuarios/nuevo" className="inline-flex items-center gap-2 bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700 transition-colors">
               <Plus className="h-4 w-4" />
               Nuevo Usuario
-            </button>
+            </Link>
           )}
         </div>
 

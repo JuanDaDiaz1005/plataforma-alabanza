@@ -47,7 +47,7 @@ export async function GET(request: NextRequest) {
 
     // Obtener usuarios con paginación
     const [usuarios, total] = await Promise.all([
-      prisma.usuario.findMunknown({
+      prisma.usuario.findMany({
         where: filtros as unknown,
         skip: offset,
         take: limite,

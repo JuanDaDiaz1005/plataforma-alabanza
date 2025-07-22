@@ -19,7 +19,7 @@ interface RecursoAudio {
   tipo: string
   plataforma: string
   url: string
-  metadatos?: unknown
+  metadatos?: any
   fechaCreacion: string
 }
 
@@ -92,6 +92,20 @@ export default function GestorRecursosAudio({ cancionId, recursos, onRecursosAct
       return
     }
 
+    // Autodetectar plataforma para recursos de YouTube/Spotify
+    let plataforma = formulario.plataforma;
+    if (
+      (formulario.tipo === 'CANCION_ORIGINAL' || formulario.tipo.startsWith('TUTORIAL_') || formulario.tipo === 'MULTITRACK')
+    ) {
+      if (formulario.url.includes('youtube.com') || formulario.url.includes('youtu.be')) {
+        plataforma = 'YOUTUBE';
+      } else if (formulario.url.includes('spotify.com')) {
+        plataforma = 'SPOTIFY';
+      } else {
+        plataforma = 'MP3_LOCAL';
+      }
+    }
+
     try {
       setGuardando(true)
       
@@ -104,7 +118,7 @@ export default function GestorRecursosAudio({ cancionId, recursos, onRecursosAct
         },
         body: JSON.stringify({
           tipo: formulario.tipo,
-          plataforma: formulario.plataforma,
+          plataforma,
           url: formulario.url,
           metadatos
         }),
@@ -362,9 +376,16 @@ export default function GestorRecursosAudio({ cancionId, recursos, onRecursosAct
               
               <div className="flex items-center gap-2">
                 <button
-                  onClick={async () => await reproducirRecurso(recurso)}
+                  onClick={async () => {
+                    if (recurso.plataforma === 'MP3_LOCAL') {
+                      await reproducirRecurso(recurso);
+                    } else if (recurso.url && (recurso.plataforma === 'YOUTUBE' || recurso.plataforma === 'SPOTIFY')) {
+                      window.open(recurso.url, '_blank', 'noopener');
+                    }
+                  }}
                   className="p-2 text-blue-600 hover:bg-blue-100 rounded-lg transition-colors"
                   title="Reproducir/Abrir"
+                  disabled={!(recurso.url && (recurso.plataforma === 'MP3_LOCAL' || recurso.plataforma === 'YOUTUBE' || recurso.plataforma === 'SPOTIFY'))}
                 >
                   {recurso.plataforma === 'MP3_LOCAL' ? <Play className="h-4 w-4" /> : <ExternalLink className="h-4 w-4" />}
                 </button>

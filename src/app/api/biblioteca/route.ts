@@ -34,7 +34,7 @@ export async function GET(request: NextRequest) {
 
     // Obtener canciones con al menos un recurso de audio
     const [canciones, total] = await Promise.all([
-      prisma.cancion.findMunknown({
+      prisma.cancion.findMany({
         where: {
           ...filtros,
           recursosAudio: {

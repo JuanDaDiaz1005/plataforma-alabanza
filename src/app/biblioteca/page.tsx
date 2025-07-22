@@ -310,6 +310,15 @@ export default function BibliotecaPage() {
                 <div className="text-2xl font-bold">{canciones.length}</div>
                 <div className="text-sm text-purple-100">Canciones</div>
               </div>
+              {(session?.user?.role === 'ADMINISTRADOR' || session?.user?.role === 'LIDER_ALABANZA') && (
+                <Link
+                  href="/canciones/nueva"
+                  className="inline-flex items-center gap-2 px-5 py-3 bg-pink-600 text-white rounded-xl hover:bg-pink-700 transition-all duration-300 font-semibold shadow-lg hover:shadow-xl ml-4"
+                >
+                  <Plus className="h-5 w-5" />
+                  Registrar Canción
+                </Link>
+              )}
             </div>
           </div>
         </div>
@@ -418,13 +427,12 @@ export default function BibliotecaPage() {
         ) : (
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
             {canciones.map((cancion) => (
-              <div key={cancion.id} className="bg-white rounded-xl shadow-sm border hover:shadow-lg transition-all duration-300 overflow-hidden group">
+              <div key={cancion.id} className="bg-white rounded-xl shadow-md border border-gray-200 hover:shadow-xl transition-all duration-300 overflow-hidden group flex flex-col justify-between min-h-[420px]">
                 <div className="absolute top-0 left-0 right-0 h-1 bg-gradient-to-r from-purple-500 to-pink-600"></div>
-                
-                <div className="p-6">
+                <div className="p-6 flex-1 flex flex-col justify-between">
                   {/* Info de la canción */}
-                  <div className="mb-6">
-                    <h3 className="text-xl font-bold text-gray-900 mb-2">
+                  <div className="mb-4">
+                    <h3 className="text-xl font-bold text-gray-900 mb-1">
                       <Link 
                         href={`/canciones/${cancion.id}?from=biblioteca`}
                         className="hover:text-purple-600 transition-colors"
@@ -432,16 +440,15 @@ export default function BibliotecaPage() {
                         {cancion.titulo}
                       </Link>
                     </h3>
-                    <div className="flex items-center gap-2 mb-3">
+                    <div className="flex items-center gap-2 mb-2">
                       <div className="bg-gradient-to-r from-purple-500 to-pink-600 p-1.5 rounded-lg">
                         <Mic2 className="h-3 w-3 text-white" />
                       </div>
                       <p className="text-gray-600 font-medium">{cancion.artista}</p>
                     </div>
                     {cancion.album && (
-                      <p className="text-gray-500 text-sm mb-3">{cancion.album}</p>
+                      <p className="text-gray-500 text-sm mb-2">{cancion.album}</p>
                     )}
-                    
                     <div className="flex flex-wrap items-center gap-3 text-sm text-gray-500">
                       {cancion.duracionSegundos && (
                         <div className="flex items-center gap-2 bg-gray-50 px-3 py-1 rounded-lg">
@@ -456,120 +463,73 @@ export default function BibliotecaPage() {
                       )}
                     </div>
                   </div>
-
-                  {/* Recursos de audio */}
-                  <div className="space-y-3 mb-6">
-                    <div className="flex items-center gap-2">
-                      <div className="bg-gradient-to-r from-blue-500 to-indigo-600 p-1.5 rounded-lg">
-                        <Music className="h-3 w-3 text-white" />
-                      </div>
+                  {/* Recursos de audio mejorados */}
+                  <div className="space-y-2 mb-4">
+                    <div className="flex items-center gap-2 mb-1">
+                      <Music className="h-4 w-4 text-blue-600" />
                       <h4 className="text-sm font-semibold text-gray-900">Recursos disponibles:</h4>
                     </div>
-                    <div className="space-y-2">
+                    <div className="flex flex-col gap-2">
                       {cancion.recursosAudio.map((recurso) => (
-                        <div key={recurso.id} className="bg-gradient-to-r from-blue-50 to-indigo-50 rounded-lg p-3 border border-blue-100">
-                          <div className="flex items-center justify-between">
-                            <div className="flex items-center gap-3">
-                              <div className="bg-white p-1.5 rounded-lg shadow-sm">
-                                {obtenerIconoPlataforma(recurso.plataforma)}
-                              </div>
-                              <span className={`px-3 py-1 rounded-full text-xs font-medium border ${obtenerColorTipo(recurso.tipo)}`}>
-                                {obtenerTextoTipo(recurso.tipo)}
-                              </span>
+                        <div key={recurso.id} className="flex items-center justify-between bg-gray-50 border border-gray-200 rounded-lg px-3 py-2">
+                          <div className="flex items-center gap-2">
+                            <div className="bg-white p-1.5 rounded-lg shadow-sm border border-gray-100">
+                              {obtenerIconoPlataforma(recurso.plataforma)}
                             </div>
-                            <button
-                              onClick={() => reproducirCancion(cancion, recurso)}
-                              disabled={cargandoAudio}
-                              className="flex items-center justify-center gap-2 px-4 py-2 bg-gradient-to-r from-blue-500 to-indigo-600 text-white rounded-lg hover:from-blue-600 hover:to-indigo-700 disabled:opacity-50 disabled:cursor-not-allowed transition-all duration-300 text-sm font-medium shadow-lg hover:shadow-xl"
-                            >
+                            <span className={`px-3 py-1 rounded-full text-xs font-medium border ${obtenerColorTipo(recurso.tipo)}`}>{obtenerTextoTipo(recurso.tipo)}</span>
+                          </div>
+                          <div className="flex gap-2">
+                            {(recurso.plataforma === 'YOUTUBE' || recurso.plataforma === 'SPOTIFY') && recurso.tipo === 'CANCION_ORIGINAL' && recurso.url && (
+                              <a
+                                href={recurso.url}
+                                target="_blank"
+                                rel="noopener noreferrer"
+                                className="flex items-center gap-2 px-3 py-3 bg-red-600 text-white rounded-lg hover:bg-white hover:text-red-600 border transition-colors text-xs font-medium shadow"
+                              >
+                                <ExternalLink className="h-4 w-4" />
+                                {recurso.plataforma === 'YOUTUBE' ? 'Ver en YouTube' : 'Ver en Spotify'}
+                              </a>
+                            )}
+                            {!(recurso.plataforma === 'YOUTUBE' || recurso.plataforma === 'SPOTIFY') && (
+                              <button
+                                onClick={() => reproducirCancion(cancion, recurso)}
+                                disabled={cargandoAudio}
+                                className="flex items-center gap-2 px-3 py-3 bg-blue-600 text-white rounded-lg hover:bg-white hover:text-blue-600 border disabled:opacity-50 disabled:cursor-not-allowed transition-all duration-300 text-xs font-medium shadow cursor-pointer"
+                              >
                                 <Play className="h-3 w-3" />
-                              {recurso.plataforma === 'MP3_LOCAL' ? 'Reproducir' : 'Abrir'}
-                            </button>
+                                {recurso.plataforma === 'MP3_LOCAL' ? 'Reproducir' : 'Abrir'}
+                              </button>
+                            )}
                           </div>
                         </div>
                       ))}
                     </div>
                   </div>
-
-                  {/* Video de Danza - Solo visible para roles de danza */}
-                  {(session?.user?.role === 'DANZA' || session?.user?.role === 'LIDER_DANZA') && (
-                    <div className="pt-4 border-t border-gray-200">
-                      <div className="flex items-center justify-between mb-3">
-                        <div className="flex items-center gap-2">
-                          <div className="bg-gradient-to-r from-red-500 to-pink-600 p-1.5 rounded-lg">
-                            <Youtube className="h-3 w-3 text-white" />
-                          </div>
-                          <h4 className="text-sm font-semibold text-gray-900">Video de Danza</h4>
-                        </div>
-                        {esLiderDanza && !editandoVideo && (
-                          <button
-                            onClick={() => manejarEdicionVideo(cancion.id, cancion.videoDanza)}
-                            className="p-2 text-gray-500 hover:text-red-600 hover:bg-red-50 rounded-lg transition-all duration-200"
-                            title={cancion.videoDanza ? 'Editar video' : 'Agregar video'}
-                          >
-                            {cancion.videoDanza ? <Edit className="h-4 w-4" /> : <Plus className="h-4 w-4" />}
-                          </button>
-                        )}
-                      </div>
-                      
-                      {editandoVideo === cancion.id ? (
-                        <div className="space-y-3">
-                          <input
-                            type="url"
-                            value={nuevoVideoUrl}
-                            onChange={(e) => setNuevoVideoUrl(e.target.value)}
-                            placeholder="URL de YouTube para el video de danza"
-                            className="w-full px-4 py-3 border border-gray-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-red-500 focus:border-red-500 text-sm bg-white transition-all duration-200"
-                          />
-                          <div className="flex flex-wrap gap-2">
-                            <button
-                              onClick={() => guardarVideoDanza(cancion.id)}
-                              disabled={guardandoVideo || !nuevoVideoUrl.trim()}
-                              className="flex items-center gap-2 px-4 py-2 bg-gradient-to-r from-red-500 to-pink-600 text-white rounded-lg hover:from-red-600 hover:to-pink-700 disabled:opacity-50 disabled:cursor-not-allowed transition-all duration-300 text-sm font-medium"
-                            >
-                              <Save className="h-4 w-4" />
-                              {guardandoVideo ? 'Guardando...' : 'Guardar'}
-                            </button>
-                            <button
-                              onClick={cancelarEdicionVideo}
-                              className="flex items-center gap-2 px-4 py-2 bg-gray-100 text-gray-700 rounded-lg hover:bg-gray-200 transition-all duration-300 text-sm font-medium"
-                            >
-                              <X className="h-4 w-4" />
-                              Cancelar
-                            </button>
-                            {cancion.videoDanza && (
-                              <button
-                                onClick={() => eliminarVideoDanza(cancion.id)}
-                                className="flex items-center gap-2 px-4 py-2 bg-red-100 text-red-700 rounded-lg hover:bg-red-200 transition-all duration-300 text-sm font-medium"
-                              >
-                                <X className="h-4 w-4" />
-                                Eliminar
-                              </button>
-                            )}
-                          </div>
-                        </div>
-                      ) : (
-                        <div>
-                          {cancion.videoDanza ? (
-                            <a
-                              href={cancion.videoDanza}
-                              target="_blank"
-                              rel="noopener noreferrer"
-                              className="inline-flex items-center gap-3 p-3 bg-gradient-to-r from-red-50 to-pink-50 border border-red-200 rounded-lg hover:from-red-100 hover:to-pink-100 transition-all duration-300 text-sm font-medium"
-                            >
-                              <Youtube className="h-4 w-4 text-red-600" />
-                              <span className="text-red-700">Ver Video de Danza</span>
-                              <ExternalLink className="h-3 w-3 text-red-600" />
-                            </a>
-                          ) : (
-                            <p className="text-gray-500 text-sm italic bg-gray-50 rounded-lg p-3">
-                              {esLiderDanza ? 'Haz clic en + para agregar un video de danza' : 'Sin video de danza disponible'}
-                            </p>
-                          )}
-                        </div>
-                      )}
-                    </div>
-                  )}
+                  {/* Acciones al pie del card */}
+                  <div className="flex justify-end items-center mt-4 pt-4 border-t border-gray-100">
+                    <Link
+                      href={`/canciones/${cancion.id}?from=biblioteca`}
+                      className="inline-flex items-center gap-2 px-4 py-2 bg-blue-100 text-blue-700 rounded-lg hover:bg-blue-200 font-semibold shadow transition"
+                    >
+                      <Music className="h-4 w-4" />
+                      Detalles
+                    </Link>
+                    {(session?.user?.role === 'ADMINISTRADOR' || session?.user?.role === 'LIDER_ALABANZA') && (
+                      <button
+                        onClick={async () => {
+                          if (confirm('¿Estás seguro de eliminar esta canción?')) {
+                            const response = await fetch(`/api/canciones/${cancion.id}`, { method: 'DELETE' });
+                            if (response.ok) window.location.reload();
+                            else alert('Error al eliminar la canción');
+                          }
+                        }}
+                        className="inline-flex items-center gap-2 ml-4 px-4 py-2 bg-red-100 text-red-700 rounded-lg hover:bg-red-200 font-semibold shadow transition cursor-pointer"
+                      >
+                        <X className="h-4 w-4" />
+                        Eliminar
+                      </button>
+                    )}
+                  </div>
                 </div>
               </div>
             ))}

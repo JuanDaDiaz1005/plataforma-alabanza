@@ -16,6 +16,7 @@ import {
 } from 'lucide-react'
 import { formatearFecha } from '@/lib/utils'
 import Link from 'next/link';
+import ProximoServicioResumen from '@/components/ProximoServicioResumen';
 
 interface AsignacionCantante {
   id: string
@@ -207,6 +208,39 @@ export default function DashboardCantante() {
     }
   }
 
+  const obtenerTextoEstado = (estado: string) => {
+    switch (estado) {
+      case 'PREPARADO':
+        return 'Preparado'
+      case 'EN_PRACTICA':
+        return 'En Práctica'
+      case 'PENDIENTE':
+        return 'Pendiente'
+      case 'NECESITA_AYUDA':
+        return 'Necesita Ayuda'
+      default:
+        return estado
+    }
+  }
+
+  const obtenerTextoRol = (rol: string) => {
+    switch (rol) {
+      case 'LEAD_VOCAL':
+        return 'Líder de Voz'
+      case 'BACK_VOCAL':
+        return 'Coro'
+      case 'GUITARRA':
+        return 'Guitarra'
+      case 'BAJO':
+        return 'Bajo'
+      case 'TECLADO':
+        return 'Teclado'
+      case 'PERCUSION':
+        return 'Percusión'
+      default:
+        return rol.replace('_', ' ')
+    }
+  }
 
 
   if (cargando) {
@@ -277,103 +311,14 @@ export default function DashboardCantante() {
 
         {/* Próximo Servicio */}
         {proximoServicio && (
-          <div className="bg-white rounded-xl shadow-sm border p-6">
-            <div className="flex items-center gap-3 mb-6">
-              <div className="bg-gradient-to-r from-blue-500 to-indigo-600 p-2 rounded-lg">
-                <Calendar className="h-6 w-6 text-white" />
-              </div>
-              <div>
-                <h3 className="text-xl font-bold text-gray-900">
-                  Próximo Servicio
-                </h3>
-                <p className="text-sm text-gray-500">Tu próxima presentación</p>
-              </div>
-            </div>
-            <a 
-              href={`/programacion/${proximoServicio.programacion.id}`}
-              className="block bg-gradient-to-r from-blue-50 to-indigo-50 rounded-xl p-6 hover:from-blue-100 hover:to-indigo-100 transition-all duration-300 border border-blue-100 hover:border-blue-200 hover:shadow-md"
-            >
-              <div className="flex items-start justify-between">
-                <div className="flex-1 space-y-4">
-                  <div>
-                    <h4 className="text-lg font-bold text-gray-900 mb-1">
-                      {formatearFecha(proximoServicio.programacion.fecha)}
-                    </h4>
-                    <div className="flex items-center gap-2">
-                      <span className="bg-blue-100 text-blue-700 px-3 py-1 rounded-full text-sm font-medium">
-                        {proximoServicio.programacion.tipoServicio}
-                      </span>
-                      <span className="text-gray-500 text-sm">
-                        {proximoServicio.todasLasCanciones?.length || 0} canciones
-                      </span>
-                    </div>
-                  </div>
-                  
-                  {proximoServicio.todasLasCanciones && proximoServicio.todasLasCanciones.length > 0 && (
-                    <div className="space-y-3">
-                      <div className="flex items-center gap-2">
-                        <Music className="h-4 w-4 text-blue-600" />
-                        <p className="text-sm font-semibold text-gray-700">Repertorio:</p>
-                      </div>
-                      <div className="space-y-3">
-                        {(() => {
-                          // Agrupar asignaciones por canción
-                          const cancionesAgrupadas = proximoServicio.todasLasCanciones.reduce((acc: unknown, asignacion: unknown) => {
-                            const cancionId = asignacion.cancion.id
-                            if (!acc[cancionId]) {
-                              acc[cancionId] = {
-                                cancion: asignacion.cancion,
-                                cantantes: []
-                              }
-                            }
-                            acc[cancionId].cantantes.push({
-                              nombre: asignacion.usuario.nombre,
-                              rol: asignacion.rolCancion
-                            })
-                            return acc
-                          }, {})
-
-                          const cancionesArray = Object.values(cancionesAgrupadas)
-                          return cancionesArray.slice(0, 3).map((item: unknown, index: number) => (
-                            <div key={index} className="bg-white rounded-lg p-3 border border-gray-100 shadow-sm">
-                              <div className="flex items-center gap-2 mb-2">
-                                <div className="w-2 h-2 bg-blue-500 rounded-full"></div>
-                                <p className="font-semibold text-gray-900 text-sm">{item.cancion.titulo}</p>
-                              </div>
-                              <div className="ml-4 space-y-1">
-                                {item.cantantes.map((cantante: unknown, cantanteIndex: number) => (
-                                  <div key={cantanteIndex} className="flex items-center gap-2">
-                                    <User className="h-3 w-3 text-gray-400" />
-                                    <span className="text-xs text-gray-600 font-medium">{cantante.nombre}</span>
-                                    <span className="text-xs bg-gray-100 text-gray-600 px-2 py-0.5 rounded">
-                                      {cantante.rol.replace('_', ' ')}
-                                    </span>
-                                  </div>
-                                ))}
-                              </div>
-                            </div>
-                          ))
-                        })()}
-                        {proximoServicio.todasLasCanciones.length > 3 && (
-                          <div className="text-center py-2">
-                            <span className="text-xs text-blue-600 font-medium bg-blue-50 px-3 py-1 rounded-full">
-                              +{proximoServicio.todasLasCanciones.length - 3} canciones más
-                            </span>
-                          </div>
-                        )}
-                      </div>
-                    </div>
-                  )}
-                </div>
-                <div className="ml-6 flex flex-col items-center">
-                  <div className="bg-gradient-to-br from-blue-500 to-indigo-600 p-4 rounded-full shadow-lg">
-                    <Calendar className="h-8 w-8 text-white" />
-                  </div>
-                  <p className="text-xs text-gray-500 mt-2 text-center">Ver detalles</p>
-                </div>
-              </div>
-            </a>
-          </div>
+          <ProximoServicioResumen
+            proximoServicio={proximoServicio}
+            colorGradiente="from-green-500 to-emerald-600"
+            colorAcento="text-green-600"
+            obtenerColorEstado={obtenerColorEstado}
+            obtenerTextoEstado={obtenerTextoEstado}
+            obtenerTextoRol={obtenerTextoRol}
+          />
         )}
 
         {/* Mis asignaciones */}

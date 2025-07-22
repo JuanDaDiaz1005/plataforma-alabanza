@@ -20,6 +20,7 @@ import {
 } from 'lucide-react'
 import AudioPlayer, { RHAP_UI } from 'react-h5-audio-player'
 import 'react-h5-audio-player/lib/styles.css'
+import { useAudioPlayer } from './audio/AudioPlayerContext';
 
 interface RecursoMusical {
   id: string
@@ -73,6 +74,8 @@ export default function GestorRecursosMusicales({
     titulo: '',
     descripcion: ''
   })
+
+  const { setTrack } = useAudioPlayer();
 
   useEffect(() => {
     cargarRecursos()
@@ -222,7 +225,7 @@ export default function GestorRecursosMusicales({
     }
     grupos[recurso.tipo].recursos.push(recurso)
     return grupos
-  }, {} as { [key: string]: { config: unknown; recursos: RecursoMusical[] } })
+  }, {} as { [key: string]: { config: any; recursos: RecursoMusical[] } })
 
   const reproducirRecurso = async (recurso: RecursoMusical) => {
     let url = recurso.url;
@@ -254,13 +257,13 @@ export default function GestorRecursosMusicales({
         url = signedUrl;
       }
     }
-    // setTrack({
-    //   id: recurso.id,
-    //   title: cancionTitulo,
-    //   artist: cancionArtista,
-    //   url,
-    //   cover: undefined
-    // });
+    setTrack({
+      id: recurso.id,
+      title: recurso.titulo || cancionTitulo,
+      artist: cancionArtista,
+      url,
+      cover: undefined
+    });
   };
 
   const puedeSubirArchivo = puedeGestionar
@@ -448,7 +451,7 @@ export default function GestorRecursosMusicales({
               
               <div className="space-y-2">
                 {grupo.recursos.map((recurso) => (
-                  <div key={recurso.id} className="flex items-center justify-between p-3 bg-gray-50 rounded-lg">
+                  <div key={recurso.id} className="flex flex-col sm:flex-row items-center justify-between p-3 bg-gray-50 rounded-lg">
                     <div className="flex-1">
                       <div className="flex items-center gap-2">
                         <h4 className="font-medium text-gray-900">
@@ -465,15 +468,26 @@ export default function GestorRecursosMusicales({
                     
                     <div className="flex items-center gap-2">
                       {/* Solo mostrar el botón Ver para recursos que no sean MP3_LOCAL */}
+                      
+                      {recurso.plataforma === 'MP3_LOCAL' && typeof recurso.url === 'string' && recurso.url && (
+                        <button
+                          className="flex my-2 p-2 items-center text-white bg-green-600 hover:bg-white hover:text-green-600 border rounded-lg transition-colors text-sm cursor-pointer"
+                          onClick={async () => await reproducirRecurso(recurso)}
+                          title="Reproducir"
+                        >
+                          <Play className="h-4 w-4 mr-2" />
+                          Reproducir
+                        </button>
+                      )}
                       {recurso.plataforma !== 'MP3_LOCAL' && (
                         <a
                           href={recurso.url}
                           target="_blank"
                           rel="noopener noreferrer"
-                          className="flex items-center gap-1 px-3 py-2 bg-blue-100 text-blue-700 rounded-lg hover:bg-blue-200 transition-colors text-sm"
+                          className="flex items-center gap-1 px-3 py-2 bg-red-600 text-white rounded-lg hover:bg-white hover:text-red-500 border transition-colors text-sm"
                         >
                           <ExternalLink className="h-3 w-3" />
-                          Ver
+                          Ver en Youtube
                         </a>
                       )}
                       
@@ -494,15 +508,6 @@ export default function GestorRecursosMusicales({
                             <Trash2 className="h-4 w-4" />
                           </button>
                         </>
-                      )}
-                      {recurso.plataforma === 'MP3_LOCAL' && typeof recurso.url === 'string' && recurso.url && (
-                        <button
-                          className="p-2 text-blue-600 hover:bg-blue-100 rounded-lg transition-colors"
-                          onClick={async () => await reproducirRecurso(recurso)}
-                          title="Reproducir"
-                        >
-                          <Play className="h-4 w-4" />
-                        </button>
                       )}
                     </div>
                   </div>

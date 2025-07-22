@@ -32,7 +32,7 @@ export async function GET(request: NextRequest) {
 
     // Obtener canciones con paginación
     const [canciones, total] = await Promise.all([
-      prisma.cancion.findMunknown({
+      prisma.cancion.findMany({
         where: filtros as unknown,
         skip: offset,
         take: limite,

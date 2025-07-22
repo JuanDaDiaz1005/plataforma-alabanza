@@ -152,7 +152,7 @@ export async function GET(
     }
 
     // Obtener asignaciones
-    const asignaciones = await prisma.asignacionCancion.findMunknown({
+    const asignaciones = await prisma.asignacionCancion.findMany({
       where: { programacionId },
       include: {
         usuario: {
@@ -176,12 +176,11 @@ export async function GET(
         }
       },
       orderBy: [
-        { cancion: { titulo: 'asc' } },
-        { rolCancion: 'asc' }
+        { fechaCreacion: 'asc' }
       ]
     })
 
-    return NextResponse.json(asignaciones)
+    return NextResponse.json({ asignaciones })
 
   } catch (error) {
     console.error('Error al obtener asignaciones:', error)

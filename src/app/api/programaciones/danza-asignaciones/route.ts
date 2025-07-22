@@ -25,7 +25,7 @@ export async function GET(request: NextRequest) {
     }
 
     // Obtener asignaciones de danza del usuario
-    const asignaciones = await prisma.liderDanzaAsignacion.findMunknown({
+    const asignaciones = await prisma.liderDanzaAsignacion.findMany({
       where: {
         usuarioId: usuarioId,
         programacion: {

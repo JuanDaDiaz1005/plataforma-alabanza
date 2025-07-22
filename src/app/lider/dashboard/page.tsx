@@ -317,7 +317,6 @@ export default function DashboardLider() {
                 <p className="text-sm text-gray-500">Estado del equipo y programación</p>
               </div>
             </div>
-            
             <a 
               href={`/programacion/${proximoServicio.id}`}
               className="block bg-gradient-to-r from-blue-50 to-purple-50 rounded-xl p-6 hover:from-blue-100 hover:to-purple-100 transition-all duration-300 border border-blue-100 hover:border-blue-200 hover:shadow-md"
@@ -337,7 +336,6 @@ export default function DashboardLider() {
                       </span>
                     </div>
                   </div>
-                  
                   <div className="flex items-center gap-2">
                     {proximoServicio.asignacionesPendientes > 0 ? (
                       <div className="flex items-center gap-2 text-orange-600 bg-orange-50 px-4 py-2 rounded-lg">
@@ -353,7 +351,7 @@ export default function DashboardLider() {
                       </div>
                     )}
                   </div>
-
+                  {/* Agrupar asignaciones por canción */}
                   {proximoServicio.asignaciones.length > 0 && (
                     <div className="space-y-3">
                       <div className="flex items-center gap-2">
@@ -363,49 +361,38 @@ export default function DashboardLider() {
                         <p className="text-sm font-semibold text-gray-700">Repertorio programado:</p>
                       </div>
                       <div className="space-y-3">
-                        {proximoServicio.asignaciones.slice(0, 3).map((asignacion) => (
-                          <div key={asignacion.id} className="bg-white rounded-lg p-4 border border-gray-100 shadow-sm hover:shadow-md transition-all duration-200">
-                            <div className="flex items-center justify-between">
-                              <div className="flex items-center gap-3">
-                                <div className="w-3 h-3 bg-gradient-to-r from-purple-500 to-pink-600 rounded-full"></div>
-                                <div>
-                                  <p className="font-bold text-gray-900 text-sm">{asignacion.cancion.titulo}</p>
-                                  <p className="text-xs text-gray-500">{asignacion.cancion.artista}</p>
-                                </div>
-                              </div>
-                              <div className="flex items-center gap-3">
-                                <div className="text-right">
-                                  <div className="flex items-center gap-1">
-                                    <div className="bg-blue-100 p-1 rounded-lg">
-                                      <Mic className="h-3 w-3 text-blue-600" />
+                        {Object.entries(
+                          proximoServicio.asignaciones.reduce((acc, asignacion) => {
+                            const id = asignacion.cancion.id;
+                            if (!acc[id]) acc[id] = { cancion: asignacion.cancion, asignaciones: [], index: acc._order ? acc._order.length : 0 };
+                            acc[id].asignaciones.push(asignacion);
+                            if (!acc._order) acc._order = [];
+                            if (!acc._order.includes(id)) acc._order.push(id);
+                            return acc;
+                          }, {})).filter(([key]) => key !== '_order')
+                            .sort((a, b) => {
+                              const orderA = proximoServicio.asignaciones.findIndex(asig => asig.cancion.id === a[0]);
+                              const orderB = proximoServicio.asignaciones.findIndex(asig => asig.cancion.id === b[0]);
+                              return orderA - orderB;
+                            })
+                            .map(([cancionId, { cancion, asignaciones }]) => (
+                              <div key={cancionId} className="bg-white rounded-lg p-4 border border-gray-100 shadow-sm hover:shadow-md transition-all duration-200">
+                                <div className="font-bold text-gray-900 text-sm mb-1">{cancion.titulo} <span className="text-gray-500 font-normal">por {cancion.artista}</span></div>
+                                <div className="space-y-1">
+                                  {asignaciones.map((asig) => (
+                                    <div key={asig.id} className="flex items-center gap-2 text-xs">
+                                      <span className="text-gray-800 font-medium flex items-center gap-1"><Mic className="h-3 w-3 text-blue-600" />{asig.usuario.nombre}</span>
+                                      <span className="text-gray-500 flex items-center gap-1">{obtenerTextoRol(asig.rolCancion)}</span>
+                                      <span className={`px-2 py-0.5 rounded-full text-xs font-medium border ${obtenerColorEstado(asig.estadoPreparacion)}`}>{obtenerTextoEstado(asig.estadoPreparacion)}</span>
                                     </div>
-                                    <span className="text-xs font-medium text-gray-900">
-                                      {asignacion.usuario.nombre}
-                                    </span>
-                                  </div>
-                                  <span className="text-xs text-gray-500">
-                                    {obtenerTextoRol(asignacion.rolCancion)}
-                                  </span>
+                                  ))}
                                 </div>
-                                <span className={`px-3 py-1 rounded-full text-xs font-medium border ${obtenerColorEstado(asignacion.estadoPreparacion)}`}>
-                                  {obtenerTextoEstado(asignacion.estadoPreparacion)}
-                                </span>
                               </div>
-                            </div>
-                          </div>
-                        ))}
-                        {proximoServicio.asignaciones.length > 3 && (
-                          <div className="text-center py-3">
-                            <span className="text-sm text-purple-600 font-medium bg-gradient-to-r from-purple-50 to-pink-50 px-4 py-2 rounded-full border border-purple-200">
-                              +{proximoServicio.asignaciones.length - 3} canciones más
-                            </span>
-                          </div>
-                        )}
+                            ))}
                       </div>
                     </div>
                   )}
                 </div>
-                
                 <div className="ml-6">
                   <div className="bg-gradient-to-r from-blue-500 to-purple-600 p-3 rounded-full shadow-lg">
                     <ChevronRight className="h-6 w-6 text-white" />

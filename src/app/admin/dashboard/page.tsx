@@ -14,6 +14,7 @@ import {
   FileMusic
 } from 'lucide-react'
 import Link from 'next/link'
+import ProximoServicioResumen from '@/components/ProximoServicioResumen';
 
 interface EstadisticasDashboard {
   totalUsuarios: number
@@ -213,41 +214,19 @@ export default function DashboardAdmin() {
 
         {/* Próximo servicio mejorado */}
         {estadisticas?.proximoServicio && (
-          <div className="bg-white rounded-xl shadow-sm border p-6">
-            <div className="flex items-center gap-3 mb-6">
-              <div className="bg-gradient-to-r from-indigo-500 to-purple-600 p-2 rounded-lg">
-                <Calendar className="h-6 w-6 text-white" />
-              </div>
-              <div>
-                <h3 className="text-xl font-bold text-gray-900">
-                  Próximo Servicio
-                </h3>
-                <p className="text-sm text-gray-500">Información del próximo evento</p>
-              </div>
-            </div>
-            
-            <div className="bg-gradient-to-r from-indigo-50 to-purple-50 rounded-xl p-6 border border-indigo-100">
-              <div className="flex items-center justify-between">
-                <div className="space-y-3">
-                  <h4 className="text-lg font-bold text-gray-900 capitalize">
-                    {estadisticas.proximoServicio.fecha}
-                  </h4>
-                  <div className="flex items-center gap-3">
-                    <span className="bg-gradient-to-r from-indigo-500 to-purple-600 text-white px-4 py-2 rounded-full text-sm font-medium shadow-lg">
-                      {estadisticas.proximoServicio.tipo}
-                    </span>
-                    <span className="text-gray-500 text-sm bg-white px-3 py-1 rounded-full border">
-                      {estadisticas.proximoServicio.canciones} canciones
-                    </span>
-                  </div>
-                </div>
-                
-                <div className="bg-gradient-to-r from-indigo-500 to-purple-600 p-3 rounded-full shadow-lg">
-                  <PlayCircle className="h-6 w-6 text-white" />
-                </div>
-              </div>
-            </div>
-          </div>
+          <ProximoServicioResumen
+            proximoServicio={{
+              ...estadisticas.proximoServicio,
+              asignaciones: estadisticas.proximoServicio.asignaciones || [],
+              totalAsignaciones: estadisticas.proximoServicio.canciones || 0,
+              asignacionesPendientes: estadisticas.proximoServicio.asignacionesPendientes || 0
+            }}
+            colorGradiente="from-purple-500 to-indigo-600"
+            colorAcento="text-purple-600"
+            obtenerColorEstado={() => 'bg-gray-100 text-gray-800 border-gray-200'}
+            obtenerTextoEstado={estado => estado}
+            obtenerTextoRol={rol => rol}
+          />
         )}
 
         {/* Acciones rápidas */}

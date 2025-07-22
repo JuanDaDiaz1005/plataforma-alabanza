@@ -99,13 +99,8 @@ export default function DetalleCancion({ params }: { params: Promise<{ id: strin
     if (fromBiblioteca) {
       return '/biblioteca'
     }
-    if (fromAsignaciones) {
-      return '/canciones'
-    }
-    if (fromCantanteDashboard) {
-      return '/cantante/dashboard'
-    }
-    return '/canciones'
+    // fallback: si no hay parámetro 'from', regresar a la biblioteca
+    return '/biblioteca'
   }
 
   // Función para obtener el texto del botón de volver
@@ -151,7 +146,7 @@ export default function DetalleCancion({ params }: { params: Promise<{ id: strin
       
       const data = await response.json()
       setCancion(data)
-    } catch (error: unknown) {
+    } catch (error: any) {
       setError(error instanceof Error ? error.message : 'Error desconocido')
     } finally {
       setCargando(false)
@@ -173,7 +168,7 @@ export default function DetalleCancion({ params }: { params: Promise<{ id: strin
       }
 
       router.push('/canciones')
-    } catch (error: unknown) {
+    } catch (error: any) {
       setError(error instanceof Error ? error.message : 'Error desconocido')
     } finally {
       setEliminando(false)

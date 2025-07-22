@@ -12,6 +12,7 @@ import {
   ArrowRight,
   Youtube
 } from 'lucide-react'
+import ProximoServicioResumen from '@/components/ProximoServicioResumen';
 // Eliminar import { Dialog } from '@headlessui/react'
 
 interface ServicioDanza {

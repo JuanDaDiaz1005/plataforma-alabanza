@@ -248,6 +248,7 @@ export default function CancionesPage() {
                 }
               </p>
             </div>
+            {/* Botón para añadir nueva canción */}
             
             <div className="flex items-center gap-3">
               <div className="bg-white/20 rounded-lg p-3">
@@ -255,9 +256,7 @@ export default function CancionesPage() {
               </div>
               <div className="text-right">
                 <div className="text-2xl font-bold">{totalAsignaciones}</div>
-                <div className={`text-sm ${esDanza ? 'text-purple-100' : 'text-green-100'}`}>
-                  {esDanza ? 'Asignaciones' : 'Asignaciones'}
-                </div>
+                <div className={`text-sm ${esDanza ? 'text-purple-100' : 'text-green-100'}`}>Asignaciones</div>
               </div>
             </div>
           </div>
@@ -519,7 +518,7 @@ export default function CancionesPage() {
                           const res = await fetch(`/api/canciones/${asignacion.cancion.id}/recursos`);
                           if (!res.ok) return;
                           const recursos = await res.json();
-                          const recursoYT = recursos.find((r: unknown) => (r as unknown).tipo === 'CANCION_ORIGINAL' && (r as unknown).plataforma === 'YOUTUBE');
+                          const recursoYT = recursos.find((r: any) => (r as any).tipo === 'CANCION_ORIGINAL' && (r as any).plataforma === 'YOUTUBE');
                           if (recursoYT && recursoYT.url) window.open(recursoYT.url, '_blank');
                           else {
                             setMensajeCard(prev => ({ ...prev, [asignacion.id]: 'No hay enlace de YouTube configurado para esta canción.' }));
@@ -540,7 +539,7 @@ export default function CancionesPage() {
                           const res = await fetch(`/api/canciones/${asignacion.cancion.id}/recursos`);
                           if (!res.ok) return;
                           const recursos = await res.json();
-                          const recurso = recursos.find((r: unknown) => (r as unknown).tipo === 'PISTA_INSTRUMENTAL' && (r as unknown).plataforma === 'MP3_LOCAL');
+                          const recurso = recursos.find((r: any) => (r as any).tipo === 'PISTA_INSTRUMENTAL' && (r as any).plataforma === 'MP3_LOCAL');
                           if (!recurso) {
                             setMensajeCard(prev => ({ ...prev, [asignacion.id]: 'No hay pista instrumental disponible para esta canción.' }));
                             if (timeoutRef.current[asignacion.id]) clearTimeout(timeoutRef.current[asignacion.id]);
@@ -582,7 +581,7 @@ export default function CancionesPage() {
                         }}
                       >
                         <Volume2 className="h-5 w-5" />
-                        <span className="text-xs sm:text-sm font-semibold">Pista</span>
+                        <span className=" sm:text-sm font-semibold">Pista</span>
                       </button>
                     </div>
                   </div>

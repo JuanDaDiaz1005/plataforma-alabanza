@@ -4,6 +4,7 @@ import { useEffect, useState } from 'react'
 import Layout from '@/components/Layout'
 import Link from 'next/link'
 import { Calendar, Music, ArrowRight } from 'lucide-react'
+import ProximoServicioResumen from '@/components/ProximoServicioResumen';
 
 export default function DashboardMusico() {
   const [proximoServicio, setProximoServicio] = useState<unknown>(null)
@@ -21,6 +22,45 @@ export default function DashboardMusico() {
     }
     cargarProximoServicio()
   }, [])
+
+  const obtenerColorEstado = (estado: string) => {
+    switch (estado) {
+      case 'Pendiente':
+        return 'bg-yellow-100 text-yellow-800';
+      case 'Confirmado':
+        return 'bg-green-100 text-green-800';
+      case 'Cancelado':
+        return 'bg-red-100 text-red-800';
+      default:
+        return 'bg-gray-100 text-gray-800';
+    }
+  };
+
+  const obtenerTextoEstado = (estado: string) => {
+    switch (estado) {
+      case 'Pendiente':
+        return 'Pendiente';
+      case 'Confirmado':
+        return 'Confirmado';
+      case 'Cancelado':
+        return 'Cancelado';
+      default:
+        return estado;
+    }
+  };
+
+  const obtenerTextoRol = (rol: string) => {
+    switch (rol) {
+      case 'Músico':
+        return 'Músico';
+      case 'Director':
+        return 'Director';
+      case 'Cantante':
+        return 'Cantante';
+      default:
+        return rol;
+    }
+  };
 
   return (
     <Layout titulo="Dashboard Músico">
@@ -57,41 +97,15 @@ export default function DashboardMusico() {
             <div className="flex items-center justify-center py-8">
               <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-green-600"></div>
             </div>
-          ) : proximoServicio ? (
-            <div className="bg-gradient-to-r from-green-50 to-emerald-50 rounded-xl p-6 border border-green-100">
-              <div className="space-y-4">
-                <div>
-                  <h3 className="text-lg font-bold text-gray-900 mb-2">{proximoServicio.tipoServicio}</h3>
-                  <p className="text-sm text-gray-600 bg-white px-3 py-2 rounded-lg border">
-                    {new Date(proximoServicio.fecha).toLocaleDateString('es-ES', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' })}
-                  </p>
-                </div>
-                
-                <div>
-                  <h4 className="text-md font-semibold mb-3 flex items-center gap-2">
-                    <div className="bg-green-100 p-1 rounded-lg">
-                      <Music className="h-4 w-4 text-green-600" />
-                    </div>
-                    Canciones Programadas:
-                  </h4>
-                  <div className="space-y-2">
-                    {proximoServicio.asignaciones?.map((a: unknown) => (
-                      <div key={a.cancion.id} className="bg-white rounded-lg p-3 border border-gray-100 shadow-sm">
-                        <p className="font-medium text-gray-900">{a.cancion.titulo}</p>
-                        <p className="text-sm text-gray-500">{a.cancion.artista}</p>
-                      </div>
-                    ))}
-                  </div>
-                </div>
-              </div>
-            </div>
-          ) : (
-            <div className="text-center py-8">
-              <div className="bg-gradient-to-r from-gray-100 to-gray-200 rounded-full w-16 h-16 flex items-center justify-center mx-auto mb-4">
-                <Calendar className="h-8 w-8 text-gray-400" />
-              </div>
-              <p className="text-gray-500">No hay servicios próximos programados.</p>
-            </div>
+          ) : proximoServicio && (
+            <ProximoServicioResumen
+              proximoServicio={proximoServicio}
+              colorGradiente="from-green-500 to-teal-600"
+              colorAcento="text-green-600"
+              obtenerColorEstado={obtenerColorEstado}
+              obtenerTextoEstado={obtenerTextoEstado}
+              obtenerTextoRol={obtenerTextoRol}
+            />
           )}
         </div>
 

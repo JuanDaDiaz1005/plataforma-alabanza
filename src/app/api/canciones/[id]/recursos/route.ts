@@ -17,7 +17,7 @@ export async function GET(
 
     const { id } = await params
 
-    const recursos = await prisma.recursoAudio.findMunknown({
+    const recursos = await prisma.recursoAudio.findMany({
       where: { 
         cancionId: id,
         activo: true
@@ -85,6 +85,20 @@ export async function POST(
     // Para AUDIO/MP3, permitir cualquier URL (por ejemplo, Cloudflare)
 
     // Crear recurso
+    let plataforma: string;
+    if (tipo === 'CANCION_ORIGINAL') {
+      if (url.includes('youtube.com') || url.includes('youtu.be')) {
+        plataforma = 'YOUTUBE';
+      } else if (url.includes('spotify.com')) {
+        plataforma = 'SPOTIFY';
+      } else {
+        plataforma = 'MP3_LOCAL';
+      }
+    } else if (tipo === 'VIDEO') {
+      plataforma = 'YOUTUBE';
+    } else {
+      plataforma = 'MP3_LOCAL';
+    }
     const data: {
       cancionId: string;
       tipo: string;
@@ -95,7 +109,7 @@ export async function POST(
     } = {
       cancionId: id,
       tipo,
-      plataforma: tipo === 'VIDEO' ? 'YOUTUBE' : 'MP3_LOCAL',
+      plataforma,
       url: url.trim()
     }
     if (titulo && titulo.trim() !== '') data.titulo = titulo.trim()
