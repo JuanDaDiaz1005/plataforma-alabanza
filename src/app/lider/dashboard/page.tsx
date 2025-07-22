@@ -3,7 +3,6 @@
 import Layout from '@/components/Layout'
 import { useSession } from 'next-auth/react'
 import { useEffect, useState } from 'react'
-import { useRouter } from 'next/navigation'
 import Link from 'next/link'
 import { 
   Music, 
@@ -48,7 +47,6 @@ interface ProximoServicio {
 interface MiembroEquipo {
   id: string
   nombre: string
-  rangoVocal?: string
   cancionesPorEstado: {
     preparado: number
     enPractica: number
@@ -91,8 +89,8 @@ export default function DashboardLider() {
       const programaciones = programacionesData.programaciones || []
       const hoy = new Date()
       const proximasProgramaciones = programaciones
-        .filter((p: unknown) => new Date(p.fecha) >= hoy)
-        .sort((a: unknown, b: unknown) => new Date(a.fecha).getTime() - new Date(b.fecha).getTime())
+        .filter((p: any) => new Date(p.fecha) >= hoy)
+        .sort((a: any, b: any) => new Date(a.fecha).getTime() - new Date(b.fecha).getTime())
 
       if (proximasProgramaciones.length > 0) {
         const proxima = proximasProgramaciones[0]
@@ -102,7 +100,7 @@ export default function DashboardLider() {
         const asignacionesData = await asignacionesRes.json()
         
         const asignaciones = asignacionesData.asignaciones || []
-        const asignacionesPendientes = asignaciones.filter((a: unknown) => a.estadoPreparacion === 'PENDIENTE').length
+        const asignacionesPendientes = asignaciones.filter((a: any) => a.estadoPreparacion === 'PENDIENTE').length
 
         setProximoServicio({
           id: proxima.id,
@@ -120,7 +118,7 @@ export default function DashboardLider() {
 
         // Procesar estado del equipo
         const equipoMap = new Map()
-        asignaciones.forEach((asignacion: unknown) => {
+        asignaciones.forEach((asignacion: any) => {
           const usuarioId = asignacion.usuario.id
           if (!equipoMap.has(usuarioId)) {
             equipoMap.set(usuarioId, {
@@ -362,7 +360,7 @@ export default function DashboardLider() {
                       </div>
                       <div className="space-y-3">
                         {Object.entries(
-                          proximoServicio.asignaciones.reduce((acc, asignacion) => {
+                          proximoServicio.asignaciones.reduce((acc: any, asignacion: any) => {
                             const id = asignacion.cancion.id;
                             if (!acc[id]) acc[id] = { cancion: asignacion.cancion, asignaciones: [], index: acc._order ? acc._order.length : 0 };
                             acc[id].asignaciones.push(asignacion);
@@ -375,11 +373,11 @@ export default function DashboardLider() {
                               const orderB = proximoServicio.asignaciones.findIndex(asig => asig.cancion.id === b[0]);
                               return orderA - orderB;
                             })
-                            .map(([cancionId, { cancion, asignaciones }]) => (
+                            .map(([cancionId, { cancion, asignaciones }]: any) => (
                               <div key={cancionId} className="bg-white rounded-lg p-4 border border-gray-100 shadow-sm hover:shadow-md transition-all duration-200">
                                 <div className="font-bold text-gray-900 text-sm mb-1">{cancion.titulo} <span className="text-gray-500 font-normal">por {cancion.artista}</span></div>
                                 <div className="space-y-1">
-                                  {asignaciones.map((asig) => (
+                                  {asignaciones.map((asig: any) => (
                                     <div key={asig.id} className="flex items-center gap-2 text-xs">
                                       <span className="text-gray-800 font-medium flex items-center gap-1"><Mic className="h-3 w-3 text-blue-600" />{asig.usuario.nombre}</span>
                                       <span className="text-gray-500 flex items-center gap-1">{obtenerTextoRol(asig.rolCancion)}</span>
@@ -496,9 +494,7 @@ export default function DashboardLider() {
                           </div>
                           <div>
                             <h4 className="font-bold text-gray-900 text-lg">{miembro.nombre}</h4>
-                            {miembro.rangoVocal && (
-                              <span className="text-sm text-blue-600 font-medium">({miembro.rangoVocal})</span>
-                            )}
+
                           </div>
                         </div>
                         

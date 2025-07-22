@@ -1,13 +1,12 @@
 'use client'
 
-import { useState, useEffect, useRef } from 'react'
+import { useState, useEffect } from 'react'
 import { 
   Play, 
   Plus, 
   Edit, 
   Trash2, 
-  Save, 
-  X, 
+  Save,
   ExternalLink,
   Guitar,
   Mic,
@@ -15,10 +14,7 @@ import {
   Headphones,
   Piano,
   Drum,
-  Download,
-  RotateCcw
 } from 'lucide-react'
-import AudioPlayer, { RHAP_UI } from 'react-h5-audio-player'
 import 'react-h5-audio-player/lib/styles.css'
 import { useAudioPlayer } from './audio/AudioPlayerContext';
 
@@ -522,7 +518,7 @@ export default function GestorRecursosMusicales({
           <p className="text-gray-500 mb-2">No hay recursos musicales disponibles</p>
           {puedeGestionar && (
             <p className="text-gray-400 text-sm">
-              Haz clic en "Agregar Recurso" para comenzar
+              Haz clic en Agregar Recurso para comenzar
             </p>
           )}
         </div>

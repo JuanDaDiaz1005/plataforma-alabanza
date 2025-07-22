@@ -146,7 +146,7 @@ export default function DetalleCancion({ params }: { params: Promise<{ id: strin
       
       const data = await response.json()
       setCancion(data)
-    } catch (error: any) {
+    } catch (error: unknown) {
       setError(error instanceof Error ? error.message : 'Error desconocido')
     } finally {
       setCargando(false)
@@ -168,7 +168,7 @@ export default function DetalleCancion({ params }: { params: Promise<{ id: strin
       }
 
       router.push('/canciones')
-    } catch (error: any) {
+    } catch (error: unknown) {
       setError(error instanceof Error ? error.message : 'Error desconocido')
     } finally {
       setEliminando(false)

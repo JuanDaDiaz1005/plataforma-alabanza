@@ -6,8 +6,7 @@ import { useEffect, useState } from 'react'
 import { 
   Users, 
   Music, 
-  Calendar, 
-  PlayCircle, 
+  Calendar,
   TrendingUp,
   Clock,
   User,
@@ -56,18 +55,18 @@ export default function DashboardAdmin() {
       ])
 
       // Calcular estadísticas
-      const programacionesActivas = programacionesData.programaciones?.filter((p: unknown) => (p as unknown).activa && new Date((p as unknown).fecha) >= new Date()).length || 0
+      const programacionesActivas = programacionesData.programaciones?.filter((p: any) => (p).activa && new Date((p).fecha) >= new Date()).length || 0
       
       let asignacionesPendientes = 0
-      let proximoServicio = null
+      let proximoServicio: any = null
 
       // Encontrar próximo servicio y contar asignaciones pendientes
-      const programacionesFuturas = programacionesData.programaciones?.filter((p: unknown) => 
-        (p as unknown).activa && new Date((p as unknown).fecha) >= new Date()
-      ).sort((a: unknown, b: unknown) => new Date((a as unknown).fecha).getTime() - new Date((b as unknown).fecha).getTime()) || []
+      const programacionesFuturas = programacionesData.programaciones?.filter((p: any) => 
+        (p).activa && new Date((p).fecha) >= new Date()
+      ).sort((a: any, b: any) => new Date((a).fecha).getTime() - new Date((b).fecha).getTime()) || []
 
       if (programacionesFuturas.length > 0) {
-        const proxima = programacionesFuturas[0] as unknown
+        const proxima = programacionesFuturas[0]
         proximoServicio = {
           id: proxima.id,
           fecha: new Date(proxima.fecha).toLocaleDateString('es-ES', { 
@@ -82,9 +81,9 @@ export default function DashboardAdmin() {
       }
 
       // Contar asignaciones pendientes en todas las programaciones futuras
-      programacionesFuturas.forEach((prog: unknown) => {
-        (prog as unknown).asignaciones?.forEach((asig: unknown) => {
-          if ((asig as unknown).estadoPreparacion === 'PENDIENTE') {
+      programacionesFuturas.forEach((prog: any) => {
+        (prog).asignaciones?.forEach((asig: any) => {
+          if ((asig).estadoPreparacion === 'PENDIENTE') {
             asignacionesPendientes++
           }
         })
@@ -217,7 +216,7 @@ export default function DashboardAdmin() {
           <ProximoServicioResumen
             proximoServicio={{
               ...estadisticas.proximoServicio,
-              asignaciones: estadisticas.proximoServicio.asignaciones || [],
+              asignaciones: estadisticas.proximoServicio.canciones || [],
               totalAsignaciones: estadisticas.proximoServicio.canciones || 0,
               asignacionesPendientes: estadisticas.proximoServicio.asignacionesPendientes || 0
             }}

@@ -6,7 +6,7 @@ interface ProximoServicioResumenProps {
     id: string;
     fecha: string;
     tipoServicio: string;
-    asignaciones: any[];
+    asignaciones: [];
     totalAsignaciones: number;
     asignacionesPendientes: number;
   };
@@ -85,7 +85,7 @@ export default function ProximoServicioResumen({
                 </div>
                 <div className="space-y-3">
                   {Object.entries(
-                    proximoServicio.asignaciones.reduce((acc, asignacion) => {
+                    proximoServicio.asignaciones.reduce((acc: any, asignacion: any) => {
                       const id = asignacion.cancion.id;
                       if (!acc[id]) acc[id] = { cancion: asignacion.cancion, asignaciones: [], index: acc._order ? acc._order.length : 0 };
                       acc[id].asignaciones.push(asignacion);
@@ -94,9 +94,9 @@ export default function ProximoServicioResumen({
                       return acc;
                     }, {} as any)
                   ).filter(([key]) => key !== '_order')
-                    .sort((a, b) => {
-                      const orderA = proximoServicio.asignaciones.findIndex(asig => asig.cancion.id === a[0]);
-                      const orderB = proximoServicio.asignaciones.findIndex(asig => asig.cancion.id === b[0]);
+                    .sort((a: any, b: any) => {
+                      const orderA = proximoServicio.asignaciones.findIndex((asig: any) => asig.cancion.id === a[0]);
+                      const orderB = proximoServicio.asignaciones.findIndex((asig: any) => asig.cancion.id === b[0]);
                       return orderA - orderB;
                     })
                     .map(([cancionId, { cancion, asignaciones }]: any) => (

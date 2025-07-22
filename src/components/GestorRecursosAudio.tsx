@@ -11,7 +11,6 @@ import {
   Headphones,
   Youtube,
   Volume2,
-  Link as LinkIcon
 } from 'lucide-react'
 
 interface RecursoAudio {
@@ -50,6 +49,7 @@ const PLATAFORMAS = [
 ]
 
 export default function GestorRecursosAudio({ cancionId, recursos, onRecursosActualizados }: GestorRecursosAudioProps) {
+  console.log(recursos);
   const { data: session } = useSession()
   const [mostrarFormulario, setMostrarFormulario] = useState(false)
   const [guardando, setGuardando] = useState(false)

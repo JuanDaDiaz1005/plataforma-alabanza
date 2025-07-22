@@ -7,7 +7,7 @@ import { Calendar, Music, ArrowRight } from 'lucide-react'
 import ProximoServicioResumen from '@/components/ProximoServicioResumen';
 
 export default function DashboardMusico() {
-  const [proximoServicio, setProximoServicio] = useState<unknown>(null)
+  const [proximoServicio, setProximoServicio] = useState<any>(null)
   const [cargando, setCargando] = useState(true)
 
   useEffect(() => {
