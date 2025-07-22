@@ -132,4 +132,4 @@ export default function ServicioCard({
     return <Link href={href} onClick={onClick}>{CardContent}</Link>;
   }
   return CardContent;
-} 
+}

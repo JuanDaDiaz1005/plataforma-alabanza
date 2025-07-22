@@ -14,12 +14,12 @@ import {
 } from 'lucide-react'
 
 interface RecursoAudio {
-  id: string
-  tipo: string
-  plataforma: string
-  url: string
-  metadatos?: any
-  fechaCreacion: string
+  id: string;
+  tipo: string;
+  plataforma: string;
+  url: string;
+  metadatos?: Record<string, unknown>;
+  fechaCreacion: string;
 }
 
 interface GestorRecursosAudioProps {
@@ -362,11 +362,9 @@ export default function GestorRecursosAudio({ cancionId, recursos, onRecursosAct
                     <span className={`px-2 py-1 rounded text-xs font-medium ${obtenerColorTipo(recurso.tipo)}`}>
                       {obtenerTextoTipo(recurso.tipo)}
                     </span>
-                    {recurso.metadatos?.titulo && (
-                      <span className="text-sm text-gray-600">
-                        {recurso.metadatos.titulo}
-                      </span>
-                    )}
+                    {typeof recurso.metadatos?.titulo === 'string' || typeof recurso.metadatos?.titulo === 'number' ? (
+                      <span className="text-sm text-gray-600">{recurso.metadatos.titulo}</span>
+                    ) : null}
                   </div>
                   <p className="text-xs text-gray-500 mt-1">
                     {new Date(recurso.fechaCreacion).toLocaleDateString('es-ES')}
@@ -406,4 +404,4 @@ export default function GestorRecursosAudio({ cancionId, recursos, onRecursosAct
       )}
     </div>
   )
-} 
+}

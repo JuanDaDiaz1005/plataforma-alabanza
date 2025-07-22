@@ -37,6 +37,13 @@ interface GestorRecursosMusicalesProps {
   onRecursosActualizados?: () => void
 }
 
+interface TipoRecursoConfig {
+  value: string;
+  label: string;
+  icon: React.ComponentType<{ className?: string }>;
+  color: string;
+}
+
 const TIPOS_RECURSOS = [
   { value: 'CANCION_ORIGINAL', label: 'Canción Original', icon: Music, color: 'blue' },
   { value: 'PISTA_INSTRUMENTAL', label: 'Pista Instrumental', icon: Headphones, color: 'green' },
@@ -211,17 +218,17 @@ export default function GestorRecursosMusicales({
   const recursosFiltrados = recursos.filter(r => r.tipo === 'CANCION_ORIGINAL' || r.tipo === 'PISTA_INSTRUMENTAL')
 
   // Agrupar recursos por tipo
-  const recursosAgrupados = recursosFiltrados.reduce((grupos, recurso) => {
-    const config = obtenerConfigTipo(recurso.tipo)
+  const recursosAgrupados = recursosFiltrados.reduce((grupos: Record<string, { config: TipoRecursoConfig; recursos: RecursoMusical[] }>, recurso: RecursoMusical) => {
+    const config = obtenerConfigTipo(recurso.tipo) as TipoRecursoConfig;
     if (!grupos[recurso.tipo]) {
       grupos[recurso.tipo] = {
         config,
         recursos: []
-      }
+      };
     }
-    grupos[recurso.tipo].recursos.push(recurso)
-    return grupos
-  }, {} as { [key: string]: { config: any; recursos: RecursoMusical[] } })
+    grupos[recurso.tipo].recursos.push(recurso);
+    return grupos;
+  }, {} as Record<string, { config: TipoRecursoConfig; recursos: RecursoMusical[] }>)
 
   const reproducirRecurso = async (recurso: RecursoMusical) => {
     let url = recurso.url;
@@ -551,4 +558,4 @@ export default function GestorRecursosMusicales({
       )}
     </div>
   )
-} 
+}
