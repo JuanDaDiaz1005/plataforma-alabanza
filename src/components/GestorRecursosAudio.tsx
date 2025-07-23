@@ -139,7 +139,7 @@ export default function GestorRecursosAudio({ cancionId, recursos, onRecursosAct
       }
     } catch (error) {
       console.error('Error:', error)
-      setError('Error al agregar el recurso')
+      setError(error instanceof Error ? error.message : 'Error al agregar el recurso')
     } finally {
       setGuardando(false)
     }
@@ -161,7 +161,7 @@ export default function GestorRecursosAudio({ cancionId, recursos, onRecursosAct
       }
     } catch (error) {
       console.error('Error:', error)
-      setError('Error al eliminar el recurso')
+      setError(error instanceof Error ? error.message : 'Error al eliminar el recurso')
     }
   }
 

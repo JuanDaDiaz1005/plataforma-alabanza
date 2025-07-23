@@ -30,6 +30,7 @@ interface ProximoServicio {
   asignaciones: {
     id: string
     cancion: {
+      id: string // <-- Añadir id aquí
       titulo: string
       artista: string
     }
@@ -89,18 +90,16 @@ export default function DashboardLider() {
       const programaciones = programacionesData.programaciones || []
       const hoy = new Date()
       const proximasProgramaciones = programaciones
-        .filter((p: any) => new Date(p.fecha) >= hoy)
-        .sort((a: any, b: any) => new Date(a.fecha).getTime() - new Date(b.fecha).getTime())
-
+        .filter((p: {fecha: string}) => new Date(p.fecha) >= hoy)
+        .sort((a: {fecha: string}, b: {fecha: string}) => new Date(a.fecha).getTime() - new Date(b.fecha).getTime())
       if (proximasProgramaciones.length > 0) {
-        const proxima = proximasProgramaciones[0]
+        const proxima = proximasProgramaciones[0] as {id: string, fecha: string, tipoServicio: string}
         
         // Cargar asignaciones del próximo servicio
         const asignacionesRes = await fetch(`/api/programaciones/${proxima.id}/asignaciones`)
         const asignacionesData = await asignacionesRes.json()
-        
-        const asignaciones = asignacionesData.asignaciones || []
-        const asignacionesPendientes = asignaciones.filter((a: any) => a.estadoPreparacion === 'PENDIENTE').length
+        const asignaciones = (asignacionesData.asignaciones ?? []) as Array<{id: string, estadoPreparacion: string, usuario: {id: string, nombre: string, rangoVocal?: string}, cancion: {id: string, titulo: string, artista: string}, rolCancion: string}>
+        const asignacionesPendientes = asignaciones.filter((a) => a.estadoPreparacion === 'PENDIENTE').length
 
         setProximoServicio({
           id: proxima.id,
@@ -117,14 +116,13 @@ export default function DashboardLider() {
         })
 
         // Procesar estado del equipo
-        const equipoMap = new Map()
-        asignaciones.forEach((asignacion: any) => {
+        const equipoMap = new Map<string, MiembroEquipo>()
+        asignaciones.forEach((asignacion) => {
           const usuarioId = asignacion.usuario.id
           if (!equipoMap.has(usuarioId)) {
             equipoMap.set(usuarioId, {
               id: usuarioId,
               nombre: asignacion.usuario.nombre,
-              rangoVocal: asignacion.usuario.rangoVocal,
               cancionesPorEstado: {
                 preparado: 0,
                 enPractica: 0,
@@ -133,8 +131,7 @@ export default function DashboardLider() {
               }
             })
           }
-          
-          const miembro = equipoMap.get(usuarioId)
+          const miembro = equipoMap.get(usuarioId)!
           const estado = asignacion.estadoPreparacion.toLowerCase()
           if (estado === 'preparado') miembro.cancionesPorEstado.preparado++
           else if (estado === 'en_practica') miembro.cancionesPorEstado.enPractica++
@@ -360,33 +357,32 @@ export default function DashboardLider() {
                       </div>
                       <div className="space-y-3">
                         {Object.entries(
-                          proximoServicio.asignaciones.reduce((acc: any, asignacion: any) => {
+                          proximoServicio.asignaciones.reduce((acc: Record<string, { cancion: { id: string; titulo: string; artista: string }; asignaciones: typeof proximoServicio.asignaciones }>, asignacion) => {
                             const id = asignacion.cancion.id;
-                            if (!acc[id]) acc[id] = { cancion: asignacion.cancion, asignaciones: [], index: acc._order ? acc._order.length : 0 };
+                            if (!acc[id]) acc[id] = { cancion: asignacion.cancion, asignaciones: [] };
                             acc[id].asignaciones.push(asignacion);
-                            if (!acc._order) acc._order = [];
-                            if (!acc._order.includes(id)) acc._order.push(id);
                             return acc;
-                          }, {})).filter(([key]) => key !== '_order')
-                            .sort((a, b) => {
-                              const orderA = proximoServicio.asignaciones.findIndex(asig => asig.cancion.id === a[0]);
-                              const orderB = proximoServicio.asignaciones.findIndex(asig => asig.cancion.id === b[0]);
-                              return orderA - orderB;
-                            })
-                            .map(([cancionId, { cancion, asignaciones }]: any) => (
-                              <div key={cancionId} className="bg-white rounded-lg p-4 border border-gray-100 shadow-sm hover:shadow-md transition-all duration-200">
-                                <div className="font-bold text-gray-900 text-sm mb-1">{cancion.titulo} <span className="text-gray-500 font-normal">por {cancion.artista}</span></div>
-                                <div className="space-y-1">
-                                  {asignaciones.map((asig: any) => (
-                                    <div key={asig.id} className="flex items-center gap-2 text-xs">
-                                      <span className="text-gray-800 font-medium flex items-center gap-1"><Mic className="h-3 w-3 text-blue-600" />{asig.usuario.nombre}</span>
-                                      <span className="text-gray-500 flex items-center gap-1">{obtenerTextoRol(asig.rolCancion)}</span>
-                                      <span className={`px-2 py-0.5 rounded-full text-xs font-medium border ${obtenerColorEstado(asig.estadoPreparacion)}`}>{obtenerTextoEstado(asig.estadoPreparacion)}</span>
-                                    </div>
-                                  ))}
-                                </div>
+                          }, {})
+                        )
+                          .sort((a, b) => {
+                            const orderA = proximoServicio.asignaciones.findIndex(asig => asig.cancion.id === a[0]);
+                            const orderB = proximoServicio.asignaciones.findIndex(asig => asig.cancion.id === b[0]);
+                            return orderA - orderB;
+                          })
+                          .map(([cancionId, { cancion, asignaciones }]) => (
+                            <div key={cancionId} className="bg-white rounded-lg p-4 border border-gray-100 shadow-sm hover:shadow-md transition-all duration-200">
+                              <div className="font-bold text-gray-900 text-sm mb-1">{cancion.titulo} <span className="text-gray-500 font-normal">por {cancion.artista}</span></div>
+                              <div className="space-y-1">
+                                {asignaciones.map((asig) => (
+                                  <div key={asig.id} className="flex items-center gap-2 text-xs">
+                                    <span className="text-gray-800 font-medium flex items-center gap-1"><Mic className="h-3 w-3 text-blue-600" />{asig.usuario.nombre}</span>
+                                    <span className="text-gray-500 flex items-center gap-1">{obtenerTextoRol(asig.rolCancion)}</span>
+                                    <span className={`px-2 py-0.5 rounded-full text-xs font-medium border ${obtenerColorEstado(asig.estadoPreparacion)}`}>{obtenerTextoEstado(asig.estadoPreparacion)}</span>
+                                  </div>
+                                ))}
                               </div>
-                            ))}
+                            </div>
+                          ))}
                       </div>
                     </div>
                   )}
@@ -571,4 +567,4 @@ export default function DashboardLider() {
       </div>
     </Layout>
   )
-} 
+}

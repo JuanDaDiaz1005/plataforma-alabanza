@@ -91,7 +91,8 @@ export default function PerfilPage() {
       setGuardando(true)
       setError('')
 
-      const datosActualizados: unknown = {
+      // Definir tipo explícito para los datos actualizados
+      const datosActualizados: { nombre: string; email: string; contrasena?: string } = {
         nombre: nuevoNombre.trim(),
         email: nuevoEmail.trim()
       }
@@ -371,4 +372,4 @@ export default function PerfilPage() {
       </div>
     </Layout>
   )
-} 
+}

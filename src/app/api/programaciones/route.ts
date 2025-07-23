@@ -3,6 +3,8 @@ import { getServerSession } from 'next-auth'
 import { prisma } from '@/lib/prisma'
 import { validarPermisosCancion } from '@/lib/utils'
 import { authOptions } from '@/lib/auth'
+import type { Prisma } from '@prisma/client'
+import { TipoServicio } from '@prisma/client'
 
 // GET /api/programaciones - Listar programaciones
 export async function GET(request: NextRequest) {
@@ -15,7 +17,7 @@ export async function GET(request: NextRequest) {
 
     const { searchParams } = new URL(request.url)
     const pagina = parseInt(searchParams.get('page') || '1')
-    const limite = parseInt(searchParams.get('limite') || '10')
+    const limite = parseInt(searchParams.get('limite') || '6')
     const fechaDesde = searchParams.get('fechaDesde')
     const fechaHasta = searchParams.get('fechaHasta')
     const tipoServicio = searchParams.get('tipoServicio')
@@ -24,21 +26,21 @@ export async function GET(request: NextRequest) {
 
     const skip = (pagina - 1) * limite
 
-    // Construir filtros
-    const filtros: unknown = {}
+    // Construir filtros dinámicamente
+    const filtros: Prisma.ProgramacionWhereInput = {}
     
     if (fechaDesde || fechaHasta) {
-      (filtros as unknown as { fecha?: { gte?: Date; lte?: Date } }).fecha = {}
-      if (fechaDesde) (filtros as unknown as { fecha?: { gte?: Date; lte?: Date } }).fecha.gte = new Date(fechaDesde)
-      if (fechaHasta) (filtros as unknown as { fecha?: { gte?: Date; lte?: Date } }).fecha.lte = new Date(fechaHasta)
+      filtros.fecha = {};
+      if (fechaDesde) filtros.fecha.gte = new Date(fechaDesde);
+      if (fechaHasta) filtros.fecha.lte = new Date(fechaHasta);
     }
 
-    if (tipoServicio) {
-      (filtros as unknown as { tipoServicio?: string }).tipoServicio = tipoServicio
+    if (tipoServicio && Object.values(TipoServicio).includes(tipoServicio as TipoServicio)) {
+      filtros.tipoServicio = tipoServicio as TipoServicio
     }
-
-    if (activa !== null && activa !== undefined) {
-      (filtros as unknown as { activa?: boolean }).activa = activa === 'true'
+    if (typeof activa === 'string') {
+      if (activa === 'true') filtros.activa = true;
+      else if (activa === 'false') filtros.activa = false;
     }
 
     // Si se solicita por cantante, devolver asignaciones específicas
@@ -140,6 +142,10 @@ export async function GET(request: NextRequest) {
       prisma.programacion.count({ where: filtros })
     ])
 
+    console.log('FILTROS:', filtros)
+    console.log('Programaciones DB:', programaciones)
+    console.log('Total:', total)
+
     return NextResponse.json({
       programaciones,
       pagination: {
@@ -236,4 +242,4 @@ export async function POST(request: NextRequest) {
       { status: 500 }
     )
   }
-} 
+}

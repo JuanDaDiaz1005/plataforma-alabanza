@@ -108,7 +108,7 @@ export default function NuevoUsuario() {
       router.push('/usuarios')
 
     } catch (error: unknown) {
-      setError(error.message)
+      setError(error instanceof Error ? error.message : 'Error al crear el usuario')
     } finally {
       setCargando(false)
     }
@@ -252,4 +252,4 @@ export default function NuevoUsuario() {
       </div>
     </Layout>
   )
-} 
+}

@@ -20,7 +20,20 @@ interface FormularioConfiguracion {
   passwordActual: string
   passwordNueva: string
   confirmarPassword: string
-  rangoVocal: string
+}
+
+// Tipos para el usuario de configuración
+interface UsuarioConfiguracion {
+  id: string;
+  nombre: string;
+  email: string;
+  rol: string;
+  fechaCreacion?: string;
+  fechaActualizacion?: string;
+  _count?: {
+    asignaciones: number;
+    comentarios: number;
+  };
 }
 
 const ROLES_LABELS = {
@@ -47,10 +60,9 @@ export default function ConfiguracionPage() {
     passwordActual: '',
     passwordNueva: '',
     confirmarPassword: '',
-    rangoVocal: ''
   })
 
-  const [usuario, setUsuario] = useState<unknown>(null)
+  const [usuario, setUsuario] = useState<UsuarioConfiguracion | null>(null)
 
   useEffect(() => {
     if (session?.user?.id) {
@@ -78,10 +90,9 @@ export default function ConfiguracionPage() {
         passwordActual: '',
         passwordNueva: '',
         confirmarPassword: '',
-        rangoVocal: data.rangoVocal || ''
       })
     } catch (error: unknown) {
-      setError(error.message)
+      setError(error instanceof Error ? error.message : 'Error al cargar los datos de usuario.')
     } finally {
       setCargando(false)
     }
@@ -136,10 +147,14 @@ export default function ConfiguracionPage() {
       }
 
       // Preparar datos para envío
-      const datosActualizacion: unknown = {
+      const datosActualizacion: {
+        nombre: string;
+        email: string;
+        passwordActual?: string;
+        passwordNueva?: string;
+      } = {
         nombre: formulario.nombre.trim(),
-        email: formulario.email.trim().toLowerCase(),
-        rangoVocal: formulario.rangoVocal || null
+        email: formulario.email.trim().toLowerCase()
       }
 
       if (cambiarPassword) {
@@ -188,7 +203,7 @@ export default function ConfiguracionPage() {
       }
 
     } catch (error: unknown) {
-      setError(error.message)
+      setError(error instanceof Error ? error.message : 'Error al actualizar la información')
     } finally {
       setGuardando(false)
     }
@@ -407,4 +422,4 @@ export default function ConfiguracionPage() {
       </div>
     </Layout>
   )
-} 
+}

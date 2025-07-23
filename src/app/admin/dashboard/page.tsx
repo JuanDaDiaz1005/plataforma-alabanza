@@ -55,18 +55,17 @@ export default function DashboardAdmin() {
       ])
 
       // Calcular estadísticas
-      const programacionesActivas = programacionesData.programaciones?.filter((p: any) => (p).activa && new Date((p).fecha) >= new Date()).length || 0
-      
+      const programacionesActivas = programacionesData.programaciones?.filter((p: {activa: boolean, fecha: string}) => p.activa && new Date(p.fecha) >= new Date()).length || 0
       let asignacionesPendientes = 0
-      let proximoServicio: any = null
+      let proximoServicio: EstadisticasDashboard['proximoServicio'] = undefined;
 
       // Encontrar próximo servicio y contar asignaciones pendientes
-      const programacionesFuturas = programacionesData.programaciones?.filter((p: any) => 
-        (p).activa && new Date((p).fecha) >= new Date()
-      ).sort((a: any, b: any) => new Date((a).fecha).getTime() - new Date((b).fecha).getTime()) || []
+      const programacionesFuturas = programacionesData.programaciones?.filter((p: {activa: boolean, fecha: string}) => 
+        p.activa && new Date(p.fecha) >= new Date()
+      ).sort((a: {fecha: string}, b: {fecha: string}) => new Date(a.fecha).getTime() - new Date(b.fecha).getTime()) || []
 
       if (programacionesFuturas.length > 0) {
-        const proxima = programacionesFuturas[0]
+        const proxima = programacionesFuturas[0] as {id: string, fecha: string, tipoServicio: string, asignaciones?: Array<{estadoPreparacion: string}>}
         proximoServicio = {
           id: proxima.id,
           fecha: new Date(proxima.fecha).toLocaleDateString('es-ES', { 
@@ -81,9 +80,9 @@ export default function DashboardAdmin() {
       }
 
       // Contar asignaciones pendientes en todas las programaciones futuras
-      programacionesFuturas.forEach((prog: any) => {
-        (prog).asignaciones?.forEach((asig: any) => {
-          if ((asig).estadoPreparacion === 'PENDIENTE') {
+      programacionesFuturas.forEach((prog: {asignaciones?: Array<{estadoPreparacion: string}>}) => {
+        prog.asignaciones?.forEach((asig: {estadoPreparacion: string}) => {
+          if (asig.estadoPreparacion === 'PENDIENTE') {
             asignacionesPendientes++
           }
         })
@@ -215,10 +214,12 @@ export default function DashboardAdmin() {
         {estadisticas?.proximoServicio && (
           <ProximoServicioResumen
             proximoServicio={{
-              ...estadisticas.proximoServicio,
-              asignaciones: estadisticas.proximoServicio.canciones || [],
+              id: estadisticas.proximoServicio.id,
+              fecha: estadisticas.proximoServicio.fecha,
+              tipoServicio: estadisticas.proximoServicio.tipo,
+              asignaciones: [],
               totalAsignaciones: estadisticas.proximoServicio.canciones || 0,
-              asignacionesPendientes: estadisticas.proximoServicio.asignacionesPendientes || 0
+              asignacionesPendientes: 0
             }}
             colorGradiente="from-purple-500 to-indigo-600"
             colorAcento="text-purple-600"
@@ -271,4 +272,4 @@ export default function DashboardAdmin() {
       </div>
     </Layout>
   )
-} 
+}

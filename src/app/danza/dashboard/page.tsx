@@ -28,13 +28,16 @@ interface Asignacion {
     titulo: string
     artista: string
     videoDanza?: string
+    album?: string
+    duracionSegundos?: number
+    tonalidad?: string
   }
 }
 
 export default function DashboardDanza() {
   const { data: sesion } = useSession()
   const [proximosServicios, setProximosServicios] = useState<ServicioDanza[]>([])
-  const [cancionesConVideo, setCancionesConVideo] = useState<unknown[]>([])
+  const [cancionesConVideo, setCancionesConVideo] = useState<Asignacion['cancion'][]>([])
   const [cargando, setCargando] = useState(true)
   const [lideresPorCancion, setLideresPorCancion] = useState<Record<string, { cancionId: string, titulo: string, lideres: Array<{ id: string, nombre: string }> }>>({})
 
@@ -59,7 +62,7 @@ export default function DashboardDanza() {
       
       if (respuestaCanciones.ok) {
         const datosCanciones = await respuestaCanciones.json()
-        const conVideo = datosCanciones.canciones.filter((c: unknown) => c.videoDanza).slice(0, 5)
+        const conVideo = datosCanciones.canciones.filter((c: Asignacion['cancion']) => c.videoDanza).slice(0, 5)
         setCancionesConVideo(conVideo)
       }
 
@@ -75,7 +78,7 @@ export default function DashboardDanza() {
     if (res.ok) {
       const data = await res.json()
       const porCancion: Record<string, { cancionId: string, titulo: string, lideres: Array<{ id: string, nombre: string }> }> = {}
-      data.forEach((c: unknown) => { porCancion[c.cancionId] = c })
+      data.forEach((c: { cancionId: string; titulo: string; lideres: Array<{ id: string, nombre: string }> }) => { porCancion[c.cancionId] = c })
       setLideresPorCancion(prev => ({ ...prev, ...porCancion }))
     }
   }
@@ -384,4 +387,4 @@ export default function DashboardDanza() {
       </div>
     </Layout>
   )
-} 
+}

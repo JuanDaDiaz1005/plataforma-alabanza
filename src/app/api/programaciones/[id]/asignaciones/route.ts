@@ -3,6 +3,7 @@ import { getServerSession } from 'next-auth'
 import { prisma } from '@/lib/prisma'
 import { validarPermisosCancion } from '@/lib/utils'
 import { authOptions } from '@/lib/auth'
+import type { Prisma } from '@prisma/client'
 
 // POST /api/programaciones/[id]/asignaciones - Crear nueva asignación
 export async function POST(
@@ -234,17 +235,17 @@ export async function PUT(
     }
 
     // Preparar datos para actualización
-    const datosActualizacion: unknown = {}
+    const datosActualizacion: Prisma.AsignacionCancionUpdateInput = {}
 
     if (datos.hasOwnProperty('preparado')) {
       // Convertir boolean a enum para retrocompatibilidad
-      (datosActualizacion as unknown as { estadoPreparacion?: string }).estadoPreparacion = datos.preparado ? 'PREPARADO' : 'PENDIENTE'
+      datosActualizacion.estadoPreparacion = { set: datos.preparado ? 'PREPARADO' : 'PENDIENTE' }
     } else if (datos.estadoPreparacion) {
-      (datosActualizacion as unknown as { estadoPreparacion?: string }).estadoPreparacion = datos.estadoPreparacion
+      datosActualizacion.estadoPreparacion = { set: datos.estadoPreparacion }
     }
 
     if (datos.notasPersonales !== undefined) {
-      (datosActualizacion as unknown as { notasPersonales?: string | null }).notasPersonales = datos.notasPersonales
+      datosActualizacion.notasPersonales = { set: datos.notasPersonales }
     }
 
     // Actualizar asignación
@@ -336,4 +337,4 @@ export async function DELETE(
       { status: 500 }
     )
   }
-} 
+}

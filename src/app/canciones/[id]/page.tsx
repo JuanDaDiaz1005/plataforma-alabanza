@@ -81,6 +81,9 @@ export default function DetalleCancion({ params }: { params: Promise<{ id: strin
   const [error, setError] = useState('')
   const [eliminando, setEliminando] = useState(false)
   const [mostrarEliminar, setMostrarEliminar] = useState(false)
+  const [editandoVideo, setEditandoVideo] = useState(false)
+  const [videoDanzaInput, setVideoDanzaInput] = useState(cancion?.videoDanza || '')
+  const [guardandoVideo, setGuardandoVideo] = useState(false)
 
   const [resolvedParams, setResolvedParams] = useState<{ id: string } | null>(null)
 
@@ -146,7 +149,7 @@ export default function DetalleCancion({ params }: { params: Promise<{ id: strin
       
       const data = await response.json()
       setCancion(data)
-    } catch (error: unknown) {
+    } catch (error) {
       setError(error instanceof Error ? error.message : 'Error desconocido')
     } finally {
       setCargando(false)
@@ -168,7 +171,7 @@ export default function DetalleCancion({ params }: { params: Promise<{ id: strin
       }
 
       router.push('/canciones')
-    } catch (error: unknown) {
+    } catch (error) {
       setError(error instanceof Error ? error.message : 'Error desconocido')
     } finally {
       setEliminando(false)
@@ -320,6 +323,63 @@ export default function DetalleCancion({ params }: { params: Promise<{ id: strin
           </div>
         )}
 
+        {/* Video de danza en detalles de canción */}
+        {cancion.videoDanza && (
+          <div className="bg-white rounded-lg border border-gray-200 shadow-sm p-6 mt-4">
+            <h2 className="text-lg font-semibold text-gray-900 mb-4 flex items-center gap-2">
+              <Play className="h-5 w-5 text-purple-600" />
+              Video de Danza
+            </h2>
+            <a href={cancion.videoDanza} target="_blank" rel="noopener noreferrer" className="inline-flex items-center gap-2 px-3 py-2 bg-red-100 text-red-700 rounded-lg hover:bg-red-200 text-xs font-medium">
+              <Play className="h-4 w-4" />
+              Ver Video
+            </a>
+          </div>
+        )}
+        {session?.user?.role === 'LIDER_DANZA' && (
+          <button
+            className="mt-4 inline-flex items-center gap-2 px-3 py-2 bg-purple-100 text-purple-700 rounded-lg hover:bg-purple-200 text-xs font-medium"
+            onClick={() => setEditandoVideo(true)}
+          >
+            <Play className="h-4 w-4" />
+            {cancion.videoDanza ? 'Editar Video de Danza' : 'Agregar Video de Danza'}
+          </button>
+        )}
+        {editandoVideo && (
+          <form
+            className="mt-2 flex gap-2"
+            onSubmit={async e => {
+              e.preventDefault();
+              setGuardandoVideo(true);
+              const res = await fetch(`/api/canciones/${cancion.id}/video-danza`, {
+                method: 'PUT',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ videoDanza: videoDanzaInput })
+              });
+              setGuardandoVideo(false);
+              if (res.ok) {
+                setEditandoVideo(false);
+                window.location.reload();
+              } else {
+                alert('Error al guardar el video de danza');
+              }
+            }}
+          >
+            <input
+              type="url"
+              required
+              placeholder="URL de YouTube"
+              className="px-3 py-2 border rounded-lg text-xs w-full"
+              value={videoDanzaInput}
+              onChange={e => setVideoDanzaInput(e.target.value)}
+            />
+            <button type="submit" disabled={guardandoVideo} className="px-3 py-2 bg-pink-600 text-white rounded-lg text-xs font-medium">
+              {guardandoVideo ? 'Guardando...' : 'Guardar'}
+            </button>
+            <button type="button" onClick={() => setEditandoVideo(false)} className="px-3 py-2 bg-gray-100 text-gray-700 rounded-lg text-xs font-medium">Cancelar</button>
+          </form>
+        )}
+
         {/* Letra */}
         {cancion.letra && (
           <div className="bg-white rounded-lg border border-gray-200 shadow-sm p-6">
@@ -438,4 +498,4 @@ export default function DetalleCancion({ params }: { params: Promise<{ id: strin
       </div>
     </Layout>
   )
-} 
+}

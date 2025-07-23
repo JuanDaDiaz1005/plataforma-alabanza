@@ -19,7 +19,8 @@ import {
   Info,
   Headphones,
   User,
-  ExternalLink
+  ExternalLink,
+  Loader2
 } from 'lucide-react'
 import { useAudioPlayer } from '@/components/audio/AudioPlayerContext';
 import { useRef } from 'react';
@@ -75,6 +76,13 @@ const ESTADOS_PREPARACION = [
   { value: 'NECESITA_AYUDA', label: 'Necesita Ayuda', color: 'text-red-600', bgColor: 'bg-red-100' }
 ]
 
+interface UsuarioDanza {
+  id: string
+  nombre: string
+  email: string
+  role: string
+}
+
 export default function DetalleProgramacion() {
   const { data: session } = useSession()
   const params = useParams()
@@ -85,17 +93,23 @@ export default function DetalleProgramacion() {
   const [cargando, setCargando] = useState(true)
   const [error, setError] = useState('')
   const [lideresPorCancion, setLideresPorCancion] = useState<Record<string, { cancionId: string, titulo: string, lideres: Array<{ id: string, nombre: string }> }>>({})
-  const [modalDanza, setModalDanza] = useState<{ visible: boolean, cancionId: string, cancionTitulo: string }>({ visible: false, cancionId: '', cancionTitulo: '' })
-  const [danzoras, setDanzoras] = useState<unknown[]>([])
-  const [seleccionadas, setSeleccionadas] = useState<string[]>([])
-  const [guardando, setGuardando] = useState(false)
-  const [cargandoModal, setCargandoModal] = useState(false)
+  // Estados para el modal de asignar líder de danza
+  const [modalOpen, setModalOpen] = useState(false)
+  const [modalCancionId, setModalCancionId] = useState<string | null>(null)
+  const [danzoras, setDanzoras] = useState<UsuarioDanza[]>([])
+  const [cargandoDanzoras, setCargandoDanzoras] = useState(false)
+  const [asignando, setAsignando] = useState(false)
+  const [errorModal, setErrorModal] = useState('')
+  const [liderActual, setLiderActual] = useState<string | null>(null)
   const { setTrack } = useAudioPlayer();
   const [mensajeCard, setMensajeCard] = useState<{ [key: string]: string }>({});
   const timeoutRef = useRef<{ [key: string]: NodeJS.Timeout }>({});
 
   // Estado global de loading para los botones de cada canción
   const [loading, setLoading] = useState({});
+
+  // Estado para el guardando del modal de líderes de danza
+  const [guardando, setGuardando] = useState(false)
 
   // Verificar permisos
   const puedeEditar = session?.user?.role === 'ADMINISTRADOR' || session?.user?.role === 'LIDER_ALABANZA'
@@ -265,9 +279,9 @@ export default function DetalleProgramacion() {
 
   // Abrir modal de asignación de danza
   const abrirModalDanza = async (cancionId: string, cancionTitulo: string) => {
-    setModalDanza({ visible: true, cancionId, cancionTitulo })
-    setCargandoModal(true)
-
+    setModalOpen(true)
+    setModalCancionId(cancionId)
+    setCargandoDanzoras(true)
     try {
       // Cargar danzoras y líder de danza
       const res = await fetch('/api/usuarios?rol=DANZA,LIDER_DANZA&limite=50')
@@ -278,21 +292,22 @@ export default function DetalleProgramacion() {
         console.error('Error al cargar usuarios de danza:', res.statusText)
         setDanzoras([])
       }
-
       // Cargar líderes actuales
       await cargarLideresDanza()
       setSeleccionadas(lideresPorCancion[cancionId]?.lideres.map(l => l.id) || [])
     } catch (error) {
       console.error('Error al abrir modal de danza:', error)
       setDanzoras([])
+      setSeleccionadas([])
     } finally {
-      setCargandoModal(false)
+      setCargandoDanzoras(false)
     }
   }
 
   // Cerrar modal de danza
   const cerrarModalDanza = () => {
-    setModalDanza({ visible: false, cancionId: '', cancionTitulo: '' })
+    setModalOpen(false)
+    setModalCancionId(null)
     setSeleccionadas([])
     setDanzoras([])
   }
@@ -300,14 +315,13 @@ export default function DetalleProgramacion() {
   // Guardar líderes de danza
   const guardarLideresDanza = async () => {
     if (!programacion) return
-
     setGuardando(true)
     try {
       await fetch(`/api/programaciones/${programacion.id}/danzas-lideres`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
-          cancionId: modalDanza.cancionId,
+          cancionId: modalCancionId,
           usuarioIds: seleccionadas
         })
       })
@@ -378,6 +392,8 @@ export default function DetalleProgramacion() {
     }
   };
 
+  const [seleccionadas, setSeleccionadas] = useState<string[]>([]);
+
   useEffect(() => {
     if (programacionId) {
       cargarProgramacion()
@@ -390,6 +406,54 @@ export default function DetalleProgramacion() {
       cargarLideresDanza()
     }
   }, [programacion, esDanza])
+
+  // Cargar danzoras al abrir modal
+  useEffect(() => {
+    if (modalOpen) {
+      setCargandoDanzoras(true)
+      fetch('/api/usuarios?role=DANZA,LIDER_DANZA')
+        .then(res => res.json())
+        .then(data => setDanzoras(data.usuarios || []))
+        .catch(() => setErrorModal('Error al cargar danzoras'))
+        .finally(() => setCargandoDanzoras(false))
+    }
+  }, [modalOpen])
+
+  // Cargar líder actual al abrir modal
+  useEffect(() => {
+    if (modalOpen && modalCancionId && programacion) {
+      fetch(`/api/programaciones/danza-asignaciones?usuarioId=${session?.user?.id}`)
+        .then(res => res.json())
+        .then(data => {
+          const asignacion = (data.asignaciones || []).find((a: { cancion: { id: string }, programacion: { id: string }, usuarioId?: string }) => a.cancion.id === modalCancionId && a.programacion.id === programacion.id)
+          setLiderActual(asignacion ? asignacion.usuarioId : null)
+        })
+        .catch(() => {})
+    }
+  }, [modalOpen, modalCancionId, session?.user?.id, programacion])
+
+  const asignarLider = async (usuarioId: string) => {
+    if (!programacion) return;
+    setAsignando(true)
+    setErrorModal('')
+    try {
+      const res = await fetch(`/api/programaciones/danza-asignaciones`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          usuarioId,
+          cancionId: modalCancionId,
+          programacionId: programacion.id
+        })
+      })
+      if (!res.ok) throw new Error('Error al asignar líder')
+      setModalOpen(false)
+    } catch (err) {
+      setErrorModal('No se pudo asignar líder')
+    } finally {
+      setAsignando(false)
+    }
+  }
 
   if (cargando) {
     return (
@@ -584,7 +648,7 @@ export default function DetalleProgramacion() {
         {/* Sección de asignaciones según el rol */}
         {esDanza ? (
           <div className="bg-white rounded-xl shadow-sm border border-gray-100">
-            <div className="flex items-center gap-3 p-6 border-b border-gray-200">
+            <div className="flex items-center gap-4 p-6 border-b border-gray-200">
               <div className="bg-gradient-to-br from-purple-500 to-pink-600 p-2 rounded-lg">
                 <Music className="h-5 w-5 text-white" />
               </div>
@@ -604,48 +668,63 @@ export default function DetalleProgramacion() {
                 </div>
               ) : (
                 <div className="space-y-4">
-                  {Object.entries(programacion.asignaciones.reduce((acc: Record<string, { cancion: Asignacion['cancion'], asignaciones: Asignacion[] }>, asignacion: Asignacion) => {
+                  {Object.entries(programacion?.asignaciones?.reduce((acc: Record<string, { cancion: Asignacion['cancion'], asignaciones: Asignacion[] }>, asignacion: Asignacion) => {
                     const id = asignacion.cancion.id;
                     if (!acc[id]) acc[id] = { cancion: asignacion.cancion, asignaciones: [] };
                     acc[id].asignaciones.push(asignacion);
                     return acc;
                   }, {} as Record<string, { cancion: Asignacion['cancion'], asignaciones: Asignacion[] }>)).map(([cancionId, { cancion, asignaciones }]) => (
-                    <div key={cancionId} className="bg-green-50 border border-green-200 shadow rounded-xl p-6 mb-6 flex md:items-center md:justify-between gap-4 min-w-0 w-full max-w-full overflow-x-hidden">
+                    <div key={cancionId} className="bg-green-50 border border-green-200 shadow rounded-xl p-6 mb-6">
                       <div className="flex-1 min-w-0">
                         <p className="font-bold text-gray-900 text-base mb-1 break-words">{cancion.titulo} <span className="text-gray-500 font-normal">por {cancion.artista}</span> {cancion.tonalidad && (<span className="ml-2 bg-gray-100 text-gray-700 px-2 py-1 rounded text-xs">{cancion.tonalidad}</span>)}</p>
-                        {asignaciones.map((asig: Asignacion) => (
-                          <div key={asig.id} className="flex flex-wrap items-center gap-2 text-xs sm:text-sm mb-1 min-w-0">
-                            <span className="text-gray-800 font-medium flex items-center gap-1 min-w-0"><User className="h-4 w-4" />{asig.usuario.nombre}</span>
-                            <span className="text-gray-500 flex items-center gap-1 min-w-0"><Music className="h-4 w-4" />{formatearRol(asig.rolCancion)}</span>
-                            {session?.user?.id === asig.usuario.id ? (
-                              <select
-                                value={asig.estadoPreparacion}
-                                onChange={e => cambiarEstadoPreparacion(asig.id, e.target.value)}
-                                className={`text-xs rounded px-2 py-1 border focus:outline-none ${asig.estadoPreparacion === 'PREPARADO' ? 'bg-green-100 text-green-700' : asig.estadoPreparacion === 'NECESITA_AYUDA' ? 'bg-red-100 text-red-700' : 'bg-gray-100 text-gray-700'}`}
-                              >
-                                <option value="PENDIENTE">Pendiente</option>
-                                <option value="EN_PRACTICA">En Práctica</option>
-                                <option value="PREPARADO">Preparado</option>
-                                <option value="NECESITA_AYUDA">Necesita Ayuda</option>
-                              </select>
-                            ) : (
-                              <span className={`text-xs rounded px-2 py-1 border font-semibold ${asig.estadoPreparacion === 'PREPARADO' ? 'bg-green-100 text-green-700 border-green-200' : asig.estadoPreparacion === 'NECESITA_AYUDA' ? 'bg-red-100 text-red-700 border-red-200' : 'bg-gray-100 text-gray-700 border-gray-200'}`}>
-                                {asig.estadoPreparacion === 'PENDIENTE' ? 'Pendiente' : asig.estadoPreparacion === 'EN_PRACTICA' ? 'En Práctica' : asig.estadoPreparacion === 'PREPARADO' ? 'Preparado' : 'Necesita Ayuda'}
+                        {/* Mostrar líderes de danza asignados para esta canción */}
+                        {lideresPorCancion[cancionId]?.lideres && lideresPorCancion[cancionId].lideres.length > 0 ? (
+                          <div className="mt-2 flex flex-wrap gap-2">
+                            <span className="text-xs font-semibold text-purple-700 bg-purple-50 px-2 py-1 rounded">Líder(es):</span>
+                            {lideresPorCancion[cancionId].lideres.map(lider => (
+                              <span key={lider.id} className="text-xs text-purple-900 bg-purple-100 px-2 py-1 rounded flex items-center gap-1">
+                                <UserCheck className="h-4 w-4" />{lider.nombre}
                               </span>
-                            )}
-                            {(session?.user?.role === 'LIDER_ALABANZA' || session?.user?.role === 'ADMINISTRADOR') && (
-                              <button
-                                onClick={() => eliminarAsignacion(asig.id)}
-                                className="text-gray-400 hover:text-red-600 p-1"
-                                title="Eliminar asignación"
-                              >
-                                <Trash2 className="h-4 w-4" />
-                              </button>
-                            )}
+                            ))}
                           </div>
-                        ))}
+                        ) : (
+                          <div className="mt-2 text-xs text-gray-500">Sin líder asignado</div>
+                        )}
+                        <div className="flex flex-wrap items-center gap-4 mb-2">
+                          {asignaciones.map((asig: Asignacion) => (
+                            <div key={asig.id} className="flex items-center gap-2 text-xs sm:text-sm min-w-0">
+                              <span className="text-gray-800 font-medium flex items-center gap-1 min-w-0"><User className="h-4 w-4" />{asig.usuario.nombre}</span>
+                              <span className="text-gray-500 flex items-center gap-1 min-w-0"><Music className="h-4 w-4" />{formatearRol(asig.rolCancion)}</span>
+                              {session?.user?.id === asig.usuario.id ? (
+                                <select
+                                  value={asig.estadoPreparacion}
+                                  onChange={e => cambiarEstadoPreparacion(asig.id, e.target.value)}
+                                  className={`text-xs rounded px-2 py-1 border focus:outline-none ${asig.estadoPreparacion === 'PREPARADO' ? 'bg-green-100 text-green-700' : asig.estadoPreparacion === 'NECESITA_AYUDA' ? 'bg-red-100 text-red-700' : 'bg-gray-100 text-gray-700'}`}
+                                >
+                                  <option value="PENDIENTE">Pendiente</option>
+                                  <option value="EN_PRACTICA">En Práctica</option>
+                                  <option value="PREPARADO">Preparado</option>
+                                  <option value="NECESITA_AYUDA">Necesita Ayuda</option>
+                                </select>
+                              ) : (
+                                <span className={`text-xs rounded px-2 py-1 border font-semibold ${asig.estadoPreparacion === 'PREPARADO' ? 'bg-green-100 text-green-700 border-green-200' : asig.estadoPreparacion === 'NECESITA_AYUDA' ? 'bg-red-100 text-red-700 border-red-200' : 'bg-gray-100 text-gray-700 border-gray-200'}`}>
+                                  {asig.estadoPreparacion === 'PENDIENTE' ? 'Pendiente' : asig.estadoPreparacion === 'EN_PRACTICA' ? 'En Práctica' : asig.estadoPreparacion === 'PREPARADO' ? 'Preparado' : 'Necesita Ayuda'}
+                                </span>
+                              )}
+                              {(session?.user?.role === 'LIDER_ALABANZA' || session?.user?.role === 'ADMINISTRADOR') && (
+                                <button
+                                  onClick={() => eliminarAsignacion(asig.id)}
+                                  className="text-gray-400 hover:text-red-600 p-1"
+                                  title="Eliminar asignación"
+                                >
+                                  <Trash2 className="h-4 w-4" />
+                                </button>
+                              )}
+                            </div>
+                          ))}
+                        </div>
                       </div>
-                      <div className="flex flex-col sm:flex-row gap-2 w-full min-w-0 relative justify-end">
+                      <div className="flex flex-col sm:flex-row gap-2 w-full min-w-0 relative justify-end items-center">
                         {/* Mensaje contextual sobre el card */}
                         {mensajeCard[cancionId] && (
                           <div className="absolute -top-8 left-0 right-0 flex justify-center z-10">
@@ -728,6 +807,17 @@ export default function DetalleProgramacion() {
                           <Headphones className="h-5 w-5" />
                           <span className="break-words">Pista</span>
                         </button>
+                        {/* Botón para asignar líder de danza */}
+                        {(session?.user?.role === 'LIDER_DANZA' || session?.user?.role === 'ADMINISTRADOR') && (
+                          <button
+                            className="flex items-center gap-2 px-3 py-2 sm:px-6 sm:py-3 bg-gradient-to-r from-purple-500 to-pink-500 text-white rounded-xl shadow hover:from-purple-600 hover:to-pink-600 transition-all duration-200 font-semibold text-xs sm:text-base min-w-0 w-full sm:w-auto flex-1 truncate"
+                            title="Asignar líder de danza"
+                            onClick={() => { setModalOpen(true); setModalCancionId(cancionId); }}
+                          >
+                            <UserCheck className="h-5 w-5" />
+                            <span className="break-words">Asignar líder</span>
+                          </button>
+                        )}
                       </div>
                     </div>
                   ))}
@@ -904,7 +994,7 @@ export default function DetalleProgramacion() {
         )}
 
         {/* Modal de asignación de líderes de danza */}
-        {modalDanza.visible && (
+        {modalOpen && modalCancionId && (
           <div className="fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-50 backdrop-blur-sm p-4">
             <div className="bg-white rounded-2xl shadow-2xl w-full max-w-md mx-auto p-6 sm:p-8 relative max-h-[90vh] overflow-y-auto">
               <div className="mb-6">
@@ -915,7 +1005,7 @@ export default function DetalleProgramacion() {
                   <h2 className="text-xl font-bold text-gray-900">Asignar líder(es) de danza</h2>
                 </div>
                 <div className="bg-gradient-to-r from-purple-50 to-pink-50 border border-purple-200 rounded-xl p-4">
-                  <p className="text-sm text-purple-800 font-semibold mb-1">Canción: {modalDanza.cancionTitulo}</p>
+                  <p className="text-sm text-purple-800 font-semibold mb-1">Canción: {programacion.asignaciones.find(a => a.cancion.id === modalCancionId)?.cancion.titulo}</p>
                   <p className="text-xs text-purple-600">
                     Esta asignación es específica para esta canción en este servicio.
                   </p>
@@ -926,7 +1016,7 @@ export default function DetalleProgramacion() {
               <div className="mb-3">
                 <p className="text-sm text-gray-700 mb-2">Selecciona quién liderará esta canción:</p>
                 <div className="space-y-2 max-h-60 overflow-y-auto">
-                  {cargandoModal ? (
+                  {cargandoDanzoras ? (
                     <div className="text-center py-8">
                       <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-pink-600 mx-auto mb-2"></div>
                       <p className="text-sm text-gray-500">Cargando usuarios...</p>
@@ -936,26 +1026,21 @@ export default function DetalleProgramacion() {
                       <p className="text-sm text-gray-500">No se encontraron usuarios de danza</p>
                     </div>
                   ) : (
-                    (danzoras as Array<{ id: string, nombre: string, rol: string }>).map((d) => (
+                    (danzoras as Array<{ id: string, nombre: string }> ).map((d) => (
                       <label key={d.id} className="flex items-center gap-4 p-4 hover:bg-gray-50 rounded-xl cursor-pointer border border-gray-100 hover:border-gray-200 transition-all duration-200">
                         <input
                           type="checkbox"
                           checked={seleccionadas.includes(d.id)}
                           onChange={e => {
-                            if (e.target.checked) setSeleccionadas(prev => [...prev, d.id])
-                            else setSeleccionadas(prev => prev.filter(id => id !== d.id))
+                            if (e.target.checked) {
+                              setSeleccionadas(prev => [...prev, d.id])
+                            } else {
+                              setSeleccionadas(prev => prev.filter(id => id !== d.id))
+                            }
                           }}
                           className="w-5 h-5 rounded border-gray-300 text-pink-600 focus:ring-pink-500 focus:ring-2"
                         />
-                        <div className="flex-1">
-                          <span className="text-base font-semibold text-gray-900">{d.nombre}</span>
-                          <span className={`inline-block mt-1 px-3 py-1 text-sm rounded-full font-medium ${d.rol === 'LIDER_DANZA'
-                              ? 'bg-pink-100 text-pink-700'
-                              : 'bg-purple-100 text-purple-700'
-                            }`}>
-                            {d.rol === 'LIDER_DANZA' ? 'Líder de Danza' : 'Danzora'}
-                          </span>
-                        </div>
+                        <span className="text-gray-800 font-medium">{d.nombre}</span>
                       </label>
                     ))
                   )}

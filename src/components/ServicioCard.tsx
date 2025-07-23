@@ -22,7 +22,6 @@ interface ServicioCardProps {
 }
 
 export default function ServicioCard({
-  id,
   tipoServicio,
   fecha,
   activa,

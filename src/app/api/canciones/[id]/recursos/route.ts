@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from 'next/server'
 import { getServerSession } from 'next-auth'
 import { prisma } from '@/lib/prisma'
 import { authOptions } from '@/lib/auth'
+import { TipoRecurso, PlataformaAudio } from '@prisma/client'
 
 // GET /api/canciones/[id]/recursos - Obtener recursos de una canción
 export async function GET(
@@ -99,21 +100,22 @@ export async function POST(
     } else {
       plataforma = 'MP3_LOCAL';
     }
-    const data: {
-      cancionId: string;
-      tipo: string;
-      plataforma: string;
-      url: string;
-      titulo?: string;
-      descripcion?: string;
-    } = {
-      cancionId: id,
-      tipo,
-      plataforma,
-      url: url.trim()
+    const tipoEnum = tipo as TipoRecurso;
+    const plataformaEnum = plataforma as PlataformaAudio;
+    if (!Object.values(TipoRecurso).includes(tipoEnum)) {
+      return NextResponse.json({ error: 'Tipo de recurso inválido' }, { status: 400 })
     }
-    if (titulo && titulo.trim() !== '') data.titulo = titulo.trim()
-    if (descripcion && descripcion.trim() !== '') data.descripcion = descripcion.trim()
+    if (!Object.values(PlataformaAudio).includes(plataformaEnum)) {
+      return NextResponse.json({ error: 'Plataforma inválida' }, { status: 400 })
+    }
+    const data = {
+      cancionId: id,
+      tipo: tipoEnum,
+      plataforma: plataformaEnum,
+      url: url.trim(),
+      titulo: titulo && titulo.trim() !== '' ? titulo.trim() : undefined,
+      descripcion: descripcion && descripcion.trim() !== '' ? descripcion.trim() : undefined
+    }
 
     const nuevoRecurso = await prisma.recursoAudio.create({
       data
@@ -128,4 +130,4 @@ export async function POST(
       { status: 500 }
     )
   }
-} 
+}

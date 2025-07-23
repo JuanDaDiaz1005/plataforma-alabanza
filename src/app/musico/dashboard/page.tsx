@@ -6,8 +6,54 @@ import Link from 'next/link'
 import { Calendar, Music, ArrowRight } from 'lucide-react'
 import ProximoServicioResumen from '@/components/ProximoServicioResumen';
 
+// Tipos literales para estado y rol
+export type EstadoPreparacionMusico = 'Pendiente' | 'Confirmado' | 'Cancelado';
+export type RolMusico = 'Músico' | 'Director' | 'Cantante';
+
+interface AsignacionServicio {
+  id: string;
+  cancion: {
+    id: string;
+    titulo: string;
+    artista: string;
+  };
+  usuario: {
+    id: string;
+    nombre: string;
+    rolCancion: RolMusico;
+  };
+  rolCancion: RolMusico;
+  estadoPreparacion: EstadoPreparacionMusico;
+}
+
+interface ProximoServicioMusico {
+  id: string;
+  fecha: string;
+  tipoServicio: string;
+  asignaciones: AsignacionServicio[];
+  totalAsignaciones: number;
+  asignacionesPendientes: number;
+}
+
+// Tipo para la asignación recibida de la API
+interface AsignacionServicioApi {
+  id: string;
+  cancion: {
+    id: string;
+    titulo: string;
+    artista: string;
+  };
+  usuario: {
+    id: string;
+    nombre: string;
+    rolCancion: RolMusico;
+  };
+  rolCancion: RolMusico;
+  estadoPreparacion: EstadoPreparacionMusico;
+}
+
 export default function DashboardMusico() {
-  const [proximoServicio, setProximoServicio] = useState<any>(null)
+  const [proximoServicio, setProximoServicio] = useState<ProximoServicioMusico | null>(null)
   const [cargando, setCargando] = useState(true)
 
   useEffect(() => {
@@ -16,50 +62,68 @@ export default function DashboardMusico() {
       const res = await fetch('/api/programaciones?page=1&limite=1&activa=true')
       if (res.ok) {
         const data = await res.json()
-        setProximoServicio(data.programaciones?.[0] || null)
+        const servicio = data.programaciones?.[0]
+        if (servicio) {
+          // Validar y mapear asignaciones
+          const asignaciones: AsignacionServicio[] = (servicio.asignaciones ?? []).map((a: AsignacionServicioApi) => ({
+            id: a.id,
+            cancion: {
+              id: a.cancion.id,
+              titulo: a.cancion.titulo,
+              artista: a.cancion.artista
+            },
+            usuario: {
+              id: a.usuario.id,
+              nombre: a.usuario.nombre,
+              rolCancion: a.rolCancion
+            },
+            rolCancion: a.rolCancion,
+            estadoPreparacion: a.estadoPreparacion
+          }))
+          setProximoServicio({
+            id: servicio.id,
+            fecha: new Date(servicio.fecha).toLocaleDateString('es-ES', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' }),
+            tipoServicio: servicio.tipoServicio,
+            asignaciones,
+            totalAsignaciones: asignaciones.length,
+            asignacionesPendientes: asignaciones.filter((a) => a.estadoPreparacion === 'Pendiente').length
+          })
+        } else {
+          setProximoServicio(null)
+        }
       }
       setCargando(false)
     }
     cargarProximoServicio()
   }, [])
 
+  // Funciones compatibles con string, usando type guard
   const obtenerColorEstado = (estado: string) => {
-    switch (estado) {
-      case 'Pendiente':
-        return 'bg-yellow-100 text-yellow-800';
-      case 'Confirmado':
-        return 'bg-green-100 text-green-800';
-      case 'Cancelado':
-        return 'bg-red-100 text-red-800';
-      default:
-        return 'bg-gray-100 text-gray-800';
+    if (estado === 'Pendiente' || estado === 'Confirmado' || estado === 'Cancelado') {
+      switch (estado) {
+        case 'Pendiente':
+          return 'bg-yellow-100 text-yellow-800';
+        case 'Confirmado':
+          return 'bg-green-100 text-green-800';
+        case 'Cancelado':
+          return 'bg-red-100 text-red-800';
+      }
     }
+    return 'bg-gray-100 text-gray-800';
   };
 
   const obtenerTextoEstado = (estado: string) => {
-    switch (estado) {
-      case 'Pendiente':
-        return 'Pendiente';
-      case 'Confirmado':
-        return 'Confirmado';
-      case 'Cancelado':
-        return 'Cancelado';
-      default:
-        return estado;
+    if (estado === 'Pendiente' || estado === 'Confirmado' || estado === 'Cancelado') {
+      return estado;
     }
+    return estado;
   };
 
   const obtenerTextoRol = (rol: string) => {
-    switch (rol) {
-      case 'Músico':
-        return 'Músico';
-      case 'Director':
-        return 'Director';
-      case 'Cantante':
-        return 'Cantante';
-      default:
-        return rol;
+    if (rol === 'Músico' || rol === 'Director' || rol === 'Cantante') {
+      return rol;
     }
+    return rol;
   };
 
   return (
@@ -131,4 +195,4 @@ export default function DashboardMusico() {
       </div>
     </Layout>
   )
-} 
+}

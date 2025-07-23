@@ -66,7 +66,7 @@ interface LayoutProps {
 
 export const SidebarContext = createContext<{ sidebarOpen: boolean, setSidebarOpen: (open: boolean) => void }>({ sidebarOpen: false, setSidebarOpen: () => {} });
 
-export default function Layout({ children, titulo }: LayoutProps) {
+export default function Layout({ children }: LayoutProps) {
   const { data: session, status } = useSession()
   const pathname = usePathname()
   const [sidebarOpen, setSidebarOpen] = useState(false)

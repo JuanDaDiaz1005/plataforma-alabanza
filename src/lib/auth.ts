@@ -48,7 +48,7 @@ export const authOptions: NextAuthOptions = {
             email: usuario.email,
             name: usuario.nombre,
             role: usuario.rol,
-            telefono: usuario.telefono
+            telefono: usuario.telefono ?? undefined
           }
         } catch (error) {
           console.error('Error en autenticación:', error)
@@ -58,8 +58,9 @@ export const authOptions: NextAuthOptions = {
     })
   ],
   session: {
-    strategy: 'jwt'
+    strategy: 'jwt',
   },
+  // Sin configuración personalizada de cookies, NextAuth usará cookie de sesión por defecto
   pages: {
     signIn: '/auth/login',
     error: '/auth/error'
@@ -67,20 +68,20 @@ export const authOptions: NextAuthOptions = {
   callbacks: {
     async jwt({ token, user }) {
       if (user) {
-        token.role = user.role
-        token.telefono = user.telefono
+        token.role = user.role;
+        token.telefono = user.telefono;
       }
-      return token
+      return token;
     },
     async session({ session, token }) {
       if (token) {
-        session.user.id = token.sub!
-        session.user.role = token.role as string
-        session.user.telefono = token.telefono as string
+        session.user.id = token.sub!;
+        session.user.role = token.role as string;
+        session.user.telefono = token.telefono as string;
       }
-      return session
+      return session;
     }
   }
 }
 
-export default NextAuth(authOptions) 
+export default NextAuth(authOptions)

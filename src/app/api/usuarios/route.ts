@@ -3,6 +3,8 @@ import { getServerSession } from 'next-auth'
 import { prisma } from '@/lib/prisma'
 import { authOptions } from '@/lib/auth'
 import bcrypt from 'bcryptjs'
+import type { Prisma } from '@prisma/client'
+import { RolUsuario } from '@prisma/client'
 
 // GET /api/usuarios - Listar usuarios
 export async function GET(request: NextRequest) {
@@ -15,40 +17,36 @@ export async function GET(request: NextRequest) {
 
     const { searchParams } = new URL(request.url)
     const busqueda = searchParams.get('busqueda') || ''
-    const rol = searchParams.get('rol') || ''
+    const rol = searchParams.get('rol')
+    const activo = searchParams.get('activo')
     const page = parseInt(searchParams.get('page') || '1')
-    const limite = parseInt(searchParams.get('limite') || '12')
+    const limite = parseInt(searchParams.get('limite') || '6')
     const offset = (page - 1) * limite
 
     // Construir filtros
-    const filtros: unknown = {}
+    const filtros: Prisma.UsuarioWhereInput = {}
     
     if (busqueda) {
-      (filtros as unknown).OR = [
+      filtros.OR = [
         { nombre: { contains: busqueda } },
         { email: { contains: busqueda } }
       ]
     }
-
-    // Si el filtro de rol es para asignaciones, mostrar múltiples roles
-    if (rol === 'CANTANTE,LIDER_ALABANZA') {
-      (filtros as unknown).OR = [
-        { rol: 'CANTANTE' },
-        { rol: 'LIDER_ALABANZA' }
-      ]
-    } else if (rol === 'DANZA,LIDER_DANZA') {
-      (filtros as unknown).OR = [
-        { rol: 'DANZA' },
-        { rol: 'LIDER_DANZA' }
-      ]
-    } else if (rol) {
-      (filtros as unknown).rol = rol
+    if (rol && Object.values(RolUsuario).includes(rol as RolUsuario)) {
+      filtros.rol = rol as RolUsuario
     }
+    if (typeof activo === 'string') {
+      if (activo === 'true') filtros.activo = true;
+      else if (activo === 'false') filtros.activo = false;
+    }
+
+    console.log('SESION:', session)
+    console.log('FILTROS:', filtros)
 
     // Obtener usuarios con paginación
     const [usuarios, total] = await Promise.all([
       prisma.usuario.findMany({
-        where: filtros as unknown,
+        where: filtros,
         skip: offset,
         take: limite,
         orderBy: { fechaCreacion: 'desc' },
@@ -67,16 +65,18 @@ export async function GET(request: NextRequest) {
           }
         }
       }),
-      prisma.usuario.count({ where: filtros as unknown })
+      prisma.usuario.count({ where: filtros })
     ])
 
     return NextResponse.json({
       usuarios,
       pagination: {
-        page,
+        pagina: page,
         limite,
         total,
-        totalPaginas: Math.ceil(total / limite)
+        totalPaginas: Math.max(1, Math.ceil(total / limite)),
+        hasNext: page < Math.ceil(total / limite),
+        hasPrev: page > 1
       }
     })
 
@@ -151,4 +151,4 @@ export async function POST(request: NextRequest) {
       { status: 500 }
     )
   }
-} 
+}

@@ -3,6 +3,7 @@ import { prisma } from '@/lib/prisma'
 import { getServerSession } from 'next-auth'
 import { validarPermisosCancion } from '@/lib/utils'
 import { authOptions } from '@/lib/auth'
+import type { Prisma } from '@prisma/client'
 
 // GET /api/canciones - Listar canciones con filtros
 export async function GET(request: NextRequest) {
@@ -20,10 +21,10 @@ export async function GET(request: NextRequest) {
     const offset = (page - 1) * limite
 
     // Construir filtros dinámicamente
-    const filtros: unknown = {}
+    const filtros: Prisma.CancionWhereInput = {}
     
     if (busqueda) {
-      (filtros as unknown).OR = [
+      filtros.OR = [
         { titulo: { contains: busqueda } },
         { artista: { contains: busqueda } },
         { letra: { contains: busqueda } }
@@ -33,7 +34,7 @@ export async function GET(request: NextRequest) {
     // Obtener canciones con paginación
     const [canciones, total] = await Promise.all([
       prisma.cancion.findMany({
-        where: filtros as unknown,
+        where: filtros,
         skip: offset,
         take: limite,
         orderBy: { fechaCreacion: 'desc' },
@@ -47,7 +48,7 @@ export async function GET(request: NextRequest) {
           }
         }
       }),
-      prisma.cancion.count({ where: filtros as unknown })
+      prisma.cancion.count({ where: filtros })
     ])
 
     return NextResponse.json({
@@ -115,4 +116,4 @@ export async function POST(request: NextRequest) {
       { status: 500 }
     )
   }
-} 
+}

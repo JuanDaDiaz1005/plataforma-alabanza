@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from 'next/server'
 import { getServerSession } from 'next-auth'
 import { prisma } from '@/lib/prisma'
 import { authOptions } from '@/lib/auth'
+import { TipoRecurso } from '@prisma/client'
 
 // PUT /api/canciones/[id]/recursos/[recursoId] - Actualizar recurso
 export async function PUT(
@@ -49,12 +50,12 @@ export async function PUT(
     }
 
     // Actualizar recurso
-    const data: unknown = {
-      tipo,
-      url: url.trim()
-    }
-    if (titulo && titulo.trim() !== '') (data as unknown as { titulo?: string }).titulo = titulo.trim()
-    if (descripcion && descripcion.trim() !== '') (data as unknown as { descripcion?: string }).descripcion = descripcion.trim()
+    const data = {
+      tipo: Object.values(TipoRecurso).includes(tipo) ? tipo : undefined,
+      url: url.trim(),
+      titulo: titulo && titulo.trim() !== '' ? titulo.trim() : undefined,
+      descripcion: descripcion && descripcion.trim() !== '' ? descripcion.trim() : undefined
+    };
 
     const recursoActualizado = await prisma.recursoAudio.update({
       where: { id: recursoId },
@@ -113,4 +114,4 @@ export async function DELETE(
       { status: 500 }
     )
   }
-} 
+}

@@ -38,6 +38,32 @@ interface AsignacionCantante {
   notasPersonales?: string
 }
 
+// Tipos para el próximo servicio y sus canciones
+interface AsignacionServicio {
+  id: string;
+  cancion: {
+    id: string;
+    titulo: string;
+    artista: string;
+  };
+  usuario: {
+    id: string;
+    nombre: string;
+    rolCancion: string;
+  };
+  rolCancion: string;
+  estadoPreparacion: string;
+}
+
+interface ProximoServicio {
+  programacion: {
+    id: string;
+    fecha: string | Date;
+    tipoServicio: string;
+  };
+  todasLasCanciones: AsignacionServicio[];
+}
+
 export default function DashboardCantante() {
   const { data: session } = useSession()
   const [asignaciones, setAsignaciones] = useState<AsignacionCantante[]>([])
@@ -68,7 +94,7 @@ export default function DashboardCantante() {
       setAsignaciones(data.asignaciones || [])
     } catch (error) {
       console.error('Error:', error)
-      setError('Error al cargar las asignaciones. Por favor, intenta de nuevo.')
+      setError(error instanceof Error ? error.message : 'Error al cargar las asignaciones. Por favor, intenta de nuevo.')
     } finally {
       setCargando(false)
     }
@@ -111,12 +137,12 @@ export default function DashboardCantante() {
     return null
   }
 
-  const [proximoServicio, setProximoServicio] = useState<any>(null)
+  const [proximoServicio, setProximoServicio] = useState<ProximoServicio | null>(null)
 
   useEffect(() => {
     const fetchProximoServicio = async () => {
       const servicio = await obtenerProximoServicio()
-      setProximoServicio(servicio)
+      setProximoServicio(servicio as ProximoServicio | null)
     }
     fetchProximoServicio()
   }, [asignaciones])
@@ -337,12 +363,11 @@ export default function DashboardCantante() {
                         {proximoServicio.programacion.tipoServicio}
                       </span>
                       <span className="text-gray-500 text-sm">
-                        {proximoServicio.todasLasCanciones?.length || 0} canciones
+                        {proximoServicio.todasLasCanciones.length} canciones
                       </span>
                     </div>
                   </div>
-                  
-                  {proximoServicio.todasLasCanciones && proximoServicio.todasLasCanciones.length > 0 && (
+                  {proximoServicio.todasLasCanciones.length > 0 && (
                     <div className="space-y-3">
                       <div className="flex items-center gap-2">
                         <Music className="h-4 w-4 text-blue-600" />
@@ -351,41 +376,38 @@ export default function DashboardCantante() {
                       <div className="space-y-3">
                         {(() => {
                           // Agrupar asignaciones por canción
-                          const cancionesAgrupadas = proximoServicio.todasLasCanciones.reduce((acc: any, asignacion: any) => {
-                            const cancionId = asignacion.cancion.id
+                          const cancionesAgrupadas = proximoServicio.todasLasCanciones.reduce((acc: Record<string, { cancion: { id: string; titulo: string; artista: string }; cantantes: { nombre: string; rol: string }[] }>, asignacion) => {
+                            const cancionId = asignacion.cancion.id;
                             if (!acc[cancionId]) {
                               acc[cancionId] = {
                                 cancion: asignacion.cancion,
                                 cantantes: []
-                              }
+                              };
                             }
                             acc[cancionId].cantantes.push({
                               nombre: asignacion.usuario.nombre,
                               rol: asignacion.rolCancion
-                            })
-                            return acc
-                          }, {})
-
-                          const cancionesArray = Object.values(cancionesAgrupadas)
-                          return cancionesArray.slice(0, 3).map((item: any, index: number) => (
+                            });
+                            return acc;
+                          }, {});
+                          const cancionesArray = Object.values(cancionesAgrupadas);
+                          return cancionesArray.slice(0, 3).map((item, index) => (
                             <div key={index} className="bg-white rounded-lg p-3 border border-gray-100 shadow-sm">
                               <div className="flex items-center gap-2 mb-2">
                                 <div className="w-2 h-2 bg-blue-500 rounded-full"></div>
                                 <p className="font-semibold text-gray-900 text-sm">{item.cancion.titulo}</p>
                               </div>
                               <div className="ml-4 space-y-1">
-                                {item.cantantes.map((cantante: any, cantanteIndex: number) => (
+                                {item.cantantes.map((cantante: { nombre: string; rol: string }, cantanteIndex: number) => (
                                   <div key={cantanteIndex} className="flex items-center gap-2">
                                     <User className="h-3 w-3 text-gray-400" />
                                     <span className="text-xs text-gray-600 font-medium">{cantante.nombre}</span>
-                                    <span className="text-xs bg-gray-100 text-gray-600 px-2 py-0.5 rounded">
-                                      {cantante.rol.replace('_', ' ')}
-                                    </span>
+                                    <span className="text-xs bg-gray-100 text-gray-600 px-2 py-0.5 rounded">{cantante.rol.replace('_', ' ')}</span>
                                   </div>
                                 ))}
                               </div>
                             </div>
-                          ))
+                          ));
                         })()}
                         {proximoServicio.todasLasCanciones.length > 3 && (
                           <div className="text-center py-2">
@@ -623,4 +645,4 @@ export default function DashboardCantante() {
       </div>
     </Layout>
   )
-} 
+}

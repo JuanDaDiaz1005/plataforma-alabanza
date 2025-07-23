@@ -43,15 +43,17 @@ export default function ProximoServicioResumen({
   obtenerTextoEstado,
   obtenerTextoRol
 }: ProximoServicioResumenProps) {
-  // Agrupar asignaciones por canción
-  const agrupadas = proximoServicio.asignaciones.reduce((acc: Record<string, { cancion: AsignacionServicio['cancion']; asignaciones: AsignacionServicio[]; index: number } & { _order?: string[] }>, asignacion: AsignacionServicio) => {
+  // Agrupar asignaciones por canción y mantener el orden
+  const agrupadas: Record<string, { cancion: AsignacionServicio['cancion']; asignaciones: AsignacionServicio[]; index: number }> = {};
+  const order: string[] = [];
+  proximoServicio.asignaciones.forEach((asignacion) => {
     const id = asignacion.cancion.id;
-    if (!acc[id]) acc[id] = { cancion: asignacion.cancion, asignaciones: [], index: acc._order ? acc._order.length : 0 };
-    acc[id].asignaciones.push(asignacion);
-    if (!acc._order) acc._order = [];
-    if (!acc._order.includes(id)) acc._order.push(id);
-    return acc;
-  }, {} as Record<string, { cancion: AsignacionServicio['cancion']; asignaciones: AsignacionServicio[]; index: number } & { _order?: string[] }>);
+    if (!agrupadas[id]) {
+      agrupadas[id] = { cancion: asignacion.cancion, asignaciones: [], index: order.length };
+      order.push(id);
+    }
+    agrupadas[id].asignaciones.push(asignacion);
+  });
 
   return (
     <div className="bg-white rounded-xl shadow-sm border p-6">
@@ -110,14 +112,9 @@ export default function ProximoServicioResumen({
                   <p className="text-sm font-semibold text-gray-700">Repertorio programado:</p>
                 </div>
                 <div className="space-y-3">
-                  {Object.entries(agrupadas)
-                    .filter(([key]) => key !== '_order')
-                    .sort((a, b) => {
-                      const orderA = proximoServicio.asignaciones.findIndex((asig: AsignacionServicio) => asig.cancion.id === a[0]);
-                      const orderB = proximoServicio.asignaciones.findIndex((asig: AsignacionServicio) => asig.cancion.id === b[0]);
-                      return orderA - orderB;
-                    })
-                    .map(([cancionId, { cancion, asignaciones }]) => (
+                  {order.map((cancionId) => {
+                    const { cancion, asignaciones } = agrupadas[cancionId];
+                    return (
                       <div key={cancionId} className="bg-white rounded-lg p-4 border border-gray-100 shadow-sm hover:shadow-md transition-all duration-200">
                         <div className="font-bold text-gray-900 text-sm mb-1">{cancion.titulo} <span className="text-gray-500 font-normal">por {cancion.artista}</span></div>
                         <div className="space-y-1">
@@ -130,7 +127,8 @@ export default function ProximoServicioResumen({
                           ))}
                         </div>
                       </div>
-                    ))}
+                    );
+                  })}
                 </div>
               </div>
             )}

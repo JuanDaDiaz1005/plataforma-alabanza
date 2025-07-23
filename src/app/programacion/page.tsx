@@ -70,7 +70,7 @@ export default function ProgramacionPage() {
   // Estados para paginación
   const [paginaActual, setPaginaActual] = useState(1)
   const [totalPaginas, setTotalPaginas] = useState(1)
-  const limite = 12
+  const limite = 6
 
   // Verificar permisos
   const puedeCrear = session?.user?.role === 'ADMINISTRADOR' || session?.user?.role === 'LIDER_ALABANZA'
@@ -431,4 +431,4 @@ export default function ProgramacionPage() {
       </div>
     </Layout>
   )
-} 
+}

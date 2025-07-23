@@ -27,6 +27,7 @@ interface Usuario {
   id: string
   nombre: string
   email: string
+  rol: string // <- Añadido para tipado correcto
 }
 
 interface FormularioAsignacion {
@@ -35,6 +36,48 @@ interface FormularioAsignacion {
   rolCancion: string
   estadoPreparacion: string
   notasPersonales: string
+}
+
+interface Programacion {
+  id: string;
+  fecha: string;
+  tipoServicio: string;
+  notas?: string;
+  activa: boolean;
+  fechaCreacion: string;
+  asignaciones: Asignacion[];
+  comentarios: Comentario[];
+}
+
+interface Asignacion {
+  id: string;
+  rolCancion: string;
+  estadoPreparacion: string;
+  notasPersonales?: string;
+  fechaCreacion: string;
+  usuario: {
+    id: string;
+    nombre: string;
+    email: string;
+  };
+  cancion: {
+    id: string;
+    titulo: string;
+    artista: string;
+    duracionSegundos?: number;
+    tonalidad?: string;
+  };
+}
+
+interface Comentario {
+  id: string;
+  contenido: string;
+  fechaCreacion: string;
+  usuario: {
+    id: string;
+    nombre: string;
+    role: string;
+  };
 }
 
 const ROLES_CANCION = [
@@ -57,7 +100,7 @@ export default function AsignarCancion() {
   const router = useRouter()
   const programacionId = params?.id as string
 
-  const [programacion, setProgramacion] = useState<unknown>(null)
+  const [programacion, setProgramacion] = useState<Programacion | null>(null)
   const [canciones, setCanciones] = useState<Cancion[]>([])
   const [cantantes, setCantantes] = useState<Usuario[]>([])
   const [cargando, setCargando] = useState(true)
@@ -460,4 +503,4 @@ export default function AsignarCancion() {
       </div>
     </Layout>
   )
-} 
+}

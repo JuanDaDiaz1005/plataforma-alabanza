@@ -60,13 +60,6 @@ const ROLES = [
   { value: 'CANTANTE', label: 'Cantante' }
 ]
 
-const RANGOS_VOCALES = [
-  { value: 'SOPRANO', label: 'Soprano' },
-  { value: 'CONTRALTO', label: 'Contralto' },
-  { value: 'TENOR', label: 'Tenor' },
-  { value: 'BAJO', label: 'Bajo' }
-]
-
 export default function PaginaUsuarios() {
   const { data: session } = useSession()
   const [usuarios, setUsuarios] = useState<Usuario[]>([])
@@ -114,13 +107,15 @@ export default function PaginaUsuarios() {
     try {
       const params = new URLSearchParams({
         page: paginaActual.toString(),
-        limite: '12'
+        limite: '6'
       })
       
       if (busqueda) params.append('busqueda', busqueda)
-      if (rolFiltro) params.append('role', rolFiltro)
+      if (rolFiltro) params.append('rol', rolFiltro)
 
-      const response = await fetch(`/api/usuarios?${params}`)
+      const response = await fetch(`/api/usuarios?${params}`, {
+        credentials: 'include'
+      })
       
       if (!response.ok) {
         throw new Error('Error al cargar usuarios')
@@ -835,4 +830,4 @@ export default function PaginaUsuarios() {
       )}
     </Layout>
   )
-} 
+}

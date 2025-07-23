@@ -90,7 +90,7 @@ export default function EditarCancion({ params }: { params: Promise<{ id: string
         tonalidad: data.tonalidad || ''
       })
     } catch (error: unknown) {
-      setError(error.message)
+      setError(error instanceof Error ? error.message : 'Error desconocido')
     } finally {
       setCargando(false)
     }
@@ -158,7 +158,7 @@ export default function EditarCancion({ params }: { params: Promise<{ id: string
       router.push(`/canciones/${cancionActualizada.id}`)
 
     } catch (error: unknown) {
-      setError(error.message)
+      setError(error instanceof Error ? error.message : 'Error desconocido')
     } finally {
       setGuardando(false)
     }
@@ -366,4 +366,4 @@ export default function EditarCancion({ params }: { params: Promise<{ id: string
       </div>
     </Layout>
   )
-} 
+}

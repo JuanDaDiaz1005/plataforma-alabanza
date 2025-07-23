@@ -518,9 +518,8 @@ export default function CancionesPage() {
                           const res = await fetch(`/api/canciones/${asignacion.cancion.id}/recursos`);
                           if (!res.ok) return;
                           const recursos = await res.json();
-                          const recursoYT = recursos.find((r: any) => (r).tipo === 'CANCION_ORIGINAL' && (r).plataforma === 'YOUTUBE');
-                          console.log(recursoYT);
-                          if (recursoYT.url) window.open(recursoYT.url, '_blank');
+                          const recursoYT = (recursos as Array<{tipo: string, plataforma: string, url?: string}>).find((r) => r.tipo === 'CANCION_ORIGINAL' && r.plataforma === 'YOUTUBE');
+                          if (recursoYT && recursoYT.url) window.open(recursoYT.url, '_blank');
                           else {
                             setMensajeCard(prev => ({ ...prev, [asignacion.id]: 'No hay enlace de YouTube configurado para esta canción.' }));
                             if (timeoutRef.current[asignacion.id]) clearTimeout(timeoutRef.current[asignacion.id]);
@@ -540,8 +539,8 @@ export default function CancionesPage() {
                           const res = await fetch(`/api/canciones/${asignacion.cancion.id}/recursos`);
                           if (!res.ok) return;
                           const recursos = await res.json();
-                          const recurso = recursos.find((r: any) => (r).tipo === 'PISTA_INSTRUMENTAL' && (r).plataforma === 'MP3_LOCAL');
-                          if (!recurso) {
+                          const recurso = (recursos as Array<{tipo: string, plataforma: string, url?: string, id?: string}>).find((r) => r.tipo === 'PISTA_INSTRUMENTAL' && r.plataforma === 'MP3_LOCAL');
+                          if (!recurso || !recurso.url || !recurso.id) {
                             setMensajeCard(prev => ({ ...prev, [asignacion.id]: 'No hay pista instrumental disponible para esta canción.' }));
                             if (timeoutRef.current[asignacion.id]) clearTimeout(timeoutRef.current[asignacion.id]);
                             timeoutRef.current[asignacion.id] = setTimeout(() => {
@@ -647,17 +646,33 @@ export default function CancionesPage() {
                         <Info className="h-5 w-5" />
                         <span className="text-sm font-semibold">Detalles</span>
                       </Link>
+                      {/* Botón para abrir la canción en YouTube */}
+                      <button
+                        className="flex items-center justify-center gap-2 px-6 py-4 text-blue-700 hover:text-white hover:bg-blue-600 rounded-xl border border-blue-200 font-semibold shadow-sm transition-all duration-200 min-h-[48px] flex-1 sm:flex-none"
+                        title="Ver canción en YouTube"
+                        onClick={async () => {
+                          const res = await fetch(`/api/canciones/${asignacion.cancion.id}/recursos`);
+                          if (!res.ok) return;
+                          const recursos = await res.json();
+                          const recursoYT = (recursos as Array<{tipo: string, plataforma: string, url?: string}>).find((r) => r.tipo === 'CANCION_ORIGINAL' && r.plataforma === 'YOUTUBE');
+                          if (recursoYT && recursoYT.url) window.open(recursoYT.url, '_blank');
+                        }}
+                      >
+                        <ExternalLink className="h-5 w-5" />
+                        <span className="text-sm font-semibold">Canción</span>
+                      </button>
+                      {/* Botón para abrir el video de danza en YouTube */}
                       {asignacion.cancion.videoDanza && (
-                        <Link 
+                        <a
                           href={asignacion.cancion.videoDanza}
                           target="_blank"
                           rel="noopener noreferrer"
-                          className="flex items-center justify-center gap-2 px-6 py-4 text-gray-600 hover:text-red-700 hover:bg-red-50 rounded-xl transition-all duration-200 border-2 border-gray-200 hover:border-red-300 font-semibold shadow-sm hover:shadow-md active:scale-95 min-h-[48px] flex-1 sm:flex-none"
+                          className="flex items-center justify-center gap-2 px-6 py-4 text-red-700 hover:text-white hover:bg-red-600 rounded-xl border border-red-200 font-semibold shadow-sm transition-all duration-200 min-h-[48px] flex-1 sm:flex-none"
                           title="Ver video de danza"
                         >
                           <PlayCircle className="h-5 w-5" />
                           <span className="text-sm font-semibold">Video</span>
-                        </Link>
+                        </a>
                       )}
                     </div>
                   </div>
@@ -727,4 +742,4 @@ export default function CancionesPage() {
       </div>
     </Layout>
   )
-} 
+}

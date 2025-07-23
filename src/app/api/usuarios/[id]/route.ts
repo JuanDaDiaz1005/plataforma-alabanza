@@ -3,6 +3,7 @@ import { getServerSession } from 'next-auth'
 import { prisma } from '@/lib/prisma'
 import { authOptions } from '@/lib/auth'
 import bcrypt from 'bcryptjs'
+import type { Prisma } from '@prisma/client'
 
 // GET /api/usuarios/[id] - Obtener usuario específico
 export async function GET(
@@ -78,7 +79,7 @@ export async function PUT(
     }
 
     // Validaciones y actualización solo para nombre, email, rol y contraseñas
-    const datosActualizacion: Record<string, unknown> = {};
+    const datosActualizacion: Prisma.UsuarioUpdateInput = {};
     if (nombre) datosActualizacion.nombre = nombre;
     if (email) datosActualizacion.email = email;
 
@@ -210,4 +211,4 @@ export async function DELETE(
       { status: 500 }
     )
   }
-} 
+}

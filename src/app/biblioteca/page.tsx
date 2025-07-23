@@ -15,9 +15,6 @@ import {
   Clock,
   Mic2,
   Headphones,
-  Youtube,
-  Edit,
-  Save,
   X,
   Plus
 } from 'lucide-react'
@@ -28,7 +25,7 @@ interface RecursoAudio {
   tipo: string
   plataforma: string
   url: string
-  metadatos?: unknown
+  metadatos?: Record<string, object>
   fechaCreacion: string
 }
 
@@ -47,16 +44,6 @@ interface CancionBiblioteca {
     asignaciones: number
     comentarios: number
   }
-}
-
-interface AudioPlayerState {
-  isPlaying: boolean
-  currentTime: number
-  duration: number
-  volume: number
-  isMuted: boolean
-  currentSong: CancionBiblioteca | null
-  currentResource: RecursoAudio | null
 }
 
 export default function BibliotecaPage() {
@@ -79,13 +66,10 @@ export default function BibliotecaPage() {
   // Estado del reproductor
   const [cargandoAudio, setCargandoAudio] = useState(false)
 
-  // Estados para gestión de videos de danza
-  const [editandoVideo, setEditandoVideo] = useState<string | null>(null)
-  const [nuevoVideoUrl, setNuevoVideoUrl] = useState('')
+  // Estado para video de danza
+  const [videoEditandoId, setVideoEditandoId] = useState<string | null>(null)
+  const [videoDanzaInput, setVideoDanzaInput] = useState('')
   const [guardandoVideo, setGuardandoVideo] = useState(false)
-
-  // Verificar permisos de danza
-  const esLiderDanza = session?.user?.role === 'LIDER_DANZA'
 
   const cargarCanciones = async () => {
     try {
@@ -107,7 +91,7 @@ export default function BibliotecaPage() {
       }
     } catch (error) {
       console.error('Error al cargar biblioteca:', error)
-      setError('Error al cargar la biblioteca')
+      setError(error instanceof Error ? error.message : 'Error al cargar la biblioteca')
     } finally {
       setCargando(false)
     }
@@ -171,7 +155,7 @@ export default function BibliotecaPage() {
       });
     } catch (error) {
       console.error('Error al obtener URL firmada:', error)
-      alert('Error al cargar el audio. Por favor, intenta de nuevo.')
+      alert(error instanceof Error ? error.message : 'Error al cargar el audio. Por favor, intenta de nuevo.')
     } finally {
       setCargandoAudio(false)
     }
@@ -200,82 +184,6 @@ export default function BibliotecaPage() {
       case 'SPOTIFY': return <Music className="h-4 w-4" />
       case 'YOUTUBE': return <Play className="h-4 w-4" />
       default: return <Music className="h-4 w-4" />
-    }
-  }
-
-  // Funciones para gestionar videos de danza
-  const manejarEdicionVideo = (cancionId: string, videoActual?: string) => {
-    setEditandoVideo(cancionId)
-    setNuevoVideoUrl(videoActual || '')
-  }
-
-  const cancelarEdicionVideo = () => {
-    setEditandoVideo(null)
-    setNuevoVideoUrl('')
-  }
-
-  const guardarVideoDanza = async (cancionId: string) => {
-    if (!nuevoVideoUrl.trim() || guardandoVideo) return
-
-    // Validar URL de YouTube
-    if (!nuevoVideoUrl.includes('youtube.com') && !nuevoVideoUrl.includes('youtu.be')) {
-      alert('Por favor ingresa una URL válida de YouTube')
-      return
-    }
-
-    try {
-      setGuardandoVideo(true)
-      
-      const response = await fetch(`/api/canciones/${cancionId}/video-danza`, {
-        method: 'PUT',
-        headers: {
-          'Content-Type': 'application/json'
-        },
-        body: JSON.stringify({ videoDanza: nuevoVideoUrl.trim() })
-      })
-
-      if (response.ok) {
-        // Actualizar el estado local
-        setCanciones(prev => prev.map(cancion => 
-          cancion.id === cancionId 
-            ? { ...cancion, videoDanza: nuevoVideoUrl.trim() }
-            : cancion
-        ))
-        cancelarEdicionVideo()
-      } else {
-        const error = await response.json()
-        alert(error.error || 'Error al guardar el video de danza')
-      }
-    } catch (error) {
-      console.error('Error:', error)
-      alert('Error al guardar el video de danza')
-    } finally {
-      setGuardandoVideo(false)
-    }
-  }
-
-  const eliminarVideoDanza = async (cancionId: string) => {
-    if (!confirm('¿Estás seguro de eliminar el video de danza?')) return
-
-    try {
-      const response = await fetch(`/api/canciones/${cancionId}/video-danza`, {
-        method: 'DELETE'
-      })
-
-      if (response.ok) {
-        // Actualizar el estado local
-        setCanciones(prev => prev.map(cancion => 
-          cancion.id === cancionId 
-            ? { ...cancion, videoDanza: undefined }
-            : cancion
-        ))
-      } else {
-        const error = await response.json()
-        alert(error.error || 'Error al eliminar el video de danza')
-      }
-    } catch (error) {
-      console.error('Error:', error)
-      alert('Error al eliminar el video de danza')
     }
   }
 
@@ -505,6 +413,62 @@ export default function BibliotecaPage() {
                       ))}
                     </div>
                   </div>
+                  {/* Video de danza en la biblioteca, estilo mejorado */}
+                  {cancion.videoDanza && (
+                    <div className="mt-2 flex items-center gap-2">
+                      <span className="inline-flex items-center gap-1 px-2 py-1 bg-pink-50 text-pink-700 rounded-lg text-xs font-semibold border border-pink-200">
+                        <Play className="h-4 w-4" />
+                        Video de Danza
+                      </span>
+                      <a href={cancion.videoDanza} target="_blank" rel="noopener noreferrer" className="inline-flex items-center gap-2 px-3 py-1 bg-red-100 text-red-700 rounded-lg hover:bg-red-200 text-xs font-medium border border-red-200 transition-colors">
+                        <ExternalLink className="h-4 w-4" />
+                        Ver en YouTube
+                      </a>
+                    </div>
+                  )}
+                  {session?.user?.role === 'LIDER_DANZA' && (
+                    <button
+                      className="mt-2 inline-flex items-center gap-2 px-3 py-1 bg-purple-100 text-purple-700 rounded-lg hover:bg-purple-200 text-xs font-medium border border-purple-200 transition-colors"
+                      onClick={() => setVideoEditandoId(cancion.id)}
+                    >
+                      <Play className="h-4 w-4" />
+                      {cancion.videoDanza ? 'Editar Video de Danza' : 'Agregar Video de Danza'}
+                    </button>
+                  )}
+                  {videoEditandoId === cancion.id && (
+                    <form
+                      className="mt-2 flex gap-2 items-center"
+                      onSubmit={async e => {
+                        e.preventDefault();
+                        setGuardandoVideo(true);
+                        const res = await fetch(`/api/canciones/${cancion.id}/video-danza`, {
+                          method: 'PUT',
+                          headers: { 'Content-Type': 'application/json' },
+                          body: JSON.stringify({ videoDanza: videoDanzaInput })
+                        });
+                        setGuardandoVideo(false);
+                        if (res.ok) {
+                          setVideoEditandoId(null);
+                          window.location.reload();
+                        } else {
+                          alert('Error al guardar el video de danza');
+                        }
+                      }}
+                    >
+                      <input
+                        type="url"
+                        required
+                        placeholder="URL de YouTube"
+                        className="px-3 py-1 border border-gray-300 rounded-lg text-xs w-full focus:outline-none focus:ring-2 focus:ring-pink-500"
+                        value={videoDanzaInput}
+                        onChange={e => setVideoDanzaInput(e.target.value)}
+                      />
+                      <button type="submit" disabled={guardandoVideo} className="px-3 py-1 bg-pink-600 text-white rounded-lg text-xs font-medium shadow hover:bg-pink-700 transition-colors">
+                        {guardandoVideo ? 'Guardando...' : 'Guardar'}
+                      </button>
+                      <button type="button" onClick={() => setVideoEditandoId(null)} className="px-3 py-1 bg-gray-100 text-gray-700 rounded-lg text-xs font-medium border border-gray-300 hover:bg-gray-200 transition-colors">Cancelar</button>
+                    </form>
+                  )}
                   {/* Acciones al pie del card */}
                   <div className="flex justify-end items-center mt-4 pt-4 border-t border-gray-100">
                     <Link
@@ -563,4 +527,4 @@ export default function BibliotecaPage() {
       </div>
     </Layout>
   )
-} 
+}
