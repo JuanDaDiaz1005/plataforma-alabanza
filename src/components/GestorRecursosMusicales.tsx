@@ -382,7 +382,7 @@ export default function GestorRecursosMusicales({
             {formulario.tipo === 'PISTA_INSTRUMENTAL' && puedeSubirArchivo && (
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-2">
-                  Archivo MP3 (opcional)
+                  Archivo MP3
                 </label>
                 <input
                   type="file"
@@ -390,17 +390,29 @@ export default function GestorRecursosMusicales({
                   onChange={async e => {
                     const file = e.target.files?.[0]
                     if (file) {
-                      const formData = new FormData()
-                      formData.append('file', file)
                       setGuardando(true)
                       setError('')
                       try {
-                        const res = await fetch('/api/upload-audio', { method: 'POST', body: formData })
+                        // 1. Solicitar la URL firmada
+                        const res = await fetch(`/api/upload-audio?name=${encodeURIComponent(file.name)}`)
                         const data = await res.json()
-                        if (res.ok && data.url) {
+                        if (!res.ok || !data.url) {
+                          setError(data.error || 'Error al obtener la URL de subida')
+                          setGuardando(false)
+                          return
+                        }
+                        // 2. Subir el archivo directamente a R2
+                        const putRes = await fetch(data.url, {
+                          method: 'PUT',
+                          headers: {
+                            'Content-Type': 'audio/mpeg'
+                          },
+                          body: file
+                        })
+                        if (putRes.ok) {
                           setFormulario(f => ({ ...f, url: data.url }))
                         } else {
-                          setError(data.error || 'Error al subir el archivo')
+                          setError('Error al subir el archivo a Cloudflare R2')
                         }
                       } catch {
                         setError('Error al subir el archivo')
