@@ -431,7 +431,7 @@ export default function DashboardCantante() {
           </div>
         )}
 
-        {/* Mis asignaciones */}
+        {/*
         <div className="bg-white rounded-xl shadow-sm border p-6">
           <div className="flex items-center gap-3 mb-6">
             <div className="bg-gradient-to-r from-green-500 to-emerald-600 p-2 rounded-lg">
@@ -580,7 +580,7 @@ export default function DashboardCantante() {
             )}
           </div>
         </div>
-
+        /*}
         {/* Acciones rápidas para cantantes */}
         <div className="bg-white rounded-xl shadow-sm border p-6">
           <div className="flex items-center gap-3 mb-6">

@@ -151,12 +151,12 @@ export default function GestorRecursosMusicales({
       return
     }
     // Si es pista, solo requiere url (que puede ser la del mp3 subido)
-    if (formulario.tipo === 'PISTA_INSTRUMENTAL' && !formulario.url) {
+    if ((formulario.tipo === 'PISTA_INSTRUMENTAL' || formulario.tipo === 'CANCION_ORIGINAL') && !formulario.url) {
       setError('Debes subir un archivo mp3 para la pista')
       return
     }
     // Para otros tipos, requiere tipo y url
-    if (formulario.tipo !== 'PISTA_INSTRUMENTAL' && !formulario.url) {
+    if (formulario.tipo !== 'PISTA_INSTRUMENTAL' && formulario.tipo !== 'CANCION_ORIGINAL' && !formulario.url) {
       setError('La URL es requerida')
       return
     }
@@ -350,7 +350,7 @@ export default function GestorRecursosMusicales({
               </div>
             </div>
 
-            {formulario.tipo !== 'PISTA_INSTRUMENTAL' && (
+            {formulario.tipo !== 'PISTA_INSTRUMENTAL' && formulario.tipo !== 'CANCION_ORIGINAL' && (
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-2">
                   URL de YouTube *
@@ -360,7 +360,7 @@ export default function GestorRecursosMusicales({
                   value={formulario.url}
                   onChange={e => setFormulario(f => ({ ...f, url: e.target.value }))}
                   placeholder="https://www.youtube.com/watch?v=..."
-                  required={formulario.tipo !== 'PISTA_INSTRUMENTAL'}
+                  required={formulario.tipo !== 'PISTA_INSTRUMENTAL' && formulario.tipo !== 'CANCION_ORIGINAL'}
                   className="block w-full border border-gray-300 rounded-lg p-2"
                 />
               </div>
@@ -379,7 +379,7 @@ export default function GestorRecursosMusicales({
               />
             </div>
 
-            {formulario.tipo === 'PISTA_INSTRUMENTAL' && puedeSubirArchivo && (
+            {(formulario.tipo === 'PISTA_INSTRUMENTAL' || formulario.tipo === 'CANCION_ORIGINAL') && puedeSubirArchivo && (
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-2">
                   Archivo MP3

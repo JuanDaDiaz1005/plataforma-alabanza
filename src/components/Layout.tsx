@@ -154,7 +154,7 @@ export default function Layout({ children }: LayoutProps) {
           </div>
 
           {/* Navigation mejorada */}
-          <nav className="flex-1 px-[clamp(2px,1vw,8px)] py-[clamp(2px,1vw,8px)] space-y-[clamp(2px,0.5vw,8px)]">
+          <nav className="flex-1 px-[clamp(2px,1vw,8px)] py-[clamp(2px,1vw,8px)] space-y-[clamp(2px,0.5vw,8px)] mx-4">
             {menuFiltrado.map((item) => {
               // Lógica mejorada para detectar si el item está activo
               let esActivo = false
@@ -174,7 +174,7 @@ export default function Layout({ children }: LayoutProps) {
                   key={item.href}
                   href={item.href}
                   onClick={() => setSidebarOpen(false)}
-                  className={`flex items-center gap-[clamp(2px,0.5vw,8px)] px-[clamp(2px,1vw,8px)] py-[clamp(2px,1vw,8px)] pl-4 sm:pl-6 rounded-xl font-medium transition-all duration-300 text-[clamp(10px,2.5vh,16px)] ${
+                  className={`flex items-center my-3 gap-[clamp(2px,0.5vw,8px)] px-[clamp(2px,1vw,8px)] py-[clamp(2px,1vw,8px)] pl-4 sm:pl-6 rounded-xl font-medium transition-all duration-300 text-[clamp(10px,2.5vh,16px)] ${
                     esActivo
                       ? 'bg-gradient-to-r from-blue-500 to-purple-600 text-white shadow-lg transform scale-105'
                       : 'text-gray-600 hover:bg-gradient-to-r hover:from-blue-50 hover:to-purple-50 hover:text-gray-900 hover:shadow-md transform hover:scale-105'
@@ -202,7 +202,7 @@ export default function Layout({ children }: LayoutProps) {
               onClick={() => setSidebarOpen(false)}
               className="flex items-center gap-[clamp(2px,0.5vw,8px)] px-[clamp(2px,1vw,8px)] py-[clamp(2px,1vw,8px)] rounded-xl font-medium text-gray-600 hover:bg-gradient-to-r hover:from-gray-100 hover:to-gray-200 hover:text-gray-900 transition-all duration-300 text-[clamp(10px,2.5vh,16px)]"
             >
-              <div className="rounded-lg p-[clamp(1px,0.5vw,6px)] bg-gray-100">
+              <div className="rounded-lg p-[clamp(1px,0.5vw,6px)] bg-gray-100 mx-3 my-2">
                 <Settings className="w-[clamp(12px,2.5vh,20px)] h-[clamp(12px,2.5vh,20px)]" />
               </div>
               Configuración
@@ -211,7 +211,7 @@ export default function Layout({ children }: LayoutProps) {
               onClick={manejarLogout}
               className="w-full flex items-center gap-[clamp(2px,0.5vw,8px)] px-[clamp(2px,1vw,8px)] py-[clamp(2px,1vw,8px)] rounded-xl font-medium text-red-600 hover:bg-gradient-to-r hover:from-red-50 hover:to-pink-50 transition-all duration-300 text-[clamp(10px,2.5vh,16px)]"
             >
-              <div className="rounded-lg p-[clamp(1px,0.5vw,6px)] bg-red-100">
+              <div className="rounded-lg p-[clamp(1px,0.5vw,6px)] bg-red-100 mx-3 my-2">
                 <LogOut className="w-[clamp(12px,2.5vh,20px)] h-[clamp(12px,2.5vh,20px)]" />
               </div>
               Cerrar Sesión

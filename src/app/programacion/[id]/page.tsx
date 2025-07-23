@@ -482,7 +482,7 @@ export default function DetalleProgramacion() {
 
   return (
     <Layout titulo={`Programación ${formatearTipoServicio(programacion.tipoServicio)}`}>
-      <div className="space-y-6">
+      <div className="space-y-4">
         {/* Header con gradiente */}
         <div className="bg-gradient-to-r from-purple-600 to-pink-600 rounded-xl p-6 text-white">
           <div className="flex items-start justify-between">
@@ -551,7 +551,7 @@ export default function DetalleProgramacion() {
             </div>
           </div>
 
-          {!esDanza && (
+          {esDanza && (
             <>
               <div className="bg-white rounded-xl shadow-sm border border-gray-100 p-6 hover:shadow-md transition-all duration-200">
                 <div className="flex items-center gap-4">
@@ -676,7 +676,7 @@ export default function DetalleProgramacion() {
                   }, {} as Record<string, { cancion: Asignacion['cancion'], asignaciones: Asignacion[] }>)).map(([cancionId, { cancion, asignaciones }]) => (
                     <div key={cancionId} className="bg-green-50 border border-green-200 shadow rounded-xl p-6 mb-6">
                       <div className="flex-1 min-w-0">
-                        <p className="font-bold text-gray-900 text-base mb-1 break-words">{cancion.titulo} <span className="text-gray-500 font-normal">por {cancion.artista}</span> {cancion.tonalidad && (<span className="ml-2 bg-gray-100 text-gray-700 px-2 py-1 rounded text-xs">{cancion.tonalidad}</span>)}</p>
+                        <p className="font-bold text-gray-900 text-base mb-1">{cancion.titulo} <span className="text-gray-500 font-normal">por {cancion.artista}</span> {cancion.tonalidad && (<span className="ml-2 bg-gray-100 text-gray-700 px-2 py-1 rounded text-xs">{cancion.tonalidad}</span>)}</p>
                         {/* Mostrar líderes de danza asignados para esta canción */}
                         {lideresPorCancion[cancionId]?.lideres && lideresPorCancion[cancionId].lideres.length > 0 ? (
                           <div className="mt-2 flex flex-wrap gap-2">
@@ -724,7 +724,7 @@ export default function DetalleProgramacion() {
                           ))}
                         </div>
                       </div>
-                      <div className="flex flex-col sm:flex-row gap-2 w-full min-w-0 relative justify-end items-center">
+                      <div className="flex flex-col gap-2 mt-2 md:mt-0 md:flex-row">
                         {/* Mensaje contextual sobre el card */}
                         {mensajeCard[cancionId] && (
                           <div className="absolute -top-8 left-0 right-0 flex justify-center z-10">
@@ -742,34 +742,58 @@ export default function DetalleProgramacion() {
                           <span className="break-words">Detalles</span>
                         </Link>
                         <button
-                          className="flex items-center gap-2 px-3 py-2 sm:px-6 sm:py-3 bg-white border-2 border-blue-200 rounded-xl shadow hover:bg-blue-50 transition-all duration-200 font-semibold text-blue-700 text-xs sm:text-base min-w-0 w-full sm:w-auto flex-1 truncate"
-                          title="Ver en YouTube"
-                          onClick={async () => {
-                            const res = await fetch(`/api/canciones/${cancion.id}/recursos`);
-                            if (!res.ok) return;
-                            const recursos = await res.json();
-                            const recursoYT = (recursos as Array<{ tipo: string, plataforma: string, url: string }>).find((r) => r.tipo === 'CANCION_ORIGINAL' && r.plataforma === 'YOUTUBE');
-                            if (recursoYT && recursoYT.url) window.open(recursoYT.url, '_blank');
-                            else {
-                              setMensajeCard(prev => ({ ...prev, [cancionId]: 'No hay enlace de YouTube configurado para esta canción.' }));
-                              if (timeoutRef.current[cancionId]) clearTimeout(timeoutRef.current[cancionId]);
-                              timeoutRef.current[cancionId] = setTimeout(() => {
-                                setMensajeCard(prev => ({ ...prev, [cancionId]: '' }));
-                              }, 3500);
-                            }
-                          }}
-                        >
-                          <ExternalLink className="h-5 w-5" />
-                          <span className="break-words">Canción</span>
-                        </button>
-                        <button
                           className="flex items-center gap-2 px-3 py-2 sm:px-6 sm:py-3 bg-white border-2 border-green-200 rounded-xl shadow hover:bg-green-50 transition-all duration-200 font-semibold text-green-700 text-xs sm:text-base min-w-0 w-full sm:w-auto flex-1 truncate"
                           title="Reproducir pista instrumental"
                           onClick={async () => {
                             const res = await fetch(`/api/canciones/${cancion.id}/recursos`);
                             if (!res.ok) return;
                             const recursos = await res.json();
-                            const recurso = (recursos as Array<{ tipo: string, plataforma: string, url: string }>).find((r) => r.tipo === 'PISTA_INSTRUMENTAL' && r.plataforma === 'MP3_LOCAL');
+                            const recurso = (recursos as Array<{ tipo: string, plataforma: string, url: string }>).find((r) => r.tipo === 'CANCION_ORIGINAL' && r.plataforma === 'MP3_LOCAL');
+                            if (!recurso) {
+                              setMensajeCard(prev => ({ ...prev, [cancionId]: 'No hay pista instrumental disponible para esta canción.' }));
+                              if (timeoutRef.current[cancionId]) clearTimeout(timeoutRef.current[cancionId]);
+                              timeoutRef.current[cancionId] = setTimeout(() => {
+                                setMensajeCard(prev => ({ ...prev, [cancionId]: '' }));
+                              }, 3500);
+                              return;
+                            }
+                            let url = recurso.url;
+                            if (url && (url.includes('r2.dev') || url.includes('cloudflarestorage.com'))) {
+                              let key = '';
+                              if (url.includes('r2.dev')) {
+                                const urlParts = url.split('/');
+                                const bucketIndex = urlParts.findIndex((part: string) => part.includes('r2.dev'));
+                                if (bucketIndex !== -1) {
+                                  key = urlParts.slice(bucketIndex + 2).join('/');
+                                }
+                              } else if (url.includes('cloudflarestorage.com')) {
+                                const urlParts = url.split('/');
+                                const bucketIndex = urlParts.findIndex((part: string) => part.includes('cloudflarestorage.com'));
+                                if (bucketIndex !== -1) {
+                                  key = urlParts.slice(bucketIndex + 2).join('/');
+                                }
+                              }
+                              if (!key) key = url;
+                              const signedRes = await fetch(`/api/r2-signed-url?key=${encodeURIComponent(key)}`);
+                              if (signedRes.ok) {
+                                const { url: signedUrl } = await signedRes.json();
+                                url = signedUrl;
+                              }
+                            }
+                            reproducirRecurso(cancion.id, cancion.titulo, cancion.artista, 'CANCION_ORIGINAL');
+                          }}
+                        >
+                          <Headphones className="h-5 w-5" />
+                          <span className="break-words">Canción</span>
+                        </button>
+                        {!(session?.user?.role === 'LIDER_DANZA' || session?.user?.role === 'DANZA') && <button
+                          className="flex items-center gap-2 px-3 py-2 sm:px-6 sm:py-3 bg-white border-2 border-green-200 rounded-xl shadow hover:bg-green-50 transition-all duration-200 font-semibold text-green-700 text-xs sm:text-base min-w-0 w-full sm:w-auto flex-1 truncate"
+                          title="Reproducir pista instrumental"
+                          onClick={async () => {
+                            const res = await fetch(`/api/canciones/${cancion.id}/recursos`);
+                            if (!res.ok) return;
+                            const recursos = await res.json();
+                            const recurso = (recursos as Array<{ tipo: string, plataforma: string, url: string }>).find((r) => (r.tipo === 'PISTA_INSTRUMENTAL' || r.tipo === 'CANCION_ORIGINAL') && r.plataforma === 'MP3_LOCAL');
                             if (!recurso) {
                               setMensajeCard(prev => ({ ...prev, [cancionId]: 'No hay pista instrumental disponible para esta canción.' }));
                               if (timeoutRef.current[cancionId]) clearTimeout(timeoutRef.current[cancionId]);
@@ -807,8 +831,9 @@ export default function DetalleProgramacion() {
                           <Headphones className="h-5 w-5" />
                           <span className="break-words">Pista</span>
                         </button>
+                        }
                         {/* Botón para asignar líder de danza */}
-                        {(session?.user?.role === 'LIDER_DANZA' || session?.user?.role === 'ADMINISTRADOR') && (
+                        {(session?.user?.role === 'LIDER_DANZA') && (
                           <button
                             className="flex items-center gap-2 px-3 py-2 sm:px-6 sm:py-3 bg-gradient-to-r from-purple-500 to-pink-500 text-white rounded-xl shadow hover:from-purple-600 hover:to-pink-600 transition-all duration-200 font-semibold text-xs sm:text-base min-w-0 w-full sm:w-auto flex-1 truncate"
                             title="Asignar líder de danza"
@@ -827,15 +852,17 @@ export default function DetalleProgramacion() {
           </div>
         ) : (
           <div className="bg-white rounded-xl shadow-sm border border-gray-100">
-            <div className="flex items-center gap-3 p-6 border-b border-gray-200">
-              <div className="bg-gradient-to-br from-green-500 to-green-600 p-2 rounded-lg">
-                <Users className="h-5 w-5 text-white" />
+            <div className="flex flex-col items-center justify-center gap-3 p-6 border-b border-gray-200 md:flex-row">
+              <div className='flex'>
+                <div className="bg-gradient-to-br from-green-500 to-green-600 p-2 rounded-lg">
+                  <Users className="h-5 w-5 text-white" />
+                </div>
+              <h2 className="ml-2 text-lg sm:text-xl font-semibold text-gray-900">Asignaciones de Cantantes</h2>
               </div>
-              <h2 className="text-xl font-semibold text-gray-900">Asignaciones de Cantantes</h2>
               {puedeAsignar && (
                 <Link
                   href={`/programacion/${programacion.id}/asignar`}
-                  className="ml-auto inline-flex items-center gap-2 px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 transition-colors font-semibold shadow-sm"
+                  className="inline-flex items-center gap-2 px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 transition-colors font-semibold shadow-sm md:ml-auto"
                 >
                   <Plus className="h-4 w-4" />
                   Nueva Asignación
@@ -866,42 +893,59 @@ export default function DetalleProgramacion() {
                     acc[id].asignaciones.push(asignacion);
                     return acc;
                   }, {} as Record<string, { cancion: Asignacion['cancion'], asignaciones: Asignacion[] }>)).map(([cancionId, { cancion, asignaciones }]) => (
-                    <div key={cancionId} className="bg-gray-50 rounded-lg p-4 flex flex-col md:flex-row md:items-center md:justify-between gap-4">
+                    <div key={cancionId} className="bg-gray-50 rounded-lg p-4 flex flex-col xl:flex-row md:items-center md:justify-between gap-4">
                       <div className="flex-1">
                         <p className="font-bold text-gray-900 text-base mb-1">{cancion.titulo} <span className="text-gray-500 font-normal">por {cancion.artista}</span> {cancion.tonalidad && (<span className="ml-2 bg-gray-100 text-gray-700 px-2 py-1 rounded text-xs">{cancion.tonalidad}</span>)}</p>
-                        {asignaciones.map((asig: Asignacion) => (
-                          <div key={asig.id} className="flex items-center gap-2 text-sm mb-1">
-                            <span className="text-gray-800 font-medium flex items-center gap-1"><User className="h-4 w-4" />{asig.usuario.nombre}</span>
-                            <span className="text-gray-500 flex items-center gap-1"><Music className="h-4 w-4" />{formatearRol(asig.rolCancion)}</span>
-                            {session?.user?.id === asig.usuario.id ? (
-                              <select
-                                value={asig.estadoPreparacion}
-                                onChange={e => cambiarEstadoPreparacion(asig.id, e.target.value)}
-                                className={`text-xs rounded px-2 py-1 border focus:outline-none ${asig.estadoPreparacion === 'PREPARADO' ? 'bg-green-100 text-green-700' : asig.estadoPreparacion === 'NECESITA_AYUDA' ? 'bg-red-100 text-red-700' : 'bg-gray-100 text-gray-700'}`}
-                              >
-                                <option value="PENDIENTE">Pendiente</option>
-                                <option value="EN_PRACTICA">En Práctica</option>
-                                <option value="PREPARADO">Preparado</option>
-                                <option value="NECESITA_AYUDA">Necesita Ayuda</option>
-                              </select>
-                            ) : (
-                              <span className={`text-xs rounded px-2 py-1 border font-semibold ${asig.estadoPreparacion === 'PREPARADO' ? 'bg-green-100 text-green-700 border-green-200' : asig.estadoPreparacion === 'NECESITA_AYUDA' ? 'bg-red-100 text-red-700 border-red-200' : 'bg-gray-100 text-gray-700 border-gray-200'}`}>
-                                {asig.estadoPreparacion === 'PENDIENTE' ? 'Pendiente' : asig.estadoPreparacion === 'EN_PRACTICA' ? 'En Práctica' : asig.estadoPreparacion === 'PREPARADO' ? 'Preparado' : 'Necesita Ayuda'}
+                        {/* Mostrar líderes de danza asignados para esta canción */}
+                        {session?.user?.role === 'LIDER_ALABANZA' && lideresPorCancion[cancionId]?.lideres && lideresPorCancion[cancionId].lideres.length > 0 ? (
+                          <div className="mt-2 flex flex-wrap gap-2">
+                            <span className="text-xs font-semibold text-purple-700 bg-purple-50 px-2 py-1 rounded">Líder(es):</span>
+                            {lideresPorCancion[cancionId].lideres.map(lider => (
+                              <span key={lider.id} className="text-xs text-purple-900 bg-purple-100 px-2 py-1 rounded flex items-center gap-1">
+                                <UserCheck className="h-4 w-4" />{lider.nombre}
                               </span>
-                            )}
-                            {(session?.user?.role === 'LIDER_ALABANZA' || session?.user?.role === 'ADMINISTRADOR') && (
-                              <button
-                                onClick={() => eliminarAsignacion(asig.id)}
-                                className="text-gray-400 hover:text-red-600 p-1"
-                                title="Eliminar asignación"
-                              >
-                                <Trash2 className="h-4 w-4" />
-                              </button>
-                            )}
+                            ))}
+                          </div>
+                        ) : (
+                          <div className="mt-2 text-xs text-gray-500">Sin líder asignado</div>
+                        )}
+                        {asignaciones.map((asig: Asignacion) => (
+                          <div key={asig.id} className="flex flex-col items-center gap-2 text-sm mb-1 sm:flex-row my-4">
+                            <div className="flex flex-col">
+                              <span className="text-gray-800 font-medium flex items-center gap-1"><User className="h-4 w-4" />{asig.usuario.nombre}</span>
+                              <span className="text-gray-500 flex items-center gap-1"><Music className="h-4 w-4" />{formatearRol(asig.rolCancion)}</span>
+                            </div>
+                            <div className="sm:ml-auto md:mr-50">
+                              {session?.user?.id === asig.usuario.id ? (
+                                <select
+                                  value={asig.estadoPreparacion}
+                                  onChange={e => cambiarEstadoPreparacion(asig.id, e.target.value)}
+                                  className={`text-xs rounded px-2 py-1 border focus:outline-none ${asig.estadoPreparacion === 'PREPARADO' ? 'bg-green-100 text-green-700' : asig.estadoPreparacion === 'NECESITA_AYUDA' ? 'bg-red-100 text-red-700' : 'bg-gray-100 text-gray-700'}`}
+                                >
+                                  <option value="PENDIENTE">Pendiente</option>
+                                  <option value="EN_PRACTICA">En Práctica</option>
+                                  <option value="PREPARADO">Preparado</option>
+                                  <option value="NECESITA_AYUDA">Necesita Ayuda</option>
+                                </select>
+                              ) : (
+                                <span className={`text-xs rounded px-2 py-1 border font-semibold ${asig.estadoPreparacion === 'PREPARADO' ? 'bg-green-100 text-green-700 border-green-200' : asig.estadoPreparacion === 'NECESITA_AYUDA' ? 'bg-red-100 text-red-700 border-red-200' : 'bg-gray-100 text-gray-700 border-gray-200'}`}>
+                                  {asig.estadoPreparacion === 'PENDIENTE' ? 'Pendiente' : asig.estadoPreparacion === 'EN_PRACTICA' ? 'En Práctica' : asig.estadoPreparacion === 'PREPARADO' ? 'Preparado' : 'Necesita Ayuda'}
+                                </span>
+                              )}
+                              {(session?.user?.role === 'LIDER_ALABANZA' || session?.user?.role === 'ADMINISTRADOR') && (
+                                <button
+                                  onClick={() => eliminarAsignacion(asig.id)}
+                                  className="text-gray-400 hover:text-red-600 p-1"
+                                  title="Eliminar asignación"
+                                >
+                                  <Trash2 className="h-4 w-4" />
+                                </button>
+                              )}
+                            </div>
                           </div>
                         ))}
                       </div>
-                      <div className="flex gap-2 mt-2 md:mt-0 relative">
+                      <div className="flex flex-col gap-2 mt-2 md:mt-0 md:flex-row">
                         {/* Mensaje contextual sobre el card */}
                         {mensajeCard[cancionId] && (
                           <div className="absolute -top-8 left-0 right-0 flex justify-center z-10">
@@ -912,31 +956,55 @@ export default function DetalleProgramacion() {
                         )}
                         <Link
                           href={`/canciones/${cancion.id}?from=programacion&id=${programacion.id}`}
-                          className="flex items-center gap-2 px-6 py-3 bg-white border-2 border-gray-200 rounded-xl shadow hover:bg-gray-50 transition-all duration-200 font-semibold text-gray-700 text-base"
+                          className="flex items-center gap-2 px-4 py-3 bg-white border-2 border-gray-200 rounded-xl shadow hover:bg-gray-50 transition-all duration-200 font-semibold text-gray-700 text-base"
                           title="Ver detalles de la canción"
                         >
                           <Info className="h-5 w-5" />
                           <span>Detalles</span>
                         </Link>
                         <button
-                          className="flex items-center gap-2 px-6 py-3 bg-white border-2 border-blue-200 rounded-xl shadow hover:bg-blue-50 transition-all duration-200 font-semibold text-blue-700 text-base"
-                          title="Ver en YouTube"
+                          className="flex items-center gap-2 px-6 py-3 bg-white border-2 border-green-200 rounded-xl shadow hover:bg-green-50 transition-all duration-200 font-semibold text-green-700 text-base"
+                          title="Reproducir pista instrumental"
                           onClick={async () => {
                             const res = await fetch(`/api/canciones/${cancion.id}/recursos`);
                             if (!res.ok) return;
                             const recursos = await res.json();
-                            const recursoYT = (recursos as Array<{ tipo: string, plataforma: string, url: string }>).find((r) => r.tipo === 'CANCION_ORIGINAL' && r.plataforma === 'YOUTUBE');
-                            if (recursoYT && recursoYT.url) window.open(recursoYT.url, '_blank');
-                            else {
-                              setMensajeCard(prev => ({ ...prev, [cancionId]: 'No hay enlace de YouTube configurado para esta canción.' }));
+                            const recurso = (recursos as Array<{ tipo: string, plataforma: string, url: string }>).find((r) => r.tipo === 'CANCION_ORIGINAL' && r.plataforma === 'MP3_LOCAL');
+                            if (!recurso) {
+                              setMensajeCard(prev => ({ ...prev, [cancionId]: 'No hay pista instrumental disponible para esta canción.' }));
                               if (timeoutRef.current[cancionId]) clearTimeout(timeoutRef.current[cancionId]);
                               timeoutRef.current[cancionId] = setTimeout(() => {
                                 setMensajeCard(prev => ({ ...prev, [cancionId]: '' }));
                               }, 3500);
+                              return;
                             }
+                            let url = recurso.url;
+                            if (url && (url.includes('r2.dev') || url.includes('cloudflarestorage.com'))) {
+                              let key = '';
+                              if (url.includes('r2.dev')) {
+                                const urlParts = url.split('/');
+                                const bucketIndex = urlParts.findIndex((part: string) => part.includes('r2.dev'));
+                                if (bucketIndex !== -1) {
+                                  key = urlParts.slice(bucketIndex + 2).join('/');
+                                }
+                              } else if (url.includes('cloudflarestorage.com')) {
+                                const urlParts = url.split('/');
+                                const bucketIndex = urlParts.findIndex((part: string) => part.includes('cloudflarestorage.com'));
+                                if (bucketIndex !== -1) {
+                                  key = urlParts.slice(bucketIndex + 2).join('/');
+                                }
+                              }
+                              if (!key) key = url;
+                              const signedRes = await fetch(`/api/r2-signed-url?key=${encodeURIComponent(key)}`);
+                              if (signedRes.ok) {
+                                const { url: signedUrl } = await signedRes.json();
+                                url = signedUrl;
+                              }
+                            }
+                            reproducirRecurso(cancion.id, cancion.titulo, cancion.artista, 'CANCION_ORIGINAL');
                           }}
                         >
-                          <ExternalLink className="h-5 w-5" />
+                          <Headphones className="h-5 w-5" />
                           <span>Canción</span>
                         </button>
                         <button

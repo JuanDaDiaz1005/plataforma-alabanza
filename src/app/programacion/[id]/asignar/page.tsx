@@ -131,13 +131,15 @@ export default function AsignarCancion() {
       
       const [programacionRes, cancionesRes, cantantesRes] = await Promise.all([
         fetch(`/api/programaciones/${programacionId}`),
-        fetch('/api/canciones?limite=100'),
-        fetch('/api/usuarios?role=CANTANTE,LIDER_ALABANZA')
+        fetch('/api/canciones?limite=500'),
+        fetch('/api/usuarios?rol=CANTANTE,LIDER_ALABANZA')
       ])
 
       if (!programacionRes.ok) {
         throw new Error('Programación no encontrada')
       }
+
+      
 
       const [programacionData, cancionesData, cantantesData] = await Promise.all([
         programacionRes.json(),
@@ -145,6 +147,7 @@ export default function AsignarCancion() {
         cantantesRes.json()
       ])
 
+  
       // Validar respuestas de las APIs
       setProgramacion(programacionData)
       setCanciones(Array.isArray(cancionesData.canciones) ? cancionesData.canciones : (Array.isArray(cancionesData) ? cancionesData : []))
@@ -158,6 +161,8 @@ export default function AsignarCancion() {
         console.error('Error al cargar cantantes:', cantantesData)
         setCantantes([]) // Array vacío como fallback
       }
+
+      console.log(cantantesData)
 
     } catch (error) {
       console.error('Error al cargar datos:', error)

@@ -32,8 +32,13 @@ export async function GET(request: NextRequest) {
         { email: { contains: busqueda } }
       ]
     }
-    if (rol && Object.values(RolUsuario).includes(rol as RolUsuario)) {
-      filtros.rol = rol as RolUsuario
+    if (rol) {
+      const rolesArray = rol.split(',').map(r => r.trim()).filter(r => Object.values(RolUsuario).includes(r as RolUsuario))
+      if (rolesArray.length === 1) {
+        filtros.rol = rolesArray[0] as RolUsuario
+      } else if (rolesArray.length > 1) {
+        filtros.rol = { in: rolesArray as RolUsuario[] }
+      }
     }
     if (typeof activo === 'string') {
       if (activo === 'true') filtros.activo = true;

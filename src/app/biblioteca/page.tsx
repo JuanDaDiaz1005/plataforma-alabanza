@@ -76,7 +76,7 @@ export default function BibliotecaPage() {
       setCargando(true)
       const params = new URLSearchParams({
         page: paginaActual.toString(),
-        limite: '12',
+        limite: '8',
         ...(busqueda && { busqueda })
       })
 
@@ -211,13 +211,6 @@ export default function BibliotecaPage() {
             </div>
             
             <div className="flex items-center gap-3">
-              <div className="bg-white/20 rounded-lg p-3">
-                <Headphones className="h-6 w-6" />
-              </div>
-              <div className="text-right">
-                <div className="text-2xl font-bold">{canciones.length}</div>
-                <div className="text-sm text-purple-100">Canciones</div>
-              </div>
               {(session?.user?.role === 'ADMINISTRADOR' || session?.user?.role === 'LIDER_ALABANZA') && (
                 <Link
                   href="/canciones/nueva"
@@ -325,7 +318,7 @@ export default function BibliotecaPage() {
             <p className="text-red-700 text-sm">{error}</p>
           </div>
         ) : canciones.length === 0 ? (
-          <div className="text-center py-16">
+          <div className="text-center py-20">
             <div className="bg-gradient-to-r from-gray-100 to-gray-200 rounded-full w-24 h-24 flex items-center justify-center mx-auto mb-6">
               <Music className="h-12 w-12 text-gray-400" />
             </div>
@@ -333,7 +326,7 @@ export default function BibliotecaPage() {
             <p className="text-gray-600 mb-6">Intenta ajustar los filtros de búsqueda</p>
           </div>
         ) : (
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+          <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-6">
             {canciones.map((cancion) => (
               <div key={cancion.id} className="bg-white rounded-xl shadow-md border border-gray-200 hover:shadow-xl transition-all duration-300 overflow-hidden group flex flex-col justify-between min-h-[420px]">
                 <div className="absolute top-0 left-0 right-0 h-1 bg-gradient-to-r from-purple-500 to-pink-600"></div>
@@ -387,7 +380,7 @@ export default function BibliotecaPage() {
                             <span className={`px-3 py-1 rounded-full text-xs font-medium border ${obtenerColorTipo(recurso.tipo)}`}>{obtenerTextoTipo(recurso.tipo)}</span>
                           </div>
                           <div className="flex gap-2">
-                            {(recurso.plataforma === 'YOUTUBE' || recurso.plataforma === 'SPOTIFY') && recurso.tipo === 'CANCION_ORIGINAL' && recurso.url && (
+                            {(recurso.plataforma === 'YOUTUBE' || recurso.plataforma === 'SPOTIFY' && (recurso.tipo !== 'CANCION_ORIGINAL' && recurso.tipo !== 'PISTA_INSTRUMENTAL')) && recurso.url && (
                               <a
                                 href={recurso.url}
                                 target="_blank"
@@ -502,7 +495,7 @@ export default function BibliotecaPage() {
 
         {/* Paginación */}
         {totalPaginas > 1 && (
-          <div className="flex items-center justify-center gap-4 mt-8">
+          <div className="flex items-center justify-center gap-4 mt-8 mb-5">
             <button
               onClick={() => setPaginaActual(prev => Math.max(1, prev - 1))}
               disabled={paginaActual === 1}

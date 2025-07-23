@@ -408,10 +408,10 @@ export default function CancionesPage() {
                   key={asignacion.id}
                   className="bg-gradient-to-r from-green-50 to-emerald-50 rounded-xl p-6 border border-green-100 hover:border-green-200 hover:shadow-md transition-all duration-300 w-full max-w-full min-w-0 overflow-x-hidden mb-4"
                 >
-                  <div className="flex flex-col lg:flex-row lg:items-start justify-between gap-4 min-w-0">
+                  <div className="flex flex-col lg:items-start justify-between gap-4 min-w-0 xl:flex-row">
                     <div className="flex-1 space-y-4 min-w-0">
                       <div>
-                        <div className="flex items-center gap-3 mb-2">
+                        <div className="flex flex-col md:flex-row items-center gap-3 mb-2">
                           <h4 className="font-bold text-gray-900 text-lg">
                             <Link 
                               href={`/canciones/${asignacion.cancion.id}?from=asignaciones`}
@@ -421,7 +421,7 @@ export default function CancionesPage() {
                             </Link>
                           </h4>
                           {editandoEstado === asignacion.id ? (
-                            <div className="flex items-center gap-2">
+                            <div className="flex flex-col items-center gap-2">
                               <select 
                                 value={nuevoEstado}
                                 onChange={(e) => setNuevoEstado(e.target.value)}
@@ -433,10 +433,11 @@ export default function CancionesPage() {
                                 <option value="PREPARADO">PREPARADO</option>
                                 <option value="NECESITA_AYUDA">NECESITA AYUDA</option>
                               </select>
+                              <div>
                               <button
                                 onClick={() => actualizarEstadoPreparacion(asignacion.id)}
                                 disabled={actualizando}
-                                className="text-sm bg-green-600 text-white px-3 py-1 rounded hover:bg-green-700 disabled:opacity-50 transition-colors"
+                                className="text-sm bg-green-600 text-white px-3 py-1 rounded hover:bg-green-700 disabled:opacity-50 transition-colors mr-3"
                               >
                                 {actualizando ? 'Guardando...' : 'Guardar'}
                               </button>
@@ -447,6 +448,7 @@ export default function CancionesPage() {
                               >
                                 Cancelar
                               </button>
+                              </div>
                             </div>
                           ) : (
                             <div className="flex items-center gap-2">
@@ -464,7 +466,7 @@ export default function CancionesPage() {
                           )}
                         </div>
                         
-                        <div className="flex items-center gap-4 text-sm text-gray-600 mb-3">
+                        <div className="flex flex-col md:flex-row items-center gap-4 text-sm text-gray-600 mb-3">
                           <span className="flex items-center gap-1">
                             <User className="h-4 w-4" />
                             {asignacion.cancion.artista}
@@ -483,7 +485,7 @@ export default function CancionesPage() {
                           </span>
                         </div>
 
-                        <div className="flex items-center gap-4 text-sm">
+                        <div className="flex flex-col md:flex-row items-center gap-4 text-sm">
                           <span className="bg-green-100 text-green-700 px-3 py-1 rounded-full text-sm font-medium">
                             {asignacion.rolCancion.replace('_', ' ')}
                           </span>
@@ -494,7 +496,7 @@ export default function CancionesPage() {
                       </div>
                     </div>
 
-                    <div className="flex flex-col sm:flex-row flex-wrap gap-2 w-full lg:w-auto mt-2 lg:mt-0 min-w-0 justify-end">
+                    <div className="flex flex-col sm:flex-row flex-wrap gap-2 w-full lg:w-auto mt-2 lg:mt-0 min-w-0 justify-end lg:ml-auto">
                       {/* Mensaje contextual sobre el card */}
                       {mensajeCard[asignacion.id] && (
                         <div className="absolute -top-8 left-0 right-0 flex justify-center z-10">
@@ -505,35 +507,65 @@ export default function CancionesPage() {
                       )}
                       <Link 
                         href={`/canciones/${asignacion.cancion.id}?from=asignaciones`}
-                        className="flex items-center gap-2 px-3 py-2 sm:px-6 sm:py-4 text-gray-600 hover:text-green-700 hover:bg-green-50 rounded-xl transition-all duration-200 border-2 border-gray-200 hover:border-green-300 font-semibold shadow-sm hover:shadow-md active:scale-95 min-h-[40px] text-xs sm:text-sm flex-1 sm:flex-none"
+                        className="flex items-center gap-2 px-6 py-4 text-gray-600 hover:text-green-700 hover:bg-green-50 rounded-xl transition-all duration-200 border-2 border-gray-200 hover:border-green-300 font-semibold shadow-sm hover:shadow-md active:scale-95 min-h-[40px] text-xs sm:text-sm flex-1 sm:flex-none"
                         title="Ver detalles de la canción"
                       >
                         <Info className="h-5 w-5" />
-                        <span className="text-xs sm:text-sm font-semibold">Detalles</span>
+                        <span className="text-base font-semibold">Detalles</span>
                       </Link>
                       <button
-                        className="flex items-center gap-2 px-3 py-2 sm:px-6 sm:py-4 text-blue-700 hover:text-white hover:bg-blue-600 rounded-xl border border-blue-200 font-semibold shadow-sm transition-all duration-200 min-h-[40px] text-xs sm:text-sm flex-1 sm:flex-none"
-                        title="Ver en YouTube"
+                        className="flex items-center gap-2 px-6 py-4 text-green-700 hover:text-white hover:bg-green-600 rounded-xl border border-green-200 font-semibold shadow-sm transition-all duration-200 min-h-[40px] text-xs sm:text-sm flex-1 sm:flex-none"
+                        title="Reproducir pista instrumental"
                         onClick={async () => {
                           const res = await fetch(`/api/canciones/${asignacion.cancion.id}/recursos`);
                           if (!res.ok) return;
                           const recursos = await res.json();
-                          const recursoYT = (recursos as Array<{tipo: string, plataforma: string, url?: string}>).find((r) => r.tipo === 'CANCION_ORIGINAL' && r.plataforma === 'YOUTUBE');
-                          if (recursoYT && recursoYT.url) window.open(recursoYT.url, '_blank');
-                          else {
-                            setMensajeCard(prev => ({ ...prev, [asignacion.id]: 'No hay enlace de YouTube configurado para esta canción.' }));
+                          const recurso = (recursos as Array<{tipo: string, plataforma: string, url?: string, id?: string}>).find((r) => r.tipo === 'CANCION_ORIGINAL' && r.plataforma === 'MP3_LOCAL');
+                          if (!recurso || !recurso.url || !recurso.id) {
+                            setMensajeCard(prev => ({ ...prev, [asignacion.id]: 'No hay pista instrumental disponible para esta canción.' }));
                             if (timeoutRef.current[asignacion.id]) clearTimeout(timeoutRef.current[asignacion.id]);
                             timeoutRef.current[asignacion.id] = setTimeout(() => {
                               setMensajeCard(prev => ({ ...prev, [asignacion.id]: '' }));
                             }, 3500);
+                            return;
                           }
+                          let url = recurso.url;
+                          if (url && (url.includes('r2.dev') || url.includes('cloudflarestorage.com'))) {
+                            let key = '';
+                            if (url.includes('r2.dev')) {
+                              const urlParts = url.split('/');
+                              const bucketIndex = urlParts.findIndex((part: string) => part.includes('r2.dev'));
+                              if (bucketIndex !== -1) {
+                                key = urlParts.slice(bucketIndex + 2).join('/');
+                              }
+                            } else if (url.includes('cloudflarestorage.com')) {
+                              const urlParts = url.split('/');
+                              const bucketIndex = urlParts.findIndex((part: string) => part.includes('cloudflarestorage.com'));
+                              if (bucketIndex !== -1) {
+                                key = urlParts.slice(bucketIndex + 2).join('/');
+                              }
+                            }
+                            if (!key) key = url;
+                            const signedRes = await fetch(`/api/r2-signed-url?key=${encodeURIComponent(key)}`);
+                            if (signedRes.ok) {
+                              const { url: signedUrl } = await signedRes.json();
+                              url = signedUrl;
+                            }
+                          }
+                          setTrack({
+                            id: recurso.id,
+                            title: asignacion.cancion.titulo,
+                            artist: asignacion.cancion.artista,
+                            url,
+                            cover: undefined
+                          });
                         }}
                       >
-                        <ExternalLink className="h-5 w-5" />
-                        <span className="text-xs sm:text-sm font-semibold">Canción</span>
+                        <Volume2 className="h-5 w-5" />
+                        <span className="text-base font-semibold">Canción</span>
                       </button>
                       <button
-                        className="flex items-center gap-2 px-3 py-2 sm:px-6 sm:py-4 text-green-700 hover:text-white hover:bg-green-600 rounded-xl border border-green-200 font-semibold shadow-sm transition-all duration-200 min-h-[40px] text-xs sm:text-sm flex-1 sm:flex-none"
+                        className="flex items-center gap-2 px-6 py-4 text-green-700 hover:text-white hover:bg-green-600 rounded-xl border border-green-200 font-semibold shadow-sm transition-all duration-200 min-h-[40px] text-xs sm:text-sm flex-1 sm:flex-none"
                         title="Reproducir pista instrumental"
                         onClick={async () => {
                           const res = await fetch(`/api/canciones/${asignacion.cancion.id}/recursos`);
@@ -581,7 +613,7 @@ export default function CancionesPage() {
                         }}
                       >
                         <Volume2 className="h-5 w-5" />
-                        <span className=" sm:text-sm font-semibold">Pista</span>
+                        <span className="text-base font-semibold">Pista</span>
                       </button>
                     </div>
                   </div>
@@ -608,7 +640,7 @@ export default function CancionesPage() {
                           </h4>
                           <div className="flex items-center gap-2">
                             <span className="bg-purple-100 text-purple-700 px-3 py-1 rounded-full text-sm font-medium border border-purple-200">
-                              💃 Líder de Danza
+                              💃 Líder
                             </span>
                           </div>
                         </div>
@@ -648,18 +680,55 @@ export default function CancionesPage() {
                       </Link>
                       {/* Botón para abrir la canción en YouTube */}
                       <button
-                        className="flex items-center justify-center gap-2 px-6 py-4 text-blue-700 hover:text-white hover:bg-blue-600 rounded-xl border border-blue-200 font-semibold shadow-sm transition-all duration-200 min-h-[48px] flex-1 sm:flex-none"
-                        title="Ver canción en YouTube"
+                        className="flex items-center justify-center gap-2 px-6 py-4 text-green-700 hover:text-white hover:bg-green-600 rounded-xl border border-green-200 font-semibold shadow-sm transition-all duration-200 min-h-[40px] text-xs sm:text-sm flex-1 sm:flex-none"
+                        title="Reproducir pista instrumental"
                         onClick={async () => {
                           const res = await fetch(`/api/canciones/${asignacion.cancion.id}/recursos`);
                           if (!res.ok) return;
                           const recursos = await res.json();
-                          const recursoYT = (recursos as Array<{tipo: string, plataforma: string, url?: string}>).find((r) => r.tipo === 'CANCION_ORIGINAL' && r.plataforma === 'YOUTUBE');
-                          if (recursoYT && recursoYT.url) window.open(recursoYT.url, '_blank');
+                          const recurso = (recursos as Array<{tipo: string, plataforma: string, url?: string, id?: string}>).find((r) => (r.tipo === 'PISTA_INSTRUMENTAL' || r.tipo === 'CANCION_ORIGINAL') && r.plataforma === 'MP3_LOCAL');
+                          if (!recurso || !recurso.url || !recurso.id) {
+                            setMensajeCard(prev => ({ ...prev, [asignacion.id]: 'No hay pista instrumental disponible para esta canción.' }));
+                            if (timeoutRef.current[asignacion.id]) clearTimeout(timeoutRef.current[asignacion.id]);
+                            timeoutRef.current[asignacion.id] = setTimeout(() => {
+                              setMensajeCard(prev => ({ ...prev, [asignacion.id]: '' }));
+                            }, 3500);
+                            return;
+                          }
+                          let url = recurso.url;
+                          if (url && (url.includes('r2.dev') || url.includes('cloudflarestorage.com'))) {
+                            let key = '';
+                            if (url.includes('r2.dev')) {
+                              const urlParts = url.split('/');
+                              const bucketIndex = urlParts.findIndex((part: string) => part.includes('r2.dev'));
+                              if (bucketIndex !== -1) {
+                                key = urlParts.slice(bucketIndex + 2).join('/');
+                              }
+                            } else if (url.includes('cloudflarestorage.com')) {
+                              const urlParts = url.split('/');
+                              const bucketIndex = urlParts.findIndex((part: string) => part.includes('cloudflarestorage.com'));
+                              if (bucketIndex !== -1) {
+                                key = urlParts.slice(bucketIndex + 2).join('/');
+                              }
+                            }
+                            if (!key) key = url;
+                            const signedRes = await fetch(`/api/r2-signed-url?key=${encodeURIComponent(key)}`);
+                            if (signedRes.ok) {
+                              const { url: signedUrl } = await signedRes.json();
+                              url = signedUrl;
+                            }
+                          }
+                          setTrack({
+                            id: recurso.id,
+                            title: asignacion.cancion.titulo,
+                            artist: asignacion.cancion.artista,
+                            url,
+                            cover: undefined
+                          });
                         }}
                       >
-                        <ExternalLink className="h-5 w-5" />
-                        <span className="text-sm font-semibold">Canción</span>
+                        <Volume2 className="h-5 w-5" />
+                        <span className="text-base font-semibold">Canción</span>
                       </button>
                       {/* Botón para abrir el video de danza en YouTube */}
                       {asignacion.cancion.videoDanza && (

@@ -303,7 +303,7 @@ export default function DetalleCancion({ params }: { params: Promise<{ id: strin
         </div>
 
         {/* Video de danza */}
-        {(cancion.videoDanza && esRolDanza) && (
+        {(cancion.videoDanza && esRolDanza && session?.user?.role === 'LIDER_ALABANZA') && (
           <div className="bg-white rounded-lg border border-gray-200 shadow-sm p-6">
             <h2 className="text-lg font-semibold text-gray-900 mb-4 flex items-center gap-2">
               <Play className="h-5 w-5 text-purple-600" />
