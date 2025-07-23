@@ -394,7 +394,7 @@ export default function GestorRecursosMusicales({
                       setError('')
                       try {
                         // 1. Solicitar la URL firmada
-                        const res = await fetch(`/api/upload-audio?name=${encodeURIComponent(file.name)}`)
+                        const res = await fetch(`https://iccap-canciones-cargar-audios.onrender.com/upload-audio?name=${encodeURIComponent(file.name)}`)
                         const data = await res.json()
                         if (!res.ok || !data.url) {
                           setError(data.error || 'Error al obtener la URL de subida')
