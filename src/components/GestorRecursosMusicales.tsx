@@ -393,27 +393,20 @@ export default function GestorRecursosMusicales({
                       setGuardando(true)
                       setError('')
                       try {
-                        // 1. Solicitar la URL firmada
-                        const res = await fetch(`https://iccap-canciones-cargar-audios.onrender.com/upload-audio?name=${encodeURIComponent(file.name)}`)
+                        const formData = new FormData()
+                        formData.append('file', file)
+                        // POST directo al backend
+                        const res = await fetch('https://iccap-canciones-cargar-audios.onrender.com/upload-audio', {
+                          method: 'POST',
+                          body: formData
+                        })
                         const data = await res.json()
                         if (!res.ok || !data.url) {
-                          setError(data.error || 'Error al obtener la URL de subida')
+                          setError(data.error || 'Error al subir el archivo')
                           setGuardando(false)
                           return
                         }
-                        // 2. Subir el archivo directamente a R2
-                        const putRes = await fetch(data.url, {
-                          method: 'PUT',
-                          headers: {
-                            'Content-Type': 'audio/mpeg'
-                          },
-                          body: file
-                        })
-                        if (putRes.ok) {
-                          setFormulario(f => ({ ...f, url: data.url }))
-                        } else {
-                          setError('Error al subir el archivo a Cloudflare R2')
-                        }
+                        setFormulario(f => ({ ...f, url: data.url }))
                       } catch {
                         setError('Error al subir el archivo')
                       } finally {
