@@ -14,7 +14,8 @@ import {
   User,
   Library,
   Menu,
-  X
+  X,
+  Play
 } from 'lucide-react'
 import Image from 'next/image';
 
@@ -36,7 +37,7 @@ const menuItems: MenuItem[] = [
     nombre: 'Canciones',
     href: '/canciones',
     icono: <Music className="h-5 w-5" />,
-    roles: ['LIDER_ALABANZA', 'CANTANTE', 'LIDER_DANZA', 'DANZA', 'MUSICO']
+    roles: ['LIDER_ALABANZA', 'CANTANTE', 'LIDER_DANZA', 'DANZA']
   },
   {
     nombre: 'Servicios',
@@ -44,18 +45,29 @@ const menuItems: MenuItem[] = [
     icono: <Calendar className="h-5 w-5" />,
     roles: ['ADMINISTRADOR', 'LIDER_ALABANZA', 'CANTANTE', 'LIDER_DANZA', 'DANZA', 'MUSICO']
   },
-
-  {
-    nombre: 'Usuarios',
-    href: '/usuarios',
-    icono: <Users className="h-5 w-5" />,
-    roles: ['ADMINISTRADOR']
-  },
   {
     nombre: 'Biblioteca',
     href: '/biblioteca',
     icono: <Library className="h-5 w-5" />,
     roles: ['ADMINISTRADOR', 'LIDER_ALABANZA', 'CANTANTE', 'LIDER_DANZA', 'DANZA', 'MUSICO']
+  },
+  {
+    nombre: 'Recursos Alabanza',
+    href: '/recursos-alabanza',
+    icono: <Music className="h-5 w-5" />,
+    roles: ['ADMINISTRADOR', 'LIDER_ALABANZA', 'CANTANTE', 'MUSICO']
+  },
+  {
+    nombre: 'Recursos Danza',
+    href: '/recursos-danza',
+    icono: <Play className="h-5 w-5" />,
+    roles: ['LIDER_DANZA', 'DANZA']
+  },
+  {
+    nombre: 'Usuarios',
+    href: '/usuarios',
+    icono: <Users className="h-5 w-5" />,
+    roles: ['ADMINISTRADOR']
   }
 ]
 

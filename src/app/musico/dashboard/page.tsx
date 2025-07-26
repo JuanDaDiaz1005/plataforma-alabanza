@@ -149,14 +149,7 @@ export default function DashboardMusico() {
         </div>
 
         {/* Próximo Servicio mejorado */}
-        <div className="bg-white rounded-xl shadow-sm border p-6">
-          <div className="flex items-center gap-3 mb-6">
-            <div className="bg-gradient-to-r from-green-500 to-emerald-600 p-2 rounded-lg">
-              <Calendar className="h-5 w-5 text-white" />
-            </div>
-            <h2 className="text-xl font-bold text-gray-900">Próximo Servicio</h2>
-          </div>
-          
+                 
           {cargando ? (
             <div className="flex items-center justify-center py-8">
               <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-green-600"></div>
@@ -169,9 +162,9 @@ export default function DashboardMusico() {
               obtenerColorEstado={obtenerColorEstado}
               obtenerTextoEstado={obtenerTextoEstado}
               obtenerTextoRol={obtenerTextoRol}
+              esDanza={false}
             />
           )}
-        </div>
 
         {/* Biblioteca Musical mejorada */}
         <div className="bg-white rounded-xl shadow-sm border p-6">

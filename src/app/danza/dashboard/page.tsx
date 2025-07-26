@@ -10,10 +10,17 @@ import {
   Play,
   Users,
   ArrowRight,
-  Youtube
+  Youtube,
+  Edit2,
+  Video,
+  Clock,
+  CheckCircle2,
+  AlertCircle,
+  User,
+  Star,
+  ExternalLink
 } from 'lucide-react'
 import ProximoServicioResumen from '@/components/ProximoServicioResumen';
-// Eliminar import { Dialog } from '@headlessui/react'
 
 interface ServicioDanza {
   id: string
@@ -28,10 +35,56 @@ interface Asignacion {
     titulo: string
     artista: string
     videoDanza?: string
+    estadoVideoDanza?: string
     album?: string
     duracionSegundos?: number
     tonalidad?: string
   }
+}
+
+// Interfaces para gestión de estado de preparación de danza
+interface AsignacionDanza {
+  id: string
+  estadoPreparacion: string
+  notasPersonales?: string
+  cancion: {
+    id: string
+    titulo: string
+    artista: string
+    videoDanza?: string
+    estadoVideoDanza?: string
+  }
+  programacion: {
+    id: string
+    fecha: string
+    tipoServicio: string
+  }
+}
+
+// Interfaces para ProximoServicioResumen
+interface AsignacionServicio {
+  id: string;
+  cancion: {
+    id: string;
+    titulo: string;
+    artista: string;
+  };
+  usuario: {
+    id: string;
+    nombre: string;
+    rolCancion: string;
+  };
+  rolCancion: string;
+  estadoPreparacion: string;
+}
+
+interface ProximoServicioDanza {
+  id: string;
+  fecha: string;
+  tipoServicio: string;
+  asignaciones: AsignacionServicio[];
+  totalAsignaciones: number;
+  asignacionesPendientes: number;
 }
 
 export default function DashboardDanza() {
@@ -40,9 +93,160 @@ export default function DashboardDanza() {
   const [cancionesConVideo, setCancionesConVideo] = useState<Asignacion['cancion'][]>([])
   const [cargando, setCargando] = useState(true)
   const [lideresPorCancion, setLideresPorCancion] = useState<Record<string, { cancionId: string, titulo: string, lideres: Array<{ id: string, nombre: string }> }>>({})
+  const [proximoServicioCompleto, setProximoServicioCompleto] = useState<ProximoServicioDanza | null>(null)
+  
+  // Estados para gestión de preparación de danza
+  const [misAsignacionesDanza, setMisAsignacionesDanza] = useState<AsignacionDanza[]>([])
+  const [editandoEstadoDanza, setEditandoEstadoDanza] = useState<string | null>(null)
+  const [nuevoEstadoDanza, setNuevoEstadoDanza] = useState('')
+  const [actualizandoDanza, setActualizandoDanza] = useState(false)
+  const [errorDanza, setErrorDanza] = useState('')
+
+  // Estados para gestión de videos de danza (solo líderes)
+  const [editandoVideoEstado, setEditandoVideoEstado] = useState<string | null>(null)
+  const [nuevoEstadoVideo, setNuevoEstadoVideo] = useState('')
+  const [actualizandoVideo, setActualizandoVideo] = useState(false)
 
   // Verificar acceso
   const puedeAcceder = sesion?.user?.role === 'DANZA' || sesion?.user?.role === 'LIDER_DANZA'
+  const esLiderDanza = sesion?.user?.role === 'LIDER_DANZA'
+
+  // Funciones para ProximoServicioResumen
+  const obtenerColorEstado = (estado: string) => {
+    switch (estado) {
+      case 'PREPARADO':
+        return 'bg-green-50 text-green-800 border-green-200'
+      case 'EN_PRACTICA':
+        return 'bg-yellow-50 text-yellow-800 border-yellow-200'
+      case 'PENDIENTE':
+        return 'bg-red-50 text-red-800 border-red-200'
+      case 'NECESITA_AYUDA':
+        return 'bg-orange-50 text-orange-800 border-orange-200'
+      default:
+        return 'bg-gray-50 text-gray-800 border-gray-200'
+    }
+  }
+
+  const obtenerTextoEstado = (estado: string) => {
+    switch (estado) {
+      case 'PREPARADO': return 'Preparado'
+      case 'EN_PRACTICA': return 'En Práctica'
+      case 'PENDIENTE': return 'Pendiente'
+      case 'NECESITA_AYUDA': return 'Necesita Ayuda'
+      default: return estado
+    }
+  }
+
+  const obtenerTextoRol = (rol: string) => {
+    switch (rol) {
+      case 'CANTANTE_PRINCIPAL': return 'Voz Principal'
+      case 'COROS': return 'Coros'
+      case 'ARMONIAS': return 'Armonías'
+      case 'RESPALDO': return 'Respaldo'
+      case 'MUSICO': return 'Músico'
+      case 'DANZA': return 'Danzora'
+      case 'LIDER_DANZA': return 'Líder de Danza'
+      default: return rol
+    }
+  }
+
+  const obtenerTextoEstadoVideo = (estado: string) => {
+    switch (estado) {
+      case 'SIN_GRABAR': return 'Sin Grabar'
+      case 'GRABADO': return 'Grabado'
+      case 'REGRABAR': return 'Regrabar'
+      default: return estado
+    }
+  }
+
+  const obtenerColorEstadoVideo = (estado: string) => {
+    switch (estado) {
+      case 'GRABADO': return 'bg-green-100 text-green-700 border-green-200'
+      case 'SIN_GRABAR': return 'bg-red-100 text-red-700 border-red-200'
+      case 'REGRABAR': return 'bg-orange-100 text-orange-700 border-orange-200'
+      default: return 'bg-gray-100 text-gray-700 border-gray-200'
+    }
+  }
+
+  // Función para actualizar estado de preparación de danza
+  const actualizarEstadoPreparacionDanza = async (asignacionId: string) => {
+    if (!sesion?.user?.id || !nuevoEstadoDanza) return
+
+    try {
+      setActualizandoDanza(true)
+      setErrorDanza('')
+
+      const asignacion = misAsignacionesDanza.find(a => a.id === asignacionId)
+      if (!asignacion) throw new Error('Asignación no encontrada')
+
+      const response = await fetch(`/api/programaciones/${asignacion.programacion.id}/danzas-lideres`, {
+        method: 'PUT',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          asignacionDanzaId: asignacionId,
+          estadoPreparacion: nuevoEstadoDanza
+        })
+      })
+
+      if (!response.ok) {
+        const errorData = await response.json()
+        throw new Error(errorData.error || 'Error al actualizar estado')
+      }
+
+      // Actualizar estado local
+      setMisAsignacionesDanza(prevAsignaciones => 
+        prevAsignaciones.map(asig => 
+          asig.id === asignacionId 
+            ? { ...asig, estadoPreparacion: nuevoEstadoDanza }
+            : asig
+        )
+      )
+
+      setEditandoEstadoDanza(null)
+      setNuevoEstadoDanza('')
+    } catch (error) {
+      console.error('Error:', error)
+      setErrorDanza(error instanceof Error ? error.message : 'Error al actualizar estado')
+    } finally {
+      setActualizandoDanza(false)
+    }
+  }
+
+  // Función para actualizar estado de video de danza (solo líderes)
+  const actualizarEstadoVideo = async (cancionId: string) => {
+    if (!esLiderDanza || !nuevoEstadoVideo) return
+
+    try {
+      setActualizandoVideo(true)
+
+      const response = await fetch(`/api/canciones/${cancionId}/video-danza`, {
+        method: 'PUT',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          estadoVideoDanza: nuevoEstadoVideo
+        })
+      })
+
+      if (!response.ok) {
+        const errorData = await response.json()
+        throw new Error(errorData.error || 'Error al actualizar estado del video')
+      }
+
+      // Recargar datos para reflejar cambios
+      cargarDatos()
+      setEditandoVideoEstado(null)
+      setNuevoEstadoVideo('')
+    } catch (error) {
+      console.error('Error:', error)
+      alert(error instanceof Error ? error.message : 'Error al actualizar estado del video')
+    } finally {
+      setActualizandoVideo(false)
+    }
+  }
 
   const cargarDatos = async () => {
     try {
@@ -54,7 +258,95 @@ export default function DashboardDanza() {
       
       if (respuestaServicios.ok) {
         const datosServicios = await respuestaServicios.json()
-        setProximosServicios(datosServicios.programaciones || [])
+        const servicios = datosServicios.programaciones || []
+        setProximosServicios(servicios)
+
+        // Cargar el próximo servicio completo con asignaciones
+        if (servicios.length > 0) {
+          const proximoServicio = servicios[0]
+          const respuestaAsignaciones = await fetch(`/api/programaciones/${proximoServicio.id}/asignaciones`)
+          
+          if (respuestaAsignaciones.ok) {
+            const datosAsignaciones = await respuestaAsignaciones.json()
+            const todasAsignaciones = datosAsignaciones.asignaciones || []
+            
+            // Filtrar asignaciones según el rol del usuario
+            const asignacionesFiltradas = esLiderDanza 
+              ? todasAsignaciones // Líder de danza ve TODAS las asignaciones
+              : todasAsignaciones.filter((a: any) => 
+                  (a.rolCancion === 'DANZA' || a.rolCancion === 'LIDER_DANZA') ||
+                  (a.usuario.role === 'DANZA' || a.usuario.role === 'LIDER_DANZA')
+                )
+            
+            // Mapear al formato correcto
+            const asignacionesMapeadas = asignacionesFiltradas.map((a: any) => ({
+              id: a.id,
+              cancion: {
+                id: a.cancion.id,
+                titulo: a.cancion.titulo,
+                artista: a.cancion.artista
+              },
+              usuario: {
+                id: a.usuario.id,
+                nombre: a.usuario.nombre,
+                rolCancion: a.rolCancion || a.usuario.role
+              },
+              rolCancion: a.rolCancion || a.usuario.role,
+              estadoPreparacion: a.estadoPreparacion || 'PENDIENTE'
+            }))
+            
+            setProximoServicioCompleto({
+              id: proximoServicio.id,
+              fecha: new Date(proximoServicio.fecha).toLocaleDateString('es-ES', { 
+                weekday: 'long', 
+                year: 'numeric', 
+                month: 'long', 
+                day: 'numeric' 
+              }),
+              tipoServicio: proximoServicio.tipoServicio,
+              asignaciones: asignacionesMapeadas,
+              totalAsignaciones: asignacionesMapeadas.length,
+              asignacionesPendientes: asignacionesMapeadas.filter((a: AsignacionServicio) => a.estadoPreparacion === 'PENDIENTE').length
+            })
+          }
+        }
+
+        // Cargar mis asignaciones de danza (solo para los próximos 2 servicios)
+        if (sesion?.user?.id) {
+          const respuestaMisAsignaciones = await fetch(`/api/programaciones/danza-asignaciones?usuarioId=${sesion.user.id}`)
+          
+          if (respuestaMisAsignaciones.ok) {
+            const datosMisAsignaciones = await respuestaMisAsignaciones.json()
+            console.log('Mis asignaciones de danza cargadas:', datosMisAsignaciones)
+            
+            // Filtrar para mostrar solo asignaciones de los próximos 2 servicios
+            let asignacionesFiltradas = datosMisAsignaciones || []
+            if (servicios && servicios.length > 0) {
+              const proximosDosCultos = servicios.slice(0, 2) // Solo los primeros 2 servicios
+              const idsProximosDosCultos = proximosDosCultos.map((s: ServicioDanza) => s.id)
+              
+              asignacionesFiltradas = asignacionesFiltradas.filter((asignacion: any) => 
+                idsProximosDosCultos.includes(asignacion.programacion?.id)
+              )
+              
+              console.log(`Filtrando asignaciones para los próximos 2 cultos:`, {
+                totalServicios: servicios.length,
+                proximosDosCultos: proximosDosCultos.map((s: ServicioDanza) => ({ id: s.id, fecha: s.fecha, tipo: s.tipoServicio })),
+                asignacionesOriginales: datosMisAsignaciones.length,
+                asignacionesFiltradas: asignacionesFiltradas.length
+              })
+            }
+            
+            setMisAsignacionesDanza(asignacionesFiltradas)
+            
+            // Debug: Si no hay asignaciones, mostrar un mensaje más útil
+            if (!asignacionesFiltradas || asignacionesFiltradas.length === 0) {
+              console.log('No se encontraron asignaciones de danza para el usuario en los próximos 2 servicios:', sesion.user.id)
+            }
+          } else {
+            console.error('Error al cargar mis asignaciones de danza:', respuestaMisAsignaciones.statusText)
+          }
+        }
       }
 
       // Cargar canciones con videos de danza (últimas 5)
@@ -63,7 +355,10 @@ export default function DashboardDanza() {
       if (respuestaCanciones.ok) {
         const datosCanciones = await respuestaCanciones.json()
         const conVideo = datosCanciones.canciones.filter((c: Asignacion['cancion']) => c.videoDanza).slice(0, 5)
+        console.log('Canciones con video cargadas:', conVideo)
         setCancionesConVideo(conVideo)
+      } else {
+        console.error('Error al cargar canciones:', respuestaCanciones.statusText)
       }
 
     } catch (error) {
@@ -85,6 +380,7 @@ export default function DashboardDanza() {
 
   useEffect(() => {
     if (puedeAcceder) {
+      console.log('Cargando datos del dashboard de danza para usuario:', sesion?.user?.id, 'Es líder:', esLiderDanza)
       cargarDatos()
     }
   }, [puedeAcceder])
@@ -152,14 +448,14 @@ export default function DashboardDanza() {
                 ¡Bienvenido al Dashboard de Danza! 💃
               </h1>
               <p className="text-purple-100">
-                {sesion?.user?.role === 'LIDER_DANZA' 
-                  ? 'Como líder de danza, puedes gestionar videos y preparar coreografías para los servicios.'
-                  : 'Revisa los próximos servicios y estudia las danzas correspondientes.'
+                {esLiderDanza 
+                  ? 'Como líder de danza, puedes gestionar videos, estados y preparar coreografías para los servicios.'
+                  : 'Revisa los próximos servicios, actualiza tu estado de preparación y estudia las danzas correspondientes.'
                 }
               </p>
             </div>
             <div className="flex items-center gap-3">
-              {sesion?.user?.role === 'LIDER_DANZA' && (
+              {esLiderDanza && (
                 <Link
                   href="/servicios"
                   className="inline-flex items-center gap-3 px-6 py-3 bg-white text-purple-600 rounded-xl hover:bg-purple-50 transition-all duration-300 font-semibold shadow-lg hover:shadow-xl"
@@ -179,113 +475,130 @@ export default function DashboardDanza() {
           </div>
         </div>
 
-        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-          {/* Próximos Servicios mejorado */}
+        {/* Próximo Servicio con ProximoServicioResumen */}
+        {proximoServicioCompleto && (
+          <ProximoServicioResumen
+            proximoServicio={proximoServicioCompleto}
+            colorGradiente="from-purple-500 to-pink-600"
+            colorAcento="text-purple-600"
+            obtenerColorEstado={obtenerColorEstado}
+            obtenerTextoEstado={obtenerTextoEstado}
+            obtenerTextoRol={obtenerTextoRol}
+            esDanza={sesion?.user?.role === 'DANZA'}
+            esLiderOAdmin={esLiderDanza}
+          />
+        )}
+
+        {/* Mis Asignaciones de Danza */}
+        {misAsignacionesDanza.length > 0 && (
           <div className="bg-white rounded-xl shadow-sm border">
             <div className="p-6 border-b border-gray-200">
-              <div className="flex items-center justify-between">
-                <div className="flex items-center gap-3">
-                  <div className="bg-gradient-to-r from-purple-500 to-pink-600 p-2 rounded-lg">
-                    <Calendar className="h-5 w-5 text-white" />
-                  </div>
-                  <h2 className="text-xl font-bold text-gray-900">
-                    Próximos Servicios
-                  </h2>
+              <h2 className="text-xl font-bold text-gray-900 flex items-center gap-3">
+                <div className="bg-gradient-to-r from-purple-500 to-pink-600 p-2 rounded-lg">
+                  <Star className="h-5 w-5 text-white" />
                 </div>
-                <Link 
-                  href="/servicios"
-                  className="text-sm text-purple-600 hover:text-purple-700 flex items-center gap-2 bg-purple-50 px-3 py-2 rounded-lg hover:bg-purple-100 transition-all duration-200"
-                >
-                  Ver todos <ArrowRight className="h-4 w-4" />
-                </Link>
-              </div>
+                Mis Asignaciones de Danza
+              </h2>
+              <p className="text-gray-600 mt-1">Actualiza tu estado de preparación para cada canción</p>
             </div>
-            
             <div className="p-6">
-              {proximosServicios.length === 0 ? (
-                <div className="text-center py-8">
-                  <Calendar className="h-8 w-8 text-gray-400 mx-auto mb-2" />
-                  <p className="text-gray-500">No hay servicios próximos programados</p>
-                </div>
-              ) : (
-                <div className="space-y-4">
-                  {proximosServicios.slice(0, 1).map((servicio) => (
-                    <div key={servicio.id} className="bg-gradient-to-r from-purple-50 to-pink-50 rounded-xl p-6 border border-purple-100 hover:border-purple-200 transition-all duration-300">
-                      <div className="flex items-start justify-between mb-4">
-                        <div>
-                          <h3 className="text-lg font-bold text-gray-900 mb-1">
-                            {formatearTipoServicio(servicio.tipoServicio)}
-                          </h3>
-                          <p className="text-sm text-gray-600">
-                            {formatearFecha(servicio.fecha)}
-                          </p>
-                          <div className="flex items-center gap-2 mt-2">
-                            <span className="bg-purple-100 text-purple-700 px-3 py-1 rounded-full text-sm font-medium">
-                              {servicio.asignaciones.length} canciones
-                            </span>
-                          </div>
-                        </div>
-                        <div className="bg-gradient-to-br from-purple-500 to-pink-600 p-3 rounded-full shadow-lg">
-                          <Calendar className="h-6 w-6 text-white" />
-                        </div>
-                      </div>
-                      
-                      <div className="space-y-3">
-                        <div className="flex items-center gap-2">
-                          <Music className="h-4 w-4 text-purple-600" />
-                          <p className="text-sm font-semibold text-gray-700">Canciones para danza:</p>
-                        </div>
-                        <div className="space-y-2">
-                          {servicio.asignaciones.slice(0, 3).map((asig) => (
-                            <div key={asig.cancion.id} className="bg-white rounded-lg p-3 border border-gray-100 shadow-sm">
-                              <div className="flex items-center justify-between">
-                                <div className="flex items-center gap-3">
-                                  <div className="w-2 h-2 bg-purple-500 rounded-full"></div>
-                                  <div>
-                                    <p className="font-semibold text-gray-900 text-sm">{asig.cancion.titulo}</p>
-                                    <p className="text-xs text-gray-500">{asig.cancion.artista}</p>
-                                  </div>
-                                </div>
-                                <div className="text-right">
-                                  <div className="text-xs text-gray-600">
-                                    <span className="font-medium">Líder(es): </span>
-                                    {lideresPorCancion[asig.cancion.id]?.lideres.length > 0
-                                      ? lideresPorCancion[asig.cancion.id].lideres.map(l => l.nombre).join(', ')
-                                      : <span className="text-gray-400">No asignado</span>}
-                                  </div>
-                                </div>
-                              </div>
-                            </div>
-                          ))}
-                          {servicio.asignaciones.length > 3 && (
-                            <div className="text-center py-2">
-                              <span className="text-xs text-purple-600 font-medium bg-purple-50 px-3 py-1 rounded-full">
-                                +{servicio.asignaciones.length - 3} canciones más
-                              </span>
-                            </div>
-                          )}
-                        </div>
-                      </div>
-                    </div>
-                  ))}
-                  
-                  {proximosServicios.length > 1 && (
-                    <div className="text-center">
-                      <Link
-                        href="/servicios"
-                        className="text-purple-600 hover:text-purple-700 text-sm font-medium"
-                      >
-                        Ver {proximosServicios.length - 1} servicios más...
-                      </Link>
-                    </div>
-                  )}
+              {errorDanza && (
+                <div className="mb-4 p-3 bg-red-50 border border-red-200 rounded-lg">
+                  <p className="text-red-700 text-sm">{errorDanza}</p>
                 </div>
               )}
+              <div className="space-y-4">
+                {misAsignacionesDanza.map((asignacion) => (
+                  <div key={asignacion.id} className="bg-gray-50 rounded-lg p-4 border">
+                    <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+                      <div className="flex-1">
+                        <div className="flex items-center gap-3 mb-2">
+                          <Music className="h-5 w-5 text-purple-600" />
+                          <h3 className="font-bold text-gray-900">{asignacion.cancion.titulo}</h3>
+                        </div>
+                        <p className="text-sm text-gray-600 mb-2">por {asignacion.cancion.artista}</p>
+                        <div className="flex items-center gap-4 text-sm text-gray-600">
+                          <div className="flex items-center gap-1">
+                            <Calendar className="h-4 w-4" />
+                            {formatearFecha(asignacion.programacion.fecha)}
+                          </div>
+                          <div className="flex items-center gap-1">
+                            <Clock className="h-4 w-4" />
+                            {formatearTipoServicio(asignacion.programacion.tipoServicio)}
+                          </div>
+                        </div>
+                        {asignacion.cancion.videoDanza && (
+                          <div className="mt-2">
+                            <a
+                              href={asignacion.cancion.videoDanza}
+                              target="_blank"
+                              rel="noopener noreferrer"
+                              className="inline-flex items-center gap-2 px-3 py-1 bg-red-100 text-red-700 rounded-lg hover:bg-red-200 text-xs font-medium transition-colors"
+                            >
+                              <Play className="h-3 w-3" />
+                              Ver Video de Danza
+                              <ExternalLink className="h-3 w-3" />
+                            </a>
+                          </div>
+                        )}
+                      </div>
+                      <div className="flex items-center gap-3">
+                        {editandoEstadoDanza === asignacion.id ? (
+                          <div className="flex items-center gap-2">
+                            <select
+                              value={nuevoEstadoDanza}
+                              onChange={(e) => setNuevoEstadoDanza(e.target.value)}
+                              className="px-3 py-2 border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-purple-500"
+                            >
+                              <option value="">Seleccionar estado</option>
+                              <option value="PENDIENTE">Pendiente</option>
+                              <option value="EN_PRACTICA">En Práctica</option>
+                              <option value="PREPARADO">Preparado</option>
+                              <option value="NECESITA_AYUDA">Necesita Ayuda</option>
+                            </select>
+                            <button
+                              onClick={() => actualizarEstadoPreparacionDanza(asignacion.id)}
+                              disabled={actualizandoDanza || !nuevoEstadoDanza}
+                              className="px-3 py-2 bg-purple-600 text-white rounded-lg hover:bg-purple-700 disabled:opacity-50 text-sm font-medium"
+                            >
+                              {actualizandoDanza ? 'Guardando...' : 'Guardar'}
+                            </button>
+                            <button
+                              onClick={() => {
+                                setEditandoEstadoDanza(null)
+                                setNuevoEstadoDanza('')
+                              }}
+                              className="px-3 py-2 border border-gray-300 text-gray-700 rounded-lg hover:bg-gray-50 text-sm"
+                            >
+                              Cancelar
+                            </button>
+                          </div>
+                        ) : (
+                          <div className="flex items-center gap-3">
+                            <span className={`px-3 py-1 rounded-full text-sm font-medium border ${obtenerColorEstado(asignacion.estadoPreparacion)}`}>
+                              {obtenerTextoEstado(asignacion.estadoPreparacion)}
+                            </span>
+                            <button
+                              onClick={() => setEditandoEstadoDanza(asignacion.id)}
+                              className="p-2 text-gray-400 hover:text-purple-600 hover:bg-purple-50 rounded-lg transition-colors"
+                              title="Cambiar estado"
+                            >
+                              <Edit2 className="h-4 w-4" />
+                            </button>
+                          </div>
+                        )}
+                      </div>
+                    </div>
+                  </div>
+                ))}
+              </div>
             </div>
           </div>
+        )}
+
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
 
           {/* Canciones con Videos de Danza */}
-          {(sesion?.user?.role === 'DANZA' || sesion?.user?.role === 'LIDER_DANZA') && (
             <div className="bg-white rounded-lg shadow-sm border">
               <div className="p-6 border-b border-gray-200">
                 <div className="flex items-center justify-between">
@@ -306,7 +619,7 @@ export default function DashboardDanza() {
                   <div className="text-center py-8">
                     <Youtube className="h-8 w-8 text-gray-400 mx-auto mb-2" />
                     <p className="text-gray-500">No hay videos de danza disponibles aún</p>
-                    {sesion?.user?.role === 'LIDER_DANZA' && (
+                  {esLiderDanza && (
                       <p className="text-sm text-gray-400 mt-1">
                         Ve a la biblioteca para agregar videos a las canciones
                       </p>
@@ -320,10 +633,58 @@ export default function DashboardDanza() {
                           <h4 className="font-medium text-gray-900 text-sm">
                             {cancion.titulo}
                           </h4>
-                          <p className="text-xs text-gray-600">
+                        <p className="text-xs text-gray-600 mb-1">
                             {cancion.artista}
                           </p>
+                        {esLiderDanza && cancion.estadoVideoDanza && (
+                          <div className="flex items-center gap-2">
+                            {editandoVideoEstado === cancion.id ? (
+                              <div className="flex items-center gap-2">
+                                <select
+                                  value={nuevoEstadoVideo}
+                                  onChange={(e) => setNuevoEstadoVideo(e.target.value)}
+                                  className="px-2 py-1 border border-gray-300 rounded text-xs focus:outline-none focus:ring-1 focus:ring-purple-500"
+                                >
+                                  <option value="">Seleccionar</option>
+                                  <option value="SIN_GRABAR">Sin Grabar</option>
+                                  <option value="GRABADO">Grabado</option>
+                                  <option value="REGRABAR">Regrabar</option>
+                                </select>
+                                <button
+                                  onClick={() => actualizarEstadoVideo(cancion.id)}
+                                  disabled={actualizandoVideo || !nuevoEstadoVideo}
+                                  className="px-2 py-1 bg-purple-600 text-white rounded text-xs hover:bg-purple-700 disabled:opacity-50"
+                                >
+                                  {actualizandoVideo ? '...' : 'OK'}
+                                </button>
+                                <button
+                                  onClick={() => {
+                                    setEditandoVideoEstado(null)
+                                    setNuevoEstadoVideo('')
+                                  }}
+                                  className="px-2 py-1 border border-gray-300 text-gray-700 rounded text-xs hover:bg-gray-50"
+                                >
+                                  ✕
+                                </button>
+                              </div>
+                            ) : (
+                              <div className="flex items-center gap-1">
+                                <span className={`px-2 py-0.5 rounded text-xs font-medium border ${obtenerColorEstadoVideo(cancion.estadoVideoDanza)}`}>
+                                  {obtenerTextoEstadoVideo(cancion.estadoVideoDanza)}
+                                </span>
+                                <button
+                                  onClick={() => setEditandoVideoEstado(cancion.id)}
+                                  className="p-1 text-gray-400 hover:text-purple-600 rounded transition-colors"
+                                  title="Cambiar estado del video"
+                                >
+                                  <Edit2 className="h-3 w-3" />
+                                </button>
+                              </div>
+                            )}
+                          </div>
+                        )}
                         </div>
+                      <div className="flex items-center gap-2">
                         <a
                           href={cancion.videoDanza}
                           target="_blank"
@@ -334,56 +695,13 @@ export default function DashboardDanza() {
                           Ver Video
                         </a>
                       </div>
+                      </div>
                     ))}
                   </div>
                 )}
               </div>
-            </div>
-          )}
         </div>
-
-        {/* Enlaces rápidos */}
-        <div className="bg-white rounded-lg shadow-sm border p-6">
-          <h2 className="text-lg font-semibold text-gray-900 mb-4">Enlaces Rápidos</h2>
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-            <Link
-              href="/servicios"
-              className="flex items-center gap-3 p-4 border border-gray-200 rounded-lg hover:border-purple-300 hover:bg-purple-50 transition-colors"
-            >
-              <Calendar className="h-5 w-5 text-purple-600" />
-              <div>
-                <h3 className="font-medium text-gray-900">Ver Servicios</h3>
-                <p className="text-sm text-gray-600">Explora todos los servicios programados</p>
-              </div>
-            </Link>
-            
-            <Link
-              href="/biblioteca"
-              className="flex items-center gap-3 p-4 border border-gray-200 rounded-lg hover:border-purple-300 hover:bg-purple-50 transition-colors"
-            >
-              <Music className="h-5 w-5 text-purple-600" />
-              <div>
-                <h3 className="font-medium text-gray-900">Biblioteca</h3>
-                <p className="text-sm text-gray-600">Busca canciones y sus recursos</p>
-              </div>
-            </Link>
-
-            {sesion?.user?.role === 'LIDER_DANZA' && (
-              <Link
-                href="/biblioteca?danza=true"
-                className="flex items-center gap-3 p-4 border border-gray-200 rounded-lg hover:border-purple-300 hover:bg-purple-50 transition-colors"
-              >
-                <Youtube className="h-5 w-5 text-purple-600" />
-                <div>
-                  <h3 className="font-medium text-gray-900">Gestionar Videos</h3>
-                  <p className="text-sm text-gray-600">Agregar videos de danza</p>
-                </div>
-              </Link>
-            )}
-          </div>
         </div>
-
-
       </div>
     </Layout>
   )

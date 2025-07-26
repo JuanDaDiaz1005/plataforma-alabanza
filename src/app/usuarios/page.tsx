@@ -57,7 +57,10 @@ interface RespuestaAPI {
 const ROLES = [
   { value: 'ADMINISTRADOR', label: 'Administrador' },
   { value: 'LIDER_ALABANZA', label: 'Líder de Alabanza' },
-  { value: 'CANTANTE', label: 'Cantante' }
+  { value: 'CANTANTE', label: 'Cantante' },
+  { value: 'LIDER_DANZA', label: 'Líder de Danza' },
+  { value: 'DANZA', label: 'Danza' },
+  { value: 'MUSICO', label: 'Músico' }
 ]
 
 export default function PaginaUsuarios() {
@@ -232,7 +235,10 @@ export default function PaginaUsuarios() {
     const roles: { [key: string]: string } = {
       'ADMINISTRADOR': 'Administrador',
       'LIDER_ALABANZA': 'Líder de Alabanza',
-      'CANTANTE': 'Cantante'
+      'CANTANTE': 'Cantante',
+      'LIDER_DANZA': 'Líder de Danza',
+      'DANZA': 'Danza',
+      'MUSICO': 'Músico'
     }
     return roles[rol] || rol
   }
@@ -256,6 +262,12 @@ export default function PaginaUsuarios() {
         return 'bg-blue-100 text-blue-800'
       case 'CANTANTE':
         return 'bg-green-100 text-green-800'
+      case 'LIDER_DANZA':
+        return 'bg-purple-100 text-purple-800'
+      case 'DANZA':
+        return 'bg-pink-100 text-pink-800'
+      case 'MUSICO':
+        return 'bg-yellow-100 text-yellow-800'
       default:
         return 'bg-gray-100 text-gray-800'
     }
@@ -508,13 +520,13 @@ export default function PaginaUsuarios() {
         {paginacion && (
           <div className="bg-white rounded-lg shadow-sm border p-6">
             <h3 className="text-lg font-semibold text-gray-900 mb-4">Resumen del Equipo</h3>
-            <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+            <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-4">
               <div className="text-center">
                 <div className="bg-blue-100 p-3 rounded-full w-12 h-12 mx-auto mb-2 flex items-center justify-center">
                   <Users className="h-6 w-6 text-blue-600" />
                 </div>
                 <p className="text-2xl font-bold text-gray-900">{paginacion.total}</p>
-                <p className="text-sm text-gray-600">Total de usuarios</p>
+                <p className="text-sm text-gray-600">Total</p>
               </div>
               
               <div className="text-center">
@@ -524,7 +536,7 @@ export default function PaginaUsuarios() {
                 <p className="text-2xl font-bold text-gray-900">
                   {usuarios.filter(u => u.rol === 'ADMINISTRADOR').length}
                 </p>
-                <p className="text-sm text-gray-600">Administradores</p>
+                <p className="text-sm text-gray-600">Admins</p>
               </div>
               
               <div className="text-center">
@@ -534,7 +546,7 @@ export default function PaginaUsuarios() {
                 <p className="text-2xl font-bold text-gray-900">
                   {usuarios.filter(u => u.rol === 'LIDER_ALABANZA').length}
                 </p>
-                <p className="text-sm text-gray-600">Líderes</p>
+                <p className="text-sm text-gray-600">Líd. Alabanza</p>
               </div>
               
               <div className="text-center">
@@ -545,6 +557,26 @@ export default function PaginaUsuarios() {
                   {usuarios.filter(u => u.rol === 'CANTANTE').length}
                 </p>
                 <p className="text-sm text-gray-600">Cantantes</p>
+              </div>
+              
+              <div className="text-center">
+                <div className="bg-purple-100 p-3 rounded-full w-12 h-12 mx-auto mb-2 flex items-center justify-center">
+                  <UserCheck className="h-6 w-6 text-purple-600" />
+                </div>
+                <p className="text-2xl font-bold text-gray-900">
+                  {usuarios.filter(u => u.rol === 'LIDER_DANZA').length}
+                </p>
+                <p className="text-sm text-gray-600">Líd. Danza</p>
+              </div>
+              
+              <div className="text-center">
+                <div className="bg-pink-100 p-3 rounded-full w-12 h-12 mx-auto mb-2 flex items-center justify-center">
+                  <User className="h-6 w-6 text-pink-600" />
+                </div>
+                <p className="text-2xl font-bold text-gray-900">
+                  {usuarios.filter(u => u.rol === 'DANZA').length + usuarios.filter(u => u.rol === 'MUSICO').length}
+                </p>
+                <p className="text-sm text-gray-600">Danza/Música</p>
               </div>
             </div>
           </div>

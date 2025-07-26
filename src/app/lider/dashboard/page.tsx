@@ -16,6 +16,7 @@ import {
   Mic,
   AlertCircle
 } from 'lucide-react'
+import ProximoServicioResumen from '@/components/ProximoServicioResumen'
 
 interface EstadisticasLider {
   cancionesRepertorio: number
@@ -185,6 +186,9 @@ export default function DashboardLider() {
       case 'COROS': return 'Coros'
       case 'ARMONIAS': return 'Armonías'
       case 'RESPALDO': return 'Respaldo'
+      case 'MUSICO': return 'Músico'
+      case 'DANZA': return 'Danzora'
+      case 'LIDER_DANZA': return 'Líder de Danza'
       default: return rol
     }
   }
@@ -300,101 +304,15 @@ export default function DashboardLider() {
 
         {/* Próximo servicio mejorado */}
         {proximoServicio && (
-          <div className="bg-white rounded-xl shadow-sm border p-6">
-            <div className="flex items-center gap-3 mb-6">
-              <div className="bg-gradient-to-r from-blue-500 to-purple-600 p-2 rounded-lg">
-                <Calendar className="h-6 w-6 text-white" />
-              </div>
-              <div>
-                <h3 className="text-xl font-bold text-gray-900">
-                  Próximo Servicio
-                </h3>
-                <p className="text-sm text-gray-500">Estado del equipo y programación</p>
-              </div>
-            </div>
-            <a 
-              href={`/programacion/${proximoServicio.id}`}
-              className="block bg-gradient-to-r from-blue-50 to-purple-50 rounded-xl p-6 hover:from-blue-100 hover:to-purple-100 transition-all duration-300 border border-blue-100 hover:border-blue-200 hover:shadow-md"
-            >
-              <div className="flex items-start justify-between">
-                <div className="flex-1 space-y-4">
-                  <div>
-                    <h4 className="text-lg font-bold text-gray-900 mb-2 capitalize">
-                      {proximoServicio.fecha}
-                    </h4>
-                    <div className="flex items-center gap-3">
-                      <span className="bg-gradient-to-r from-blue-500 to-purple-600 text-white px-4 py-2 rounded-full text-sm font-medium shadow-lg">
-                        {proximoServicio.tipoServicio}
-                      </span>
-                      <span className="text-gray-500 text-sm bg-white px-3 py-1 rounded-full border">
-                        {proximoServicio.totalAsignaciones} asignaciones
-                      </span>
-                    </div>
-                  </div>
-                  <div className="flex items-center gap-2">
-                    {proximoServicio.asignacionesPendientes > 0 ? (
-                      <div className="flex items-center gap-2 text-orange-600 bg-orange-50 px-4 py-2 rounded-lg">
-                        <AlertCircle className="h-4 w-4" />
-                        <span className="text-sm font-semibold">
-                          {proximoServicio.asignacionesPendientes} asignaciones pendientes
-                        </span>
-                      </div>
-                    ) : (
-                      <div className="flex items-center gap-2 text-green-600 bg-green-50 px-4 py-2 rounded-lg">
-                        <CheckCircle className="h-4 w-4" />
-                        <span className="text-sm font-semibold">Todo el equipo está listo</span>
-                      </div>
-                    )}
-                  </div>
-                  {/* Agrupar asignaciones por canción */}
-                  {proximoServicio.asignaciones.length > 0 && (
-                    <div className="space-y-3">
-                      <div className="flex items-center gap-2">
-                        <div className="bg-gradient-to-r from-purple-500 to-pink-600 p-1.5 rounded-lg">
-                          <Music className="h-4 w-4 text-white" />
-                        </div>
-                        <p className="text-sm font-semibold text-gray-700">Repertorio programado:</p>
-                      </div>
-                      <div className="space-y-3">
-                        {Object.entries(
-                          proximoServicio.asignaciones.reduce((acc: Record<string, { cancion: { id: string; titulo: string; artista: string }; asignaciones: typeof proximoServicio.asignaciones }>, asignacion) => {
-                            const id = asignacion.cancion.id;
-                            if (!acc[id]) acc[id] = { cancion: asignacion.cancion, asignaciones: [] };
-                            acc[id].asignaciones.push(asignacion);
-                            return acc;
-                          }, {})
-                        )
-                          .sort((a, b) => {
-                            const orderA = proximoServicio.asignaciones.findIndex(asig => asig.cancion.id === a[0]);
-                            const orderB = proximoServicio.asignaciones.findIndex(asig => asig.cancion.id === b[0]);
-                            return orderA - orderB;
-                          })
-                          .map(([cancionId, { cancion, asignaciones }]) => (
-                            <div key={cancionId} className="bg-white rounded-lg p-4 border border-gray-100 shadow-sm hover:shadow-md transition-all duration-200">
-                              <div className="font-bold text-gray-900 text-sm mb-1">{cancion.titulo} <span className="text-gray-500 font-normal">por {cancion.artista}</span></div>
-                              <div className="space-y-1">
-                                {asignaciones.map((asig) => (
-                                  <div key={asig.id} className="flex items-center gap-2 text-xs">
-                                    <span className="text-gray-800 font-medium flex items-center gap-1"><Mic className="h-3 w-3 text-blue-600" />{asig.usuario.nombre}</span>
-                                    <span className="text-gray-500 flex items-center gap-1">{obtenerTextoRol(asig.rolCancion)}</span>
-                                    <span className={`px-2 py-0.5 rounded-full text-xs font-medium border ${obtenerColorEstado(asig.estadoPreparacion)}`}>{obtenerTextoEstado(asig.estadoPreparacion)}</span>
-                                  </div>
-                                ))}
-                              </div>
-                            </div>
-                          ))}
-                      </div>
-                    </div>
-                  )}
-                </div>
-                <div className="ml-6">
-                  <div className="bg-gradient-to-r from-blue-500 to-purple-600 p-3 rounded-full shadow-lg">
-                    <ChevronRight className="h-6 w-6 text-white" />
-                  </div>
-                </div>
-              </div>
-            </a>
-          </div>
+          <ProximoServicioResumen
+            proximoServicio={proximoServicio}
+            colorGradiente="from-blue-500 to-purple-600"
+            colorAcento="text-blue-600"
+            obtenerColorEstado={obtenerColorEstado}
+            obtenerTextoEstado={obtenerTextoEstado}
+            obtenerTextoRol={obtenerTextoRol}
+            esLiderOAdmin={true}
+          />
         )}
 
         {/* Acciones rápidas funcionales */}

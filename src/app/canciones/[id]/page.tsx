@@ -14,7 +14,6 @@ import {
   Clock, 
   FileText, 
   Volume2,
-  ExternalLink,
   Play,
   Edit,
   MessageSquare,
@@ -181,7 +180,6 @@ export default function DetalleCancion({ params }: { params: Promise<{ id: strin
 
   // Permisos
   const puedeEditar = session?.user?.role === 'ADMINISTRADOR' || session?.user?.role === 'LIDER_ALABANZA'
-  const esRolDanza = session?.user?.role === 'DANZA' || session?.user?.role === 'LIDER_DANZA'
 
   if (cargando) {
     return (
@@ -302,48 +300,33 @@ export default function DetalleCancion({ params }: { params: Promise<{ id: strin
           </div>
         </div>
 
-        {/* Video de danza */}
-        {(cancion.videoDanza && esRolDanza && session?.user?.role === 'LIDER_ALABANZA') && (
-          <div className="bg-white rounded-lg border border-gray-200 shadow-sm p-6">
-            <h2 className="text-lg font-semibold text-gray-900 mb-4 flex items-center gap-2">
-              <Play className="h-5 w-5 text-purple-600" />
-              Video de Danza
-            </h2>
-            <div className="space-y-3">
-              <a
-                href={cancion.videoDanza}
-                target="_blank"
-                rel="noopener noreferrer"
-                className="inline-flex items-center gap-2 text-purple-600 hover:text-purple-800 transition-colors"
-              >
-                <ExternalLink className="h-4 w-4" />
-                Ver video en YouTube
-              </a>
-            </div>
-          </div>
-        )}
 
-        {/* Video de danza en detalles de canción */}
-        {cancion.videoDanza && (
-          <div className="bg-white rounded-lg border border-gray-200 shadow-sm p-6 mt-4">
-            <h2 className="text-lg font-semibold text-gray-900 mb-4 flex items-center gap-2">
-              <Play className="h-5 w-5 text-purple-600" />
-              Video de Danza
-            </h2>
-            <a href={cancion.videoDanza} target="_blank" rel="noopener noreferrer" className="inline-flex items-center gap-2 px-3 py-2 bg-red-100 text-red-700 rounded-lg hover:bg-red-200 text-xs font-medium">
-              <Play className="h-4 w-4" />
-              Ver Video
-            </a>
-          </div>
-        )}
-        {session?.user?.role === 'LIDER_DANZA' && (
-          <button
-            className="mt-4 inline-flex items-center gap-2 px-3 py-2 bg-purple-100 text-purple-700 rounded-lg hover:bg-purple-200 text-xs font-medium"
-            onClick={() => setEditandoVideo(true)}
-          >
-            <Play className="h-4 w-4" />
-            {cancion.videoDanza ? 'Editar Video de Danza' : 'Agregar Video de Danza'}
-          </button>
+
+        {/* Video de danza en detalles de canción - solo para roles autorizados */}
+        {(session?.user?.role === 'LIDER_DANZA' || session?.user?.role === 'ADMINISTRADOR' || session?.user?.role === 'LIDER_ALABANZA' || session?.user?.role === 'DANZA') && (
+          <>
+            {cancion.videoDanza && (
+              <div className="bg-white rounded-lg border border-gray-200 shadow-sm p-6 mt-4">
+                <h2 className="text-lg font-semibold text-gray-900 mb-4 flex items-center gap-2">
+                  <Play className="h-5 w-5 text-purple-600" />
+                  Video de Danza
+                </h2>
+                <a href={cancion.videoDanza} target="_blank" rel="noopener noreferrer" className="inline-flex items-center gap-2 px-3 py-2 bg-red-100 text-red-700 rounded-lg hover:bg-red-200 text-xs font-medium">
+                  <Play className="h-4 w-4" />
+                  Ver Video
+                </a>
+              </div>
+            )}
+            {session?.user?.role === 'LIDER_DANZA' && (
+              <button
+                className="mt-4 inline-flex items-center gap-2 px-3 py-2 bg-purple-100 text-purple-700 rounded-lg hover:bg-purple-200 text-xs font-medium"
+                onClick={() => setEditandoVideo(true)}
+              >
+                <Play className="h-4 w-4" />
+                {cancion.videoDanza ? 'Editar Video de Danza' : 'Agregar Video de Danza'}
+              </button>
+            )}
+          </>
         )}
         {editandoVideo && (
           <form
@@ -387,7 +370,7 @@ export default function DetalleCancion({ params }: { params: Promise<{ id: strin
               <FileText className="h-5 w-5" />
               Letra
             </h2>
-            <div className="whitespace-pre-wrap text-gray-700 bg-gray-50 p-4 rounded-lg font-mono text-sm">
+            <div className="whitespace-pre-wrap text-gray-700 bg-gray-50 p-4 rounded-lg font-mono text-sm max-h-80 overflow-y-auto">
               {cancion.letra}
             </div>
           </div>

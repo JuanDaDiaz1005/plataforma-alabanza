@@ -152,15 +152,16 @@ export async function GET(
       return NextResponse.json({ error: 'Programación no encontrada' }, { status: 404 })
     }
 
-    // Obtener asignaciones
-    const asignaciones = await prisma.asignacionCancion.findMany({
+    // Obtener asignaciones de canto/música
+    const asignacionesCanto = await prisma.asignacionCancion.findMany({
       where: { programacionId },
       include: {
         usuario: {
           select: {
             id: true,
             nombre: true,
-            email: true
+            email: true,
+            rol: true
           }
         },
         cancion: {
@@ -181,7 +182,71 @@ export async function GET(
       ]
     })
 
-    return NextResponse.json({ asignaciones })
+    // Obtener asignaciones de danza
+    const asignacionesDanza = await prisma.liderDanzaAsignacion.findMany({
+      where: { programacionId },
+      include: {
+        usuario: {
+          select: {
+            id: true,
+            nombre: true,
+            email: true,
+            rol: true
+          }
+        },
+        cancion: {
+          select: {
+            id: true,
+            titulo: true,
+            artista: true,
+            album: true,
+            duracionSegundos: true,
+            letra: true,
+            acordes: true,
+            tonalidad: true
+          }
+        }
+      },
+      orderBy: [
+        { fechaCreacion: 'asc' }
+      ]
+    })
+
+    // Combinar y formatear todas las asignaciones en un formato uniforme
+    const todasLasAsignaciones = [
+      // Asignaciones de canto/música
+      ...asignacionesCanto.map(asignacion => ({
+        id: asignacion.id,
+        usuario: {
+          id: asignacion.usuario.id,
+          nombre: asignacion.usuario.nombre,
+          email: asignacion.usuario.email,
+          role: asignacion.usuario.rol
+        },
+        cancion: asignacion.cancion,
+        rolCancion: asignacion.rolCancion,
+        estadoPreparacion: asignacion.estadoPreparacion,
+        notasPersonales: asignacion.notasPersonales,
+        fechaCreacion: asignacion.fechaCreacion
+      })),
+      // Asignaciones de danza (mapear al mismo formato)
+      ...asignacionesDanza.map(asignacion => ({
+        id: asignacion.id,
+        usuario: {
+          id: asignacion.usuario.id,
+          nombre: asignacion.usuario.nombre,
+          email: asignacion.usuario.email,
+          role: asignacion.usuario.rol
+        },
+        cancion: asignacion.cancion,
+        rolCancion: asignacion.usuario.rol, // Usar el rol del usuario como rolCancion
+        estadoPreparacion: 'PENDIENTE', // Las asignaciones de danza no tienen estado por defecto
+        notasPersonales: null,
+        fechaCreacion: asignacion.fechaCreacion
+      }))
+    ].sort((a, b) => new Date(a.fechaCreacion).getTime() - new Date(b.fechaCreacion).getTime())
+
+    return NextResponse.json({ asignaciones: todasLasAsignaciones })
 
   } catch (error) {
     console.error('Error al obtener asignaciones:', error)

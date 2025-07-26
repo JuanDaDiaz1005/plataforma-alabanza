@@ -16,7 +16,9 @@ import {
   Mic2,
   Headphones,
   X,
-  Plus
+  Plus,
+  AlertTriangle,
+  Trash2
 } from 'lucide-react'
 import { useAudioPlayer } from '@/components/audio/AudioPlayerContext';
 
@@ -56,8 +58,6 @@ export default function BibliotecaPage() {
   
   // Filtros y búsqueda
   const [busqueda, setBusqueda] = useState('')
-  const [tipoFiltro, setTipoFiltro] = useState('')
-  const [plataformaFiltro, setPlataformaFiltro] = useState('')
   
   // Paginación
   const [paginaActual, setPaginaActual] = useState(1)
@@ -70,6 +70,11 @@ export default function BibliotecaPage() {
   const [videoEditandoId, setVideoEditandoId] = useState<string | null>(null)
   const [videoDanzaInput, setVideoDanzaInput] = useState('')
   const [guardandoVideo, setGuardandoVideo] = useState(false)
+
+  // Estados para modal de eliminación
+  const [cancionParaEliminar, setCancionParaEliminar] = useState<CancionBiblioteca | null>(null)
+  const [mostrarModalEliminar, setMostrarModalEliminar] = useState(false)
+  const [eliminandoCancion, setEliminandoCancion] = useState(false)
 
   const cargarCanciones = async () => {
     try {
@@ -99,7 +104,7 @@ export default function BibliotecaPage() {
 
   useEffect(() => {
     cargarCanciones()
-  }, [paginaActual, busqueda, tipoFiltro, plataformaFiltro])
+  }, [paginaActual, busqueda])
 
   // Funciones del reproductor
   const reproducirCancion = async (cancion: CancionBiblioteca, recurso: RecursoAudio) => {
@@ -168,6 +173,37 @@ export default function BibliotecaPage() {
     return `${minutos}:${segs.toString().padStart(2, '0')}`
   }
 
+  const manejarEliminarCancion = (cancion: CancionBiblioteca) => {
+    setCancionParaEliminar(cancion)
+    setMostrarModalEliminar(true)
+  }
+
+  const confirmarEliminarCancion = async () => {
+    if (!cancionParaEliminar) return
+
+    setEliminandoCancion(true)
+
+    try {
+      const response = await fetch(`/api/canciones/${cancionParaEliminar.id}`, { 
+        method: 'DELETE' 
+      })
+      
+      if (response.ok) {
+        setMostrarModalEliminar(false)
+        setCancionParaEliminar(null)
+        cargarCanciones() // Recargar la lista
+      } else {
+        const errorData = await response.json()
+        alert(`Error al eliminar la canción: ${errorData.error || 'Error desconocido'}`)
+      }
+    } catch (error) {
+      console.error('Error al eliminar canción:', error)
+      alert('Error al eliminar la canción. Por favor, intenta de nuevo.')
+    } finally {
+      setEliminandoCancion(false)
+    }
+  }
+
   const obtenerTextoTipo = (tipo: string) => {
     switch (tipo) {
       case 'CANCION_ORIGINAL': return 'Original'
@@ -232,13 +268,13 @@ export default function BibliotecaPage() {
             </div>
             <div>
               <h3 className="text-xl font-bold text-gray-900">
-                Filtros de Búsqueda
+                Búsqueda
               </h3>
               <p className="text-sm text-gray-500">Encuentra exactamente lo que necesitas</p>
             </div>
           </div>
           
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+          <div className="max-w-md">
             <div>
               <label className="block text-sm font-medium text-gray-700 mb-2">
                 Buscar canción
@@ -256,45 +292,6 @@ export default function BibliotecaPage() {
                   className="w-full pl-10 pr-4 py-3 border border-gray-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-purple-500 focus:border-purple-500 text-gray-900 bg-white transition-all duration-200"
                 />
               </div>
-            </div>
-
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-2">
-                Tipo de recurso
-              </label>
-              <select
-                value={tipoFiltro}
-                onChange={(e) => {
-                  setTipoFiltro(e.target.value)
-                  setPaginaActual(1)
-                }}
-                className="w-full px-4 py-3 border border-gray-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-purple-500 focus:border-purple-500 text-gray-900 bg-white transition-all duration-200"
-              >
-                <option value="">Todos los tipos</option>
-                <option value="CANCION_ORIGINAL">Original</option>
-                <option value="PISTA_INSTRUMENTAL">Pista</option>
-                <option value="PISTA_VOCAL">Vocal</option>
-                <option value="ACORDES">Acordes</option>
-              </select>
-            </div>
-
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-2">
-                Plataforma
-              </label>
-              <select
-                value={plataformaFiltro}
-                onChange={(e) => {
-                  setPlataformaFiltro(e.target.value)
-                  setPaginaActual(1)
-                }}
-                className="w-full px-4 py-3 border border-gray-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-purple-500 focus:border-purple-500 text-gray-900 bg-white transition-all duration-200"
-              >
-                <option value="">Todas las plataformas</option>
-                <option value="MP3_LOCAL">Archivos locales</option>
-                <option value="SPOTIFY">Spotify</option>
-                <option value="YOUTUBE">YouTube</option>
-              </select>
             </div>
           </div>
         </div>
@@ -406,61 +403,65 @@ export default function BibliotecaPage() {
                       ))}
                     </div>
                   </div>
-                  {/* Video de danza en la biblioteca, estilo mejorado */}
-                  {cancion.videoDanza && (
-                    <div className="mt-2 flex items-center gap-2">
-                      <span className="inline-flex items-center gap-1 px-2 py-1 bg-pink-50 text-pink-700 rounded-lg text-xs font-semibold border border-pink-200">
-                        <Play className="h-4 w-4" />
-                        Video de Danza
-                      </span>
-                      <a href={cancion.videoDanza} target="_blank" rel="noopener noreferrer" className="inline-flex items-center gap-2 px-3 py-1 bg-red-100 text-red-700 rounded-lg hover:bg-red-200 text-xs font-medium border border-red-200 transition-colors">
-                        <ExternalLink className="h-4 w-4" />
-                        Ver en YouTube
-                      </a>
-                    </div>
-                  )}
-                  {session?.user?.role === 'LIDER_DANZA' && (
-                    <button
-                      className="mt-2 inline-flex items-center gap-2 px-3 py-1 bg-purple-100 text-purple-700 rounded-lg hover:bg-purple-200 text-xs font-medium border border-purple-200 transition-colors"
-                      onClick={() => setVideoEditandoId(cancion.id)}
-                    >
-                      <Play className="h-4 w-4" />
-                      {cancion.videoDanza ? 'Editar Video de Danza' : 'Agregar Video de Danza'}
-                    </button>
-                  )}
-                  {videoEditandoId === cancion.id && (
-                    <form
-                      className="mt-2 flex gap-2 items-center"
-                      onSubmit={async e => {
-                        e.preventDefault();
-                        setGuardandoVideo(true);
-                        const res = await fetch(`/api/canciones/${cancion.id}/video-danza`, {
-                          method: 'PUT',
-                          headers: { 'Content-Type': 'application/json' },
-                          body: JSON.stringify({ videoDanza: videoDanzaInput })
-                        });
-                        setGuardandoVideo(false);
-                        if (res.ok) {
-                          setVideoEditandoId(null);
-                          window.location.reload();
-                        } else {
-                          alert('Error al guardar el video de danza');
-                        }
-                      }}
-                    >
-                      <input
-                        type="url"
-                        required
-                        placeholder="URL de YouTube"
-                        className="px-3 py-1 border border-gray-300 rounded-lg text-xs w-full focus:outline-none focus:ring-2 focus:ring-pink-500"
-                        value={videoDanzaInput}
-                        onChange={e => setVideoDanzaInput(e.target.value)}
-                      />
-                      <button type="submit" disabled={guardandoVideo} className="px-3 py-1 bg-pink-600 text-white rounded-lg text-xs font-medium shadow hover:bg-pink-700 transition-colors">
-                        {guardandoVideo ? 'Guardando...' : 'Guardar'}
-                      </button>
-                      <button type="button" onClick={() => setVideoEditandoId(null)} className="px-3 py-1 bg-gray-100 text-gray-700 rounded-lg text-xs font-medium border border-gray-300 hover:bg-gray-200 transition-colors">Cancelar</button>
-                    </form>
+                  {/* Video de danza en la biblioteca, visible solo para roles autorizados */}
+                  {(session?.user?.role === 'LIDER_DANZA' || session?.user?.role === 'ADMINISTRADOR' || session?.user?.role === 'LIDER_ALABANZA' || session?.user?.role === 'DANZA') && (
+                    <>
+                      {cancion.videoDanza && (
+                        <div className="mt-2 flex items-center gap-2">
+                          <span className="inline-flex items-center gap-1 px-2 py-1 bg-pink-50 text-pink-700 rounded-lg text-xs font-semibold border border-pink-200">
+                            <Play className="h-4 w-4" />
+                            Video de Danza
+                          </span>
+                          <a href={cancion.videoDanza} target="_blank" rel="noopener noreferrer" className="inline-flex items-center gap-2 px-3 py-1 bg-red-100 text-red-700 rounded-lg hover:bg-red-200 text-xs font-medium border border-red-200 transition-colors">
+                            <ExternalLink className="h-4 w-4" />
+                            Ver en YouTube
+                          </a>
+                        </div>
+                      )}
+                      {session?.user?.role === 'LIDER_DANZA' && (
+                        <button
+                          className="mt-2 inline-flex items-center gap-2 px-3 py-1 bg-purple-100 text-purple-700 rounded-lg hover:bg-purple-200 text-xs font-medium border border-purple-200 transition-colors"
+                          onClick={() => setVideoEditandoId(cancion.id)}
+                        >
+                          <Play className="h-4 w-4" />
+                          {cancion.videoDanza ? 'Editar Video de Danza' : 'Agregar Video de Danza'}
+                        </button>
+                      )}
+                      {videoEditandoId === cancion.id && (
+                        <form
+                          className="mt-2 flex gap-2 items-center"
+                          onSubmit={async e => {
+                            e.preventDefault();
+                            setGuardandoVideo(true);
+                            const res = await fetch(`/api/canciones/${cancion.id}/video-danza`, {
+                              method: 'PUT',
+                              headers: { 'Content-Type': 'application/json' },
+                              body: JSON.stringify({ videoDanza: videoDanzaInput })
+                            });
+                            setGuardandoVideo(false);
+                            if (res.ok) {
+                              setVideoEditandoId(null);
+                              window.location.reload();
+                            } else {
+                              alert('Error al guardar el video de danza');
+                            }
+                          }}
+                        >
+                          <input
+                            type="url"
+                            required
+                            placeholder="URL de YouTube"
+                            className="px-3 py-1 border border-gray-300 rounded-lg text-xs w-full focus:outline-none focus:ring-2 focus:ring-pink-500"
+                            value={videoDanzaInput}
+                            onChange={e => setVideoDanzaInput(e.target.value)}
+                          />
+                          <button type="submit" disabled={guardandoVideo} className="px-3 py-1 bg-pink-600 text-white rounded-lg text-xs font-medium shadow hover:bg-pink-700 transition-colors">
+                            {guardandoVideo ? 'Guardando...' : 'Guardar'}
+                          </button>
+                          <button type="button" onClick={() => setVideoEditandoId(null)} className="px-3 py-1 bg-gray-100 text-gray-700 rounded-lg text-xs font-medium border border-gray-300 hover:bg-gray-200 transition-colors">Cancelar</button>
+                        </form>
+                      )}
+                    </>
                   )}
                   {/* Acciones al pie del card */}
                   <div className="flex justify-end items-center mt-4 pt-4 border-t border-gray-100">
@@ -473,16 +474,10 @@ export default function BibliotecaPage() {
                     </Link>
                     {(session?.user?.role === 'ADMINISTRADOR' || session?.user?.role === 'LIDER_ALABANZA') && (
                       <button
-                        onClick={async () => {
-                          if (confirm('¿Estás seguro de eliminar esta canción?')) {
-                            const response = await fetch(`/api/canciones/${cancion.id}`, { method: 'DELETE' });
-                            if (response.ok) window.location.reload();
-                            else alert('Error al eliminar la canción');
-                          }
-                        }}
+                        onClick={() => manejarEliminarCancion(cancion)}
                         className="inline-flex items-center gap-2 ml-4 px-4 py-2 bg-red-100 text-red-700 rounded-lg hover:bg-red-200 font-semibold shadow transition cursor-pointer"
                       >
-                        <X className="h-4 w-4" />
+                        <Trash2 className="h-4 w-4" />
                         Eliminar
                       </button>
                     )}
@@ -515,6 +510,55 @@ export default function BibliotecaPage() {
             >
               <SkipForward className="h-4 w-4" />
             </button>
+          </div>
+        )}
+
+        {/* Modal de confirmar eliminación de canción */}
+        {mostrarModalEliminar && cancionParaEliminar && (
+          <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-50">
+            <div className="bg-white rounded-xl p-6 w-full max-w-md">
+              <div className="flex items-center gap-4 mb-6">
+                <div className="flex-shrink-0 w-12 h-12 bg-red-100 rounded-full flex items-center justify-center">
+                  <AlertTriangle className="h-6 w-6 text-red-600" />
+                </div>
+                <div>
+                  <h3 className="text-lg font-bold text-gray-900">Confirmar Eliminación</h3>
+                  <p className="text-sm text-gray-600">Esta acción no se puede deshacer</p>
+                </div>
+              </div>
+              
+              <div className="mb-6 p-4 bg-gray-50 rounded-lg">
+                <p className="text-sm text-gray-700 mb-2">
+                  ¿Estás seguro de que deseas eliminar esta canción de la biblioteca?
+                </p>
+                <div className="bg-white p-3 rounded-lg border">
+                  <p className="font-bold text-gray-900">{cancionParaEliminar.titulo}</p>
+                  <p className="text-sm text-gray-600">por {cancionParaEliminar.artista}</p>
+                </div>
+                <p className="text-xs text-red-600 mt-2">
+                  ⚠️ Se eliminarán también todos los recursos de audio, asignaciones y comentarios asociados.
+                </p>
+              </div>
+              
+              <div className="flex gap-3">
+                <button
+                  onClick={() => {
+                    setMostrarModalEliminar(false)
+                    setCancionParaEliminar(null)
+                  }}
+                  className="flex-1 px-4 py-3 border border-gray-300 text-gray-700 rounded-lg hover:bg-gray-50 transition-colors"
+                >
+                  Cancelar
+                </button>
+                <button
+                  onClick={confirmarEliminarCancion}
+                  disabled={eliminandoCancion}
+                  className="flex-1 px-4 py-3 bg-red-600 text-white rounded-lg hover:bg-red-700 transition-colors disabled:opacity-50"
+                >
+                  {eliminandoCancion ? 'Eliminando...' : 'Eliminar Canción'}
+                </button>
+              </div>
+            </div>
           </div>
         )}
       </div>

@@ -135,7 +135,7 @@ export async function GET(request: NextRequest) {
             }
           }
         },
-        orderBy: { fecha: 'desc' },
+        orderBy: { fecha: 'asc' },
         skip,
         take: limite
       }),

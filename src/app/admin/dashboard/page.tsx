@@ -28,14 +28,80 @@ interface EstadisticasDashboard {
   }
 }
 
+// Agregar interfaces para ProximoServicioResumen completo
+interface AsignacionServicio {
+  id: string;
+  cancion: {
+    id: string;
+    titulo: string;
+    artista: string;
+  };
+  usuario: {
+    id: string;
+    nombre: string;
+    rolCancion: string;
+  };
+  rolCancion: string;
+  estadoPreparacion: string;
+}
+
+interface ProximoServicioCompleto {
+  id: string;
+  fecha: string;
+  tipoServicio: string;
+  asignaciones: AsignacionServicio[];
+  totalAsignaciones: number;
+  asignacionesPendientes: number;
+}
+
 export default function DashboardAdmin() {
   const { data: session } = useSession()
   const [estadisticas, setEstadisticas] = useState<EstadisticasDashboard | null>(null)
+  const [proximoServicioCompleto, setProximoServicioCompleto] = useState<ProximoServicioCompleto | null>(null)
   const [cargando, setCargando] = useState(true)
 
   useEffect(() => {
     obtenerEstadisticas()
   }, [])
+
+  // Funciones para ProximoServicioResumen
+  const obtenerColorEstado = (estado: string) => {
+    switch (estado) {
+      case 'PREPARADO':
+        return 'bg-green-50 text-green-800 border-green-200'
+      case 'EN_PRACTICA':
+        return 'bg-yellow-50 text-yellow-800 border-yellow-200'
+      case 'PENDIENTE':
+        return 'bg-red-50 text-red-800 border-red-200'
+      case 'NECESITA_AYUDA':
+        return 'bg-orange-50 text-orange-800 border-orange-200'
+      default:
+        return 'bg-gray-50 text-gray-800 border-gray-200'
+    }
+  }
+
+  const obtenerTextoEstado = (estado: string) => {
+    switch (estado) {
+      case 'PREPARADO': return 'Preparado'
+      case 'EN_PRACTICA': return 'En Práctica'
+      case 'PENDIENTE': return 'Pendiente'
+      case 'NECESITA_AYUDA': return 'Necesita Ayuda'
+      default: return estado
+    }
+  }
+
+  const obtenerTextoRol = (rol: string) => {
+    switch (rol) {
+      case 'CANTANTE_PRINCIPAL': return 'Voz Principal'
+      case 'COROS': return 'Coros'
+      case 'ARMONIAS': return 'Armonías'
+      case 'RESPALDO': return 'Respaldo'
+      case 'MUSICO': return 'Músico'
+      case 'DANZA': return 'Danzora'
+      case 'LIDER_DANZA': return 'Líder de Danza'
+      default: return rol
+    }
+  }
 
   const obtenerEstadisticas = async () => {
     try {
@@ -76,6 +142,43 @@ export default function DashboardAdmin() {
           }),
           tipo: proxima.tipoServicio,
           canciones: proxima.asignaciones?.length || 0
+        }
+
+        // Cargar datos completos del próximo servicio para ProximoServicioResumen
+        try {
+          const respuestaAsignaciones = await fetch(`/api/programaciones/${proxima.id}/asignaciones`)
+          if (respuestaAsignaciones.ok) {
+            const datosAsignaciones = await respuestaAsignaciones.json()
+            const todasAsignaciones = datosAsignaciones.asignaciones || []
+            
+            // Mapear al formato correcto para ProximoServicioResumen
+            const asignacionesMapeadas = todasAsignaciones.map((a: any) => ({
+              id: a.id,
+              cancion: {
+                id: a.cancion.id,
+                titulo: a.cancion.titulo,
+                artista: a.cancion.artista
+              },
+              usuario: {
+                id: a.usuario.id,
+                nombre: a.usuario.nombre,
+                rolCancion: a.rolCancion || a.usuario.role
+              },
+              rolCancion: a.rolCancion || a.usuario.role,
+              estadoPreparacion: a.estadoPreparacion || 'PENDIENTE'
+            }))
+            
+            setProximoServicioCompleto({
+              id: proxima.id,
+              fecha: proximoServicio.fecha,
+              tipoServicio: proxima.tipoServicio,
+              asignaciones: asignacionesMapeadas,
+              totalAsignaciones: asignacionesMapeadas.length,
+              asignacionesPendientes: asignacionesMapeadas.filter((a: AsignacionServicio) => a.estadoPreparacion === 'PENDIENTE').length
+            })
+          }
+        } catch (error) {
+          console.error('Error al cargar detalles del próximo servicio:', error)
         }
       }
 
@@ -211,21 +314,15 @@ export default function DashboardAdmin() {
         </div>
 
         {/* Próximo servicio mejorado */}
-        {estadisticas?.proximoServicio && (
+        {proximoServicioCompleto && (
           <ProximoServicioResumen
-            proximoServicio={{
-              id: estadisticas.proximoServicio.id,
-              fecha: estadisticas.proximoServicio.fecha,
-              tipoServicio: estadisticas.proximoServicio.tipo,
-              asignaciones: [],
-              totalAsignaciones: estadisticas.proximoServicio.canciones || 0,
-              asignacionesPendientes: 0
-            }}
+            proximoServicio={proximoServicioCompleto}
             colorGradiente="from-purple-500 to-indigo-600"
             colorAcento="text-purple-600"
-            obtenerColorEstado={() => 'bg-gray-100 text-gray-800 border-gray-200'}
-            obtenerTextoEstado={estado => estado}
-            obtenerTextoRol={rol => rol}
+            obtenerColorEstado={obtenerColorEstado}
+            obtenerTextoEstado={obtenerTextoEstado}
+            obtenerTextoRol={obtenerTextoRol}
+            esLiderOAdmin={true}
           />
         )}
 

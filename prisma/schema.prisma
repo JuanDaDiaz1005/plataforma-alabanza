@@ -29,6 +29,8 @@ model Usuario {
   notificaciones    Notificacion[]
   comentarios       Comentario[]
   lideresDanza      LiderDanzaAsignacion[]
+  recursosDanza     RecursoDanza[]
+  recursosAlabanza  RecursoAlabanza[]
   @@map("usuarios")
 }
 
@@ -43,6 +45,7 @@ model Cancion {
   acordes           String?
   tonalidad         String?
   videoDanza        String?  // URL del video de danza en YouTube
+  estadoVideoDanza  EstadoVideoDanza @default(SIN_GRABAR)
 
   fechaCreacion     DateTime @default(now())
   fechaActualizacion DateTime @updatedAt
@@ -154,7 +157,10 @@ model LiderDanzaAsignacion {
   programacionId  String
   cancionId       String
   usuarioId       String // Danzora líder
+  estadoPreparacion EstadoPreparacion @default(PENDIENTE)
+  notasPersonales String?
   fechaCreacion   DateTime @default(now())
+  fechaActualizacion DateTime @updatedAt @default(now())
 
   // Relaciones
   programacion    Programacion @relation(fields: [programacionId], references: [id], onDelete: Cascade)
@@ -163,6 +169,42 @@ model LiderDanzaAsignacion {
 
   @@unique([programacionId, cancionId, usuarioId])
   @@map("lideres_danza_asignacion")
+}
+
+// Modelo de Recursos de Danza
+model RecursoDanza {
+  id              String   @id @default(cuid())
+  titulo          String
+  descripcion     String
+  url             String
+  categoria       CategoriaRecursoDanza
+  usuarioId       String
+  activo          Boolean  @default(true)
+  fechaCreacion   DateTime @default(now())
+  fechaActualizacion DateTime @updatedAt
+
+  // Relaciones
+  usuario         Usuario  @relation(fields: [usuarioId], references: [id], onDelete: Cascade)
+
+  @@map("recursos_danza")
+}
+
+// Modelo de Recursos de Alabanza
+model RecursoAlabanza {
+  id              String   @id @default(cuid())
+  titulo          String
+  descripcion     String
+  url             String
+  categoria       CategoriaRecursoAlabanza
+  usuarioId       String
+  activo          Boolean  @default(true)
+  fechaCreacion   DateTime @default(now())
+  fechaActualizacion DateTime @updatedAt
+
+  // Relaciones
+  usuario         Usuario  @relation(fields: [usuarioId], references: [id], onDelete: Cascade)
+
+  @@map("recursos_alabanza")
 }
 
 // Enums
@@ -199,6 +241,12 @@ enum EstadoPreparacion {
   NECESITA_AYUDA
 }
 
+enum EstadoVideoDanza {
+  SIN_GRABAR
+  GRABADO
+  REGRABAR
+}
+
 enum TipoRecurso {
   CANCION_ORIGINAL
   PISTA_INSTRUMENTAL
@@ -222,4 +270,23 @@ enum TipoNotificacion {
   CAMBIO_PROGRAMACION
   RECORDATORIO_ENSAYO
   MENSAJE_GENERAL
+}
+
+enum CategoriaRecursoDanza {
+  TUTORIAL
+  PREDICA
+  COREOGRAFIA
+  TECNICA
+  OTRO
+}
+
+enum CategoriaRecursoAlabanza {
+  VOCAL
+  GUITARRA
+  PIANO
+  BATERIA
+  BAJO
+  TEORIA
+  PREDICA
+  OTRO
 }

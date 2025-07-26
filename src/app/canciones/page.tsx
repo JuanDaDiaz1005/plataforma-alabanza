@@ -41,19 +41,28 @@ interface AsignacionCantante {
 
 interface AsignacionDanza {
   id: string
+  usuarioId: string
+  cancionId: string
+  estadoPreparacion: string
+  notasPersonales?: string
+  fechaActualizacion: string
+  usuario: {
+    id: string
+    nombre: string
+    email: string
+  }
   cancion: {
     id: string
     titulo: string
     artista: string
     videoDanza?: string
+    estadoVideoDanza?: string
   }
   programacion: {
     id: string
     fecha: Date | string
     tipoServicio: string
   }
-  tipo: string
-  fechaCreacion: string
 }
 
 export default function CancionesPage() {
@@ -68,6 +77,17 @@ export default function CancionesPage() {
   const [nuevoEstado, setNuevoEstado] = useState<string>('')
   const [actualizando, setActualizando] = useState(false)
   const [error, setError] = useState<string>('')
+  
+  // Estados para danza
+  const [editandoEstadoDanza, setEditandoEstadoDanza] = useState<string | null>(null)
+  const [nuevoEstadoDanza, setNuevoEstadoDanza] = useState<string>('')
+  const [actualizandoDanza, setActualizandoDanza] = useState(false)
+  const [errorDanza, setErrorDanza] = useState<string>('')
+  
+  // Estados para video de danza
+  const [editandoVideoEstado, setEditandoVideoEstado] = useState<string | null>(null)
+  const [nuevoEstadoVideo, setNuevoEstadoVideo] = useState<string>('')
+  const [actualizandoVideo, setActualizandoVideo] = useState(false)
   
   // Verificar si es usuario de danza
   const esDanza = session?.user?.role === 'DANZA' || session?.user?.role === 'LIDER_DANZA'
@@ -88,6 +108,7 @@ export default function CancionesPage() {
       
       if (esDanza) {
         // Para usuarios de danza, obtener asignaciones de danza
+        console.log('Cargando asignaciones de danza para usuario:', session.user.id)
         const response = await fetch(`/api/programaciones/danza-asignaciones?usuarioId=${session.user.id}`)
         
         if (!response.ok) {
@@ -95,7 +116,12 @@ export default function CancionesPage() {
         }
         
         const data = await response.json()
-        setAsignacionesDanza(data.asignaciones || [])
+        console.log('Datos de asignaciones de danza recibidos:', data)
+        
+        // La API ahora devuelve un array directo
+        const asignaciones = Array.isArray(data) ? data : (data.asignaciones || [])
+        console.log('Asignaciones de danza procesadas:', asignaciones)
+        setAsignacionesDanza(asignaciones)
       } else {
         // Para cantantes, obtener asignaciones de canciones
         const response = await fetch(`/api/programaciones?cantanteId=${session.user.id}`)
@@ -201,6 +227,123 @@ export default function CancionesPage() {
     }
   }
 
+  // Funciones para estados de danza
+  const iniciarEdicionDanza = (asignacionId: string, estadoActual: string) => {
+    setEditandoEstadoDanza(asignacionId)
+    setNuevoEstadoDanza(estadoActual)
+    setErrorDanza('')
+  }
+
+  const cancelarEdicionDanza = () => {
+    setEditandoEstadoDanza(null)
+    setNuevoEstadoDanza('')
+    setErrorDanza('')
+  }
+
+  const actualizarEstadoPreparacionDanza = async (asignacionId: string) => {
+    if (!session?.user?.id || !nuevoEstadoDanza) return
+
+    try {
+      setActualizandoDanza(true)
+      setErrorDanza('')
+
+      const asignacion = asignacionesDanza.find(a => a.id === asignacionId)
+      if (!asignacion) throw new Error('Asignación no encontrada')
+
+      console.log('Actualizando estado de preparación de danza:', {
+        asignacionId,
+        programacionId: asignacion.programacion.id,
+        nuevoEstado: nuevoEstadoDanza
+      })
+
+      const response = await fetch(`/api/programaciones/${asignacion.programacion.id}/danzas-lideres`, {
+        method: 'PUT',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          asignacionDanzaId: asignacionId,
+          estadoPreparacion: nuevoEstadoDanza
+        })
+      })
+
+      if (!response.ok) {
+        const errorData = await response.json()
+        throw new Error(errorData.error || 'Error al actualizar estado')
+      }
+
+      setAsignacionesDanza(prevAsignaciones => 
+        prevAsignaciones.map(asig => 
+          asig.id === asignacionId 
+            ? { ...asig, estadoPreparacion: nuevoEstadoDanza }
+            : asig
+        )
+      )
+
+      setEditandoEstadoDanza(null)
+      setNuevoEstadoDanza('')
+      console.log('Estado de preparación actualizado exitosamente')
+    } catch (error) {
+      console.error('Error:', error)
+      setErrorDanza(error instanceof Error ? error.message : 'Error al actualizar estado')
+    } finally {
+      setActualizandoDanza(false)
+    }
+  }
+
+  // Funciones para estado del video
+  const obtenerTextoEstadoVideo = (estado: string) => {
+    switch (estado) {
+      case 'GRABADO': return 'Grabado'
+      case 'REGRABAR': return 'Regrabar'
+      case 'SIN_GRABAR': return 'Sin Grabar'
+      default: return 'Sin Grabar'
+    }
+  }
+
+  const obtenerColorEstadoVideo = (estado: string) => {
+    switch (estado) {
+      case 'GRABADO': return 'bg-green-100 text-green-700 border-green-200'
+      case 'REGRABAR': return 'bg-yellow-100 text-yellow-700 border-yellow-200'
+      case 'SIN_GRABAR': return 'bg-red-100 text-red-700 border-red-200'
+      default: return 'bg-gray-100 text-gray-700 border-gray-200'
+    }
+  }
+
+  const actualizarEstadoVideo = async (cancionId: string, nuevoEstado: string) => {
+    if (actualizandoVideo) return
+    
+    console.log('Actualizando estado del video:', { cancionId, nuevoEstado })
+    setActualizandoVideo(true)
+    try {
+      const res = await fetch(`/api/canciones/${cancionId}/video-danza`, {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ estadoVideoDanza: nuevoEstado })
+      })
+
+      if (res.ok) {
+        console.log('Estado del video actualizado exitosamente')
+        // Actualizar la lista de asignaciones
+        setAsignacionesDanza(prevAsignaciones => 
+          prevAsignaciones.map(asig => 
+            asig.cancion.id === cancionId 
+              ? { ...asig, cancion: { ...asig.cancion, estadoVideoDanza: nuevoEstado } }
+              : asig
+          )
+        )
+        setEditandoVideoEstado(null)
+      } else {
+        const errorData = await res.json().catch(() => ({}))
+        console.error('Error al actualizar estado del video:', res.status, errorData)
+      }
+    } catch (error) {
+      console.error('Error al actualizar estado del video:', error)
+    } finally {
+      setActualizandoVideo(false)
+    }
+  }
+
   if (!puedeVerAsignaciones) {
     return (
       <Layout titulo="Mis Canciones">
@@ -223,8 +366,12 @@ export default function CancionesPage() {
     )
   }
 
-  const asignacionesPreparadas = asignaciones.filter(a => a.estadoPreparacion === 'PREPARADO').length
-  const asignacionesPendientes = asignaciones.filter(a => a.estadoPreparacion !== 'PREPARADO').length
+  const asignacionesPreparadas = esDanza 
+    ? asignacionesDanza.filter(a => a.estadoPreparacion === 'PREPARADO').length
+    : asignaciones.filter(a => a.estadoPreparacion === 'PREPARADO').length
+  const asignacionesPendientes = esDanza
+    ? asignacionesDanza.filter(a => a.estadoPreparacion !== 'PREPARADO').length
+    : asignaciones.filter(a => a.estadoPreparacion !== 'PREPARADO').length
   const totalAsignaciones = esDanza ? asignacionesDanza.length : asignaciones.length
 
   return (
@@ -306,6 +453,32 @@ export default function CancionesPage() {
           </div>
         ) : (
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
+            <div className="bg-gradient-to-r from-green-50 to-emerald-50 rounded-xl p-6 border border-green-100 hover:border-green-200 hover:shadow-md transition-all duration-300">
+              <div className="flex items-center justify-between">
+                <div>
+                  <p className="text-sm font-medium text-gray-600 mb-1">Preparadas</p>
+                  <p className="text-3xl font-bold text-green-600">{asignacionesPreparadas}</p>
+                  <p className="text-sm text-gray-500">Listas para danzar</p>
+                </div>
+                <div className="bg-gradient-to-br from-green-500 to-emerald-600 p-3 rounded-full shadow-lg">
+                  <CheckCircle className="h-6 w-6 text-white" />
+                </div>
+              </div>
+            </div>
+
+            <div className="bg-gradient-to-r from-orange-50 to-red-50 rounded-xl p-6 border border-orange-100 hover:border-orange-200 hover:shadow-md transition-all duration-300">
+              <div className="flex items-center justify-between">
+                <div>
+                  <p className="text-sm font-medium text-gray-600 mb-1">Por Preparar</p>
+                  <p className="text-3xl font-bold text-orange-600">{asignacionesPendientes}</p>
+                  <p className="text-sm text-gray-500">Necesitan práctica</p>
+                </div>
+                <div className="bg-gradient-to-br from-orange-500 to-red-600 p-3 rounded-full shadow-lg">
+                  <Clock className="h-6 w-6 text-white" />
+                </div>
+              </div>
+            </div>
+
             <div className="bg-gradient-to-r from-purple-50 to-pink-50 rounded-xl p-6 border border-purple-100 hover:border-purple-200 hover:shadow-md transition-all duration-300">
               <div className="flex items-center justify-between">
                 <div>
@@ -317,34 +490,6 @@ export default function CancionesPage() {
                 </div>
                 <div className="bg-gradient-to-br from-purple-500 to-pink-600 p-3 rounded-full shadow-lg">
                   <PlayCircle className="h-6 w-6 text-white" />
-                </div>
-              </div>
-            </div>
-
-            <div className="bg-gradient-to-r from-blue-50 to-indigo-50 rounded-xl p-6 border border-blue-100 hover:border-blue-200 hover:shadow-md transition-all duration-300">
-              <div className="flex items-center justify-between">
-                <div>
-                  <p className="text-sm font-medium text-gray-600 mb-1">Total</p>
-                  <p className="text-3xl font-bold text-blue-600">{asignacionesDanza.length}</p>
-                  <p className="text-sm text-gray-500">Asignaciones</p>
-                </div>
-                <div className="bg-gradient-to-br from-blue-500 to-indigo-600 p-3 rounded-full shadow-lg">
-                  <Music className="h-6 w-6 text-white" />
-                </div>
-              </div>
-            </div>
-
-            <div className="bg-gradient-to-r from-green-50 to-emerald-50 rounded-xl p-6 border border-green-100 hover:border-green-200 hover:shadow-md transition-all duration-300">
-              <div className="flex items-center justify-between">
-                <div>
-                  <p className="text-sm font-medium text-gray-600 mb-1">Próximo</p>
-                  <p className="text-3xl font-bold text-green-600">
-                    {asignacionesDanza.length > 0 ? 1 : 0}
-                  </p>
-                  <p className="text-sm text-gray-500">Servicio</p>
-                </div>
-                <div className="bg-gradient-to-br from-green-500 to-emerald-600 p-3 rounded-full shadow-lg">
-                  <Calendar className="h-6 w-6 text-white" />
                 </div>
               </div>
             </div>
@@ -377,6 +522,20 @@ export default function CancionesPage() {
                 <span className="text-red-700 text-sm">{error}</span>
                 <button 
                   onClick={() => setError('')}
+                  className="text-red-700 hover:text-red-900"
+                >
+                  ×
+                </button>
+              </div>
+            </div>
+          )}
+
+          {errorDanza && (
+            <div className="mb-6 p-4 bg-red-50 border border-red-200 rounded-xl">
+              <div className="flex justify-between items-center">
+                <span className="text-red-700 text-sm">{errorDanza}</span>
+                <button 
+                  onClick={() => setErrorDanza('')}
                   className="text-red-700 hover:text-red-900"
                 >
                   ×
@@ -629,7 +788,7 @@ export default function CancionesPage() {
                   <div className="flex flex-col lg:flex-row lg:items-start justify-between gap-4">
                     <div className="flex-1 space-y-4">
                       <div>
-                        <div className="flex items-center gap-3 mb-2">
+                        <div className="flex flex-col md:flex-row items-start gap-3 mb-2">
                           <h4 className="font-bold text-gray-900 text-lg">
                             <Link 
                               href={`/canciones/${asignacion.cancion.id}?from=asignaciones-danza`}
@@ -638,10 +797,87 @@ export default function CancionesPage() {
                               {asignacion.cancion.titulo}
                             </Link>
                           </h4>
-                          <div className="flex items-center gap-2">
+                          <div className="flex flex-wrap items-center gap-2">
                             <span className="bg-purple-100 text-purple-700 px-3 py-1 rounded-full text-sm font-medium border border-purple-200">
-                              💃 Líder
+                              💃 Danza
                             </span>
+                            
+                            {/* Estado de preparación */}
+                            {editandoEstadoDanza === asignacion.id ? (
+                              <div className="flex flex-col items-center gap-2">
+                                <select 
+                                  value={nuevoEstadoDanza}
+                                  onChange={(e) => setNuevoEstadoDanza(e.target.value)}
+                                  className="text-sm border rounded px-3 py-1 bg-white"
+                                  disabled={actualizandoDanza}
+                                >
+                                  <option value="PENDIENTE">PENDIENTE</option>
+                                  <option value="EN_PRACTICA">EN PRÁCTICA</option>
+                                  <option value="PREPARADO">PREPARADO</option>
+                                  <option value="NECESITA_AYUDA">NECESITA AYUDA</option>
+                                </select>
+                                <div className="flex gap-2">
+                                  <button
+                                    onClick={() => actualizarEstadoPreparacionDanza(asignacion.id)}
+                                    disabled={actualizandoDanza}
+                                    className="text-sm bg-purple-600 text-white px-3 py-1 rounded hover:bg-purple-700 disabled:opacity-50 transition-colors"
+                                  >
+                                    {actualizandoDanza ? 'Guardando...' : 'Guardar'}
+                                  </button>
+                                  <button
+                                    onClick={cancelarEdicionDanza}
+                                    disabled={actualizandoDanza}
+                                    className="text-sm bg-gray-600 text-white px-3 py-1 rounded hover:bg-gray-700 disabled:opacity-50 transition-colors"
+                                  >
+                                    Cancelar
+                                  </button>
+                                </div>
+                              </div>
+                            ) : (
+                              <div className="flex items-center gap-2">
+                                <span className={`inline-flex items-center gap-1 px-3 py-1 rounded-full text-sm font-medium border ${obtenerColorEstado(asignacion.estadoPreparacion)}`}>
+                                  {obtenerIconoEstado(asignacion.estadoPreparacion)}
+                                  {asignacion.estadoPreparacion.replace('_', ' ')}
+                                </span>
+                                <button
+                                  onClick={() => iniciarEdicionDanza(asignacion.id, asignacion.estadoPreparacion)}
+                                  className="text-sm text-purple-600 hover:text-purple-800 px-3 py-1 hover:bg-purple-50 rounded transition-colors"
+                                >
+                                  Editar
+                                </button>
+                              </div>
+                            )}
+
+                            {/* Estado del video - solo para líderes de danza */}
+                            {session?.user?.role === 'LIDER_DANZA' && (
+                              <div className="flex items-center gap-2">
+                                <span className="text-xs font-semibold text-purple-700 bg-purple-50 px-2 py-1 rounded">Video:</span>
+                                {editandoVideoEstado === asignacion.cancion.id ? (
+                                  <select
+                                    value={asignacion.cancion.estadoVideoDanza || 'SIN_GRABAR'}
+                                    onChange={(e) => actualizarEstadoVideo(asignacion.cancion.id, e.target.value)}
+                                    disabled={actualizandoVideo}
+                                    className="text-xs rounded px-2 py-1 border focus:outline-none bg-white"
+                                  >
+                                    <option value="SIN_GRABAR">Sin Grabar</option>
+                                    <option value="GRABADO">Grabado</option>
+                                    <option value="REGRABAR">Regrabar</option>
+                                  </select>
+                                ) : (
+                                  <button
+                                    onClick={() => setEditandoVideoEstado(asignacion.cancion.id)}
+                                    className={`text-xs rounded px-2 py-1 border font-semibold hover:bg-opacity-80 transition-colors ${obtenerColorEstadoVideo(asignacion.cancion.estadoVideoDanza || 'SIN_GRABAR')}`}
+                                  >
+                                    {obtenerTextoEstadoVideo(asignacion.cancion.estadoVideoDanza || 'SIN_GRABAR')}
+                                  </button>
+                                )}
+                              </div>
+                            )}
+                            {session?.user?.role === 'DANZA' && (
+                              <span className={`text-xs rounded px-2 py-1 border font-semibold ${obtenerColorEstadoVideo(asignacion.cancion.estadoVideoDanza || 'SIN_GRABAR')}`}>
+                                {obtenerTextoEstadoVideo(asignacion.cancion.estadoVideoDanza || 'SIN_GRABAR')}
+                              </span>
+                            )}
                           </div>
                         </div>
                         
@@ -656,13 +892,13 @@ export default function CancionesPage() {
                           </span>
                         </div>
 
-                        <div className="flex items-center gap-4 text-sm">
+                        <div className="flex flex-wrap items-center gap-4 text-sm">
                           <span className="text-gray-500">
                             {asignacion.programacion.tipoServicio}
                           </span>
-                          {asignacion.cancion.videoDanza && (
-                            <span className="bg-green-100 text-green-700 px-3 py-1 rounded-full text-sm font-medium">
-                              🎥 Video Disponible
+                          {session?.user?.role === 'LIDER_DANZA' && (
+                            <span className={`px-3 py-1 rounded-full text-sm font-medium ${obtenerColorEstadoVideo(asignacion.cancion.estadoVideoDanza || 'SIN_GRABAR')}`}>
+                              📹 {obtenerTextoEstadoVideo(asignacion.cancion.estadoVideoDanza || 'SIN_GRABAR')}
                             </span>
                           )}
                         </div>
@@ -749,64 +985,6 @@ export default function CancionesPage() {
               ))}
             </div>
           )}
-        </div>
-
-        {/* Acciones rápidas */}
-        <div className="bg-white rounded-xl shadow-sm border p-4 sm:p-6">
-          <h3 className="text-lg font-semibold text-gray-900 mb-4">
-            {esDanza ? 'Acciones Rápidas' : 'Recursos de Práctica'}
-          </h3>
-          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-            {esDanza ? (
-              <>
-                <Link 
-                  href="/servicios"
-                  className="flex items-center gap-3 p-4 border-2 border-dashed border-gray-200 rounded-lg hover:border-purple-300 hover:bg-purple-50 transition-colors"
-                >
-                  <Calendar className="h-6 w-6 text-purple-600" />
-                  <div className="text-left">
-                    <p className="font-medium text-gray-900">Asignar Canciones</p>
-                    <p className="text-sm text-gray-500">Ver servicios y asignar danzas</p>
-                  </div>
-                </Link>
-
-                <Link 
-                  href="/biblioteca"
-                  className="flex items-center gap-3 p-4 border-2 border-dashed border-gray-200 rounded-lg hover:border-pink-300 hover:bg-pink-50 transition-colors"
-                >
-                  <PlayCircle className="h-6 w-6 text-pink-600" />
-                  <div className="text-left">
-                    <p className="font-medium text-gray-900">Gestionar Videos</p>
-                    <p className="text-sm text-gray-500">Agregar videos de danza</p>
-                  </div>
-                </Link>
-              </>
-            ) : (
-              <>
-                <Link 
-                  href="/biblioteca"
-                  className="flex items-center gap-3 p-4 border-2 border-dashed border-gray-200 rounded-lg hover:border-blue-300 hover:bg-blue-50 transition-colors"
-                >
-                  <PlayCircle className="h-6 w-6 text-blue-600" />
-                  <div className="text-left">
-                    <p className="font-medium text-gray-900">Biblioteca</p>
-                    <p className="text-sm text-gray-500">Escuchar canciones completas</p>
-                  </div>
-                </Link>
-
-                <Link 
-                  href="/servicios"
-                  className="flex items-center gap-3 p-4 border-2 border-dashed border-gray-200 rounded-lg hover:border-green-300 hover:bg-green-50 transition-colors"
-                >
-                  <Calendar className="h-6 w-6 text-green-600" />
-                  <div className="text-left">
-                    <p className="font-medium text-gray-900">Servicios</p>
-                    <p className="text-sm text-gray-500">Ver todos los servicios programados</p>
-                  </div>
-                </Link>
-              </>
-            )}
-          </div>
         </div>
       </div>
     </Layout>

@@ -26,6 +26,8 @@ export default function Dashboard() {
       router.push('/lider/dashboard')
     } else if (rolUsuario === 'LIDER_DANZA' || rolUsuario === 'DANZA') {
       router.push('/danza/dashboard')
+    } else if (rolUsuario === 'MUSICO') {
+      router.push('/musico/dashboard')
     } else {
       router.push('/cantante/dashboard')
     }

@@ -36,8 +36,10 @@ export default function PerfilPage() {
   // Estados para edición
   const [nuevoNombre, setNuevoNombre] = useState('')
   const [nuevoEmail, setNuevoEmail] = useState('')
+  const [passwordActual, setPasswordActual] = useState('')
   const [nuevaContrasena, setNuevaContrasena] = useState('')
   const [confirmarContrasena, setConfirmarContrasena] = useState('')
+  const [mostrarPasswordActual, setMostrarPasswordActual] = useState(false)
   const [mostrarContrasena, setMostrarContrasena] = useState(false)
 
   useEffect(() => {
@@ -65,6 +67,7 @@ export default function PerfilPage() {
     setEditando(false)
     setNuevoNombre(perfil?.nombre || '')
     setNuevoEmail(perfil?.email || '')
+    setPasswordActual('')
     setNuevaContrasena('')
     setConfirmarContrasena('')
     setError('')
@@ -77,28 +80,55 @@ export default function PerfilPage() {
       return
     }
 
-    if (nuevaContrasena && nuevaContrasena !== confirmarContrasena) {
-      setError('Las contraseñas no coinciden')
+    // Validar formato de email
+    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/
+    if (!emailRegex.test(nuevoEmail)) {
+      setError('El formato del email no es válido')
       return
     }
 
-    if (nuevaContrasena && nuevaContrasena.length < 6) {
-      setError('La contraseña debe tener al menos 6 caracteres')
-      return
+    // Validaciones de contraseña si se va a cambiar
+    if (passwordActual || nuevaContrasena || confirmarContrasena) {
+      if (!passwordActual.trim()) {
+        setError('Debes ingresar tu contraseña actual')
+        return
+      }
+      
+      if (!nuevaContrasena.trim()) {
+        setError('Debes ingresar la nueva contraseña')
+        return
+      }
+      
+      if (nuevaContrasena.length < 6) {
+        setError('La nueva contraseña debe tener al menos 6 caracteres')
+        return
+      }
+      
+      if (nuevaContrasena !== confirmarContrasena) {
+        setError('Las contraseñas nuevas no coinciden')
+        return
+      }
     }
 
     try {
       setGuardando(true)
       setError('')
 
-      // Definir tipo explícito para los datos actualizados
-      const datosActualizados: { nombre: string; email: string; contrasena?: string } = {
+      // Preparar datos para envío
+      const datosActualizacion: {
+        nombre: string
+        email: string
+        passwordActual?: string
+        passwordNueva?: string
+      } = {
         nombre: nuevoNombre.trim(),
-        email: nuevoEmail.trim()
+        email: nuevoEmail.trim().toLowerCase()
       }
 
-      if (nuevaContrasena) {
-        datosActualizados.contrasena = nuevaContrasena
+      // Incluir contraseñas solo si ambas están presentes
+      if (passwordActual && nuevaContrasena) {
+        datosActualizacion.passwordActual = passwordActual
+        datosActualizacion.passwordNueva = nuevaContrasena
       }
 
       const response = await fetch(`/api/usuarios/${perfil?.id}`, {
@@ -106,7 +136,7 @@ export default function PerfilPage() {
         headers: {
           'Content-Type': 'application/json'
         },
-        body: JSON.stringify(datosActualizados)
+        body: JSON.stringify(datosActualizacion)
       })
 
       if (!response.ok) {
@@ -131,6 +161,7 @@ export default function PerfilPage() {
       } : null)
 
       setEditando(false)
+      setPasswordActual('')
       setNuevaContrasena('')
       setConfirmarContrasena('')
       setExito('Perfil actualizado correctamente')
@@ -235,6 +266,7 @@ export default function PerfilPage() {
                     onChange={(e) => setNuevoNombre(e.target.value)}
                     className="w-full px-4 py-3 border border-gray-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 text-gray-900 bg-white transition-all duration-200"
                     placeholder="Tu nombre completo"
+                    required
                   />
                 ) : (
                   <p className="text-gray-900 font-medium">{perfil?.nombre}</p>
@@ -258,6 +290,7 @@ export default function PerfilPage() {
                     onChange={(e) => setNuevoEmail(e.target.value)}
                     className="w-full px-4 py-3 border border-gray-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 text-gray-900 bg-white transition-all duration-200"
                     placeholder="tu@email.com"
+                    required
                   />
                 ) : (
                   <p className="text-gray-900 font-medium">{perfil?.email}</p>
@@ -304,10 +337,32 @@ export default function PerfilPage() {
               <div className="border-t border-gray-200 pt-6 space-y-4">
                 <h3 className="text-lg font-semibold text-gray-900 flex items-center gap-2">
                   <Key className="h-5 w-5 text-gray-600" />
-                  Cambiar contraseña
+                  Cambiar contraseña (opcional)
                 </h3>
                 
                 <div className="space-y-4">
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-1">
+                      Contraseña actual
+                    </label>
+                    <div className="relative">
+                      <input
+                        type={mostrarPasswordActual ? "text" : "password"}
+                        value={passwordActual}
+                        onChange={(e) => setPasswordActual(e.target.value)}
+                        className="w-full px-4 py-3 pr-12 border border-gray-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 text-gray-900 bg-white transition-all duration-200"
+                        placeholder="Tu contraseña actual"
+                      />
+                      <button
+                        type="button"
+                        onClick={() => setMostrarPasswordActual(!mostrarPasswordActual)}
+                        className="absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-400 hover:text-gray-600"
+                      >
+                        {mostrarPasswordActual ? <EyeOff className="h-5 w-5" /> : <Eye className="h-5 w-5" />}
+                      </button>
+                    </div>
+                  </div>
+
                   <div>
                     <label className="block text-sm font-medium text-gray-700 mb-1">
                       Nueva contraseña
@@ -318,7 +373,7 @@ export default function PerfilPage() {
                         value={nuevaContrasena}
                         onChange={(e) => setNuevaContrasena(e.target.value)}
                         className="w-full px-4 py-3 pr-12 border border-gray-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 text-gray-900 bg-white transition-all duration-200"
-                        placeholder="Deja vacío para mantener la actual"
+                        placeholder="Nueva contraseña (mínimo 6 caracteres)"
                       />
                       <button
                         type="button"

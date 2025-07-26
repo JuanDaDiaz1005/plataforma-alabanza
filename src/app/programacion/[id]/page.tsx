@@ -20,7 +20,8 @@ import {
   Headphones,
   User,
   ExternalLink,
-  Loader2
+  Loader2,
+  Youtube
 } from 'lucide-react'
 import { useAudioPlayer } from '@/components/audio/AudioPlayerContext';
 import { useRef } from 'react';
@@ -55,6 +56,34 @@ interface Asignacion {
     artista: string
     duracionSegundos?: number
     tonalidad?: string
+    videoDanza?: string
+    estadoVideoDanza?: string
+  }
+}
+
+interface AsignacionDanza {
+  id: string
+  usuarioId: string
+  cancionId: string
+  estadoPreparacion: string
+  notasPersonales?: string
+  fechaActualizacion: string
+  usuario: {
+    id: string
+    nombre: string
+    email: string
+  }
+  cancion: {
+    id: string
+    titulo: string
+    artista: string
+    videoDanza?: string
+    estadoVideoDanza?: string
+  }
+  programacion: {
+    id: string
+    fecha: string
+    tipoServicio: string
   }
 }
 
@@ -111,9 +140,14 @@ export default function DetalleProgramacion() {
   // Estado para el guardando del modal de líderes de danza
   const [guardando, setGuardando] = useState(false)
 
+  // Estados para asignaciones de danza y estado del video
+  const [asignacionesDanza, setAsignacionesDanza] = useState<Record<string, AsignacionDanza[]>>({})
+  const [editandoEstadoVideo, setEditandoEstadoVideo] = useState<string | null>(null)
+  const [actualizandoVideo, setActualizandoVideo] = useState(false)
+
   // Verificar permisos
   const puedeEditar = session?.user?.role === 'ADMINISTRADOR' || session?.user?.role === 'LIDER_ALABANZA'
-  const puedeEliminar = session?.user?.role === 'ADMINISTRADOR'
+  const puedeEliminar = session?.user?.role === 'ADMINISTRADOR' || session?.user?.role === 'LIDER_ALABANZA'
   const puedeAsignar = puedeEditar
   const esDanza = session?.user?.role === 'DANZA' || session?.user?.role === 'LIDER_DANZA'
 
@@ -133,6 +167,7 @@ export default function DetalleProgramacion() {
       }
 
       const data = await response.json()
+      console.log('Programación cargada:', data)
       setProgramacion(data)
 
     } catch (error) {
@@ -277,20 +312,64 @@ export default function DetalleProgramacion() {
     }
   }
 
+  // Cargar asignaciones de danza (individuales)
+  const cargarAsignacionesDanza = async () => {
+    if (!programacion) return
+
+    try {
+      console.log('Cargando asignaciones de danza para programación:', programacion.id)
+      const res = await fetch(`/api/programaciones/danza-asignaciones?programacionId=${programacion.id}`)
+      if (res.ok) {
+        const data = await res.json()
+        console.log('Asignaciones de danza recibidas:', data)
+        
+        // Manejar tanto el formato nuevo (array directo) como el antiguo (objeto con asignaciones)
+        const asignaciones = Array.isArray(data) ? data : (data.asignaciones || [])
+        console.log('Asignaciones procesadas:', asignaciones)
+        
+        const porCancion: Record<string, AsignacionDanza[]> = {}
+        asignaciones.forEach((asignacion: AsignacionDanza) => {
+          const cancionId = asignacion.cancionId
+          if (!porCancion[cancionId]) porCancion[cancionId] = []
+          porCancion[cancionId].push(asignacion)
+        })
+        console.log('Asignaciones de danza agrupadas por canción:', porCancion)
+        setAsignacionesDanza(porCancion)
+      } else {
+        console.error('Error al cargar asignaciones de danza:', res.statusText)
+        setAsignacionesDanza({})
+      }
+    } catch (error) {
+      console.error('Error al cargar asignaciones de danza:', error)
+      setAsignacionesDanza({})
+    }
+  }
+
   // Abrir modal de asignación de danza
   const abrirModalDanza = async (cancionId: string, cancionTitulo: string) => {
+    console.log('Abriendo modal de danza para canción:', cancionId, cancionTitulo)
     setModalOpen(true)
     setModalCancionId(cancionId)
     setCargandoDanzoras(true)
+    setErrorModal('')
     try {
       // Cargar danzoras y líder de danza
+      console.log('Cargando usuarios de danza...')
       const res = await fetch('/api/usuarios?rol=DANZA,LIDER_DANZA&limite=50')
+      console.log('Respuesta de usuarios:', res.status, res.statusText)
+      
       if (res.ok) {
         const data = await res.json()
-        setDanzoras(data.usuarios || [])
+        console.log('Datos de usuarios recibidos:', data)
+        const usuarios = data.usuarios || []
+        console.log('Usuarios de danza encontrados:', usuarios.length, usuarios)
+        setDanzoras(usuarios)
       } else {
-        console.error('Error al cargar usuarios de danza:', res.statusText)
+        console.error('Error al cargar usuarios de danza:', res.status, res.statusText)
+        const errorData = await res.json().catch(() => ({}))
+        console.error('Error data:', errorData)
         setDanzoras([])
+        setErrorModal('Error al cargar usuarios de danza')
       }
       // Cargar líderes actuales
       await cargarLideresDanza()
@@ -299,6 +378,7 @@ export default function DetalleProgramacion() {
       console.error('Error al abrir modal de danza:', error)
       setDanzoras([])
       setSeleccionadas([])
+      setErrorModal('Error al cargar usuarios')
     } finally {
       setCargandoDanzoras(false)
     }
@@ -326,11 +406,67 @@ export default function DetalleProgramacion() {
         })
       })
       await cargarLideresDanza()
+      await cargarAsignacionesDanza()
       setGuardando(false)
       cerrarModalDanza()
     } catch (error) {
       console.error('Error al guardar líderes de danza:', error)
       setGuardando(false)
+    }
+  }
+
+  // Actualizar estado de preparación de danza
+  const actualizarEstadoPreparacionDanza = async (asignacionId: string, nuevoEstado: string) => {
+    try {
+      console.log('Actualizando estado de preparación de danza:', { asignacionId, nuevoEstado, programacionId: programacion?.id })
+      const res = await fetch(`/api/programaciones/${programacion?.id}/danzas-lideres`, {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          asignacionDanzaId: asignacionId,
+          estadoPreparacion: nuevoEstado
+        })
+      })
+
+      if (res.ok) {
+        console.log('Estado de preparación actualizado exitosamente')
+        await cargarAsignacionesDanza()
+      } else {
+        const errorData = await res.json().catch(() => ({}))
+        console.error('Error al actualizar estado de preparación:', res.status, errorData)
+      }
+    } catch (error) {
+      console.error('Error al actualizar estado de preparación:', error)
+    }
+  }
+
+  // Actualizar estado del video de danza
+  const actualizarEstadoVideo = async (cancionId: string, nuevoEstado: string) => {
+    if (actualizandoVideo) return
+    
+    console.log('Actualizando estado del video:', { cancionId, nuevoEstado })
+    setActualizandoVideo(true)
+    try {
+      const res = await fetch(`/api/canciones/${cancionId}/video-danza`, {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ estadoVideoDanza: nuevoEstado })
+      })
+
+      if (res.ok) {
+        console.log('Estado del video actualizado exitosamente')
+        // Recargar programación para obtener los datos actualizados
+        await cargarProgramacion()
+        await cargarAsignacionesDanza()
+        setEditandoEstadoVideo(null)
+      } else {
+        const errorData = await res.json().catch(() => ({}))
+        console.error('Error al actualizar estado del video:', res.status, errorData)
+      }
+    } catch (error) {
+      console.error('Error al actualizar estado del video:', error)
+    } finally {
+      setActualizandoVideo(false)
     }
   }
 
@@ -394,43 +530,62 @@ export default function DetalleProgramacion() {
 
   const [seleccionadas, setSeleccionadas] = useState<string[]>([]);
 
+  // Funciones auxiliares para estados del video
+  const obtenerTextoEstadoVideo = (estado: string) => {
+    switch (estado) {
+      case 'SIN_GRABAR': return 'Sin Grabar'
+      case 'GRABADO': return 'Grabado'
+      case 'REGRABAR': return 'Regrabar'
+      default: return 'Sin Grabar'
+    }
+  }
+
+  const obtenerColorEstadoVideo = (estado: string) => {
+    switch (estado) {
+      case 'SIN_GRABAR': return 'bg-gray-100 text-gray-700 border-gray-200'
+      case 'GRABADO': return 'bg-green-100 text-green-700 border-green-200'
+      case 'REGRABAR': return 'bg-orange-100 text-orange-700 border-orange-200'
+      default: return 'bg-gray-100 text-gray-700 border-gray-200'
+    }
+  }
+
   useEffect(() => {
     if (programacionId) {
+      console.log('Cargando datos iniciales para programación:', programacionId)
       cargarProgramacion()
+      cargarLideresDanza()
+      cargarAsignacionesDanza()
     }
   }, [programacionId])
 
-  // Cargar líderes de danza cuando se carga la programación
+  // Cargar asignaciones de danza cuando la programación esté lista
   useEffect(() => {
-    if (programacion && esDanza) {
+    if (programacion) {
+      console.log('Programación lista, cargando asignaciones de danza...')
+      cargarAsignacionesDanza()
+    }
+  }, [programacion])
+
+  // Cargar líderes de danza cuando se carga la programación - para roles autorizados
+  useEffect(() => {
+    if (programacion && (session?.user?.role === 'LIDER_DANZA' || session?.user?.role === 'ADMINISTRADOR' || session?.user?.role === 'LIDER_ALABANZA' || session?.user?.role === 'DANZA')) {
       cargarLideresDanza()
     }
-  }, [programacion, esDanza])
+  }, [programacion, session?.user?.role])
 
-  // Cargar danzoras al abrir modal
-  useEffect(() => {
-    if (modalOpen) {
-      setCargandoDanzoras(true)
-      fetch('/api/usuarios?role=DANZA,LIDER_DANZA')
-        .then(res => res.json())
-        .then(data => setDanzoras(data.usuarios || []))
-        .catch(() => setErrorModal('Error al cargar danzoras'))
-        .finally(() => setCargandoDanzoras(false))
-    }
-  }, [modalOpen])
+  // Este useEffect se removió porque la carga se hace en abrirModalDanza()
+  // y causaba conflictos al tener dos llamadas simultáneas
 
   // Cargar líder actual al abrir modal
   useEffect(() => {
     if (modalOpen && modalCancionId && programacion) {
-      fetch(`/api/programaciones/danza-asignaciones?usuarioId=${session?.user?.id}`)
-        .then(res => res.json())
-        .then(data => {
-          const asignacion = (data.asignaciones || []).find((a: { cancion: { id: string }, programacion: { id: string }, usuarioId?: string }) => a.cancion.id === modalCancionId && a.programacion.id === programacion.id)
-          setLiderActual(asignacion ? asignacion.usuarioId : null)
-        })
-        .catch(() => {})
+      // Buscar si el usuario actual ya está asignado como líder para esta canción y programación
+      const asignacionActual = Object.values(asignacionesDanza).flat().find(
+        asignacion => asignacion.cancionId === modalCancionId && asignacion.usuarioId === session?.user?.id
+      )
+      setLiderActual(asignacionActual ? asignacionActual.usuarioId : null)
     }
-  }, [modalOpen, modalCancionId, session?.user?.id, programacion])
+  }, [modalOpen, modalCancionId, session?.user?.id, programacion, asignacionesDanza])
 
   const asignarLider = async (usuarioId: string) => {
     if (!programacion) return;
@@ -677,19 +832,84 @@ export default function DetalleProgramacion() {
                     <div key={cancionId} className="bg-green-50 border border-green-200 shadow rounded-xl p-6 mb-6">
                       <div className="flex-1 min-w-0">
                         <p className="font-bold text-gray-900 text-base mb-1">{cancion.titulo} <span className="text-gray-500 font-normal">por {cancion.artista}</span> {cancion.tonalidad && (<span className="ml-2 bg-gray-100 text-gray-700 px-2 py-1 rounded text-xs">{cancion.tonalidad}</span>)}</p>
-                        {/* Mostrar líderes de danza asignados para esta canción */}
-                        {lideresPorCancion[cancionId]?.lideres && lideresPorCancion[cancionId].lideres.length > 0 ? (
-                          <div className="mt-2 flex flex-wrap gap-2">
-                            <span className="text-xs font-semibold text-purple-700 bg-purple-50 px-2 py-1 rounded">Líder(es):</span>
-                            {lideresPorCancion[cancionId].lideres.map(lider => (
-                              <span key={lider.id} className="text-xs text-purple-900 bg-purple-100 px-2 py-1 rounded flex items-center gap-1">
-                                <UserCheck className="h-4 w-4" />{lider.nombre}
+                        
+                        {/* Mostrar estado del video de danza - editable para líderes */}
+                        {(session?.user?.role === 'LIDER_DANZA' || session?.user?.role === 'ADMINISTRADOR' || session?.user?.role === 'LIDER_ALABANZA' || session?.user?.role === 'DANZA') && (
+                          <div className="mt-2 flex flex-wrap items-center gap-2">
+                            <span className="text-xs font-semibold text-purple-700 bg-purple-50 px-2 py-1 rounded">Estado Video:</span>
+                            {session?.user?.role === 'LIDER_DANZA' || session?.user?.role === 'ADMINISTRADOR' ? (
+                              editandoEstadoVideo === cancionId ? (
+                                <select
+                                  value={cancion.estadoVideoDanza || 'SIN_GRABAR'}
+                                  onChange={(e) => actualizarEstadoVideo(cancionId, e.target.value)}
+                                  disabled={actualizandoVideo}
+                                  className="text-xs rounded px-2 py-1 border focus:outline-none bg-white"
+                                >
+                                  <option value="SIN_GRABAR">Sin Grabar</option>
+                                  <option value="GRABADO">Grabado</option>
+                                  <option value="REGRABAR">Regrabar</option>
+                                </select>
+                              ) : (
+                                <button
+                                  onClick={() => setEditandoEstadoVideo(cancionId)}
+                                  className={`text-xs rounded px-2 py-1 border font-semibold hover:bg-opacity-80 transition-colors ${obtenerColorEstadoVideo(cancion.estadoVideoDanza || 'SIN_GRABAR')}`}
+                                >
+                                  {obtenerTextoEstadoVideo(cancion.estadoVideoDanza || 'SIN_GRABAR')}
+                                </button>
+                              )
+                            ) : (
+                              <span className={`text-xs rounded px-2 py-1 border font-semibold ${obtenerColorEstadoVideo(cancion.estadoVideoDanza || 'SIN_GRABAR')}`}>
+                                {obtenerTextoEstadoVideo(cancion.estadoVideoDanza || 'SIN_GRABAR')}
                               </span>
-                            ))}
+                            )}
                           </div>
-                        ) : (
-                          <div className="mt-2 text-xs text-gray-500">Sin líder asignado</div>
                         )}
+
+                        {/* Mostrar asignaciones de danza individuales */}
+                        {(() => {
+                          const asignaciones = asignacionesDanza[cancionId] || []
+                          console.log(`Renderizando asignaciones para canción ${cancionId}:`, asignaciones)
+                          return asignaciones.length > 0 ? (
+                            <div className="mt-3 space-y-2">
+                              <span className="text-xs font-semibold text-purple-700 bg-purple-50 px-2 py-1 rounded">
+                                Danzoras Asignadas: ({asignaciones.length})
+                              </span>
+                              <div className="flex flex-wrap gap-2">
+                              {asignaciones.map((asignacion: AsignacionDanza) => (
+                                <div key={asignacion.id} className="flex items-center gap-2 text-xs bg-purple-50 px-3 py-2 rounded-lg border border-purple-200">
+                                  <span className="text-purple-900 font-medium flex items-center gap-1">
+                                    <User className="h-3 w-3" />{asignacion.usuario.nombre}
+                                  </span>
+                                  {session?.user?.id === asignacion.usuarioId ? (
+                                    <select
+                                      value={asignacion.estadoPreparacion}
+                                      onChange={(e) => {
+                                        console.log('Cambiando estado de preparación de danza:', {
+                                          asignacionId: asignacion.id,
+                                          usuarioId: asignacion.usuarioId,
+                                          nuevoEstado: e.target.value,
+                                          sessionUserId: session?.user?.id
+                                        })
+                                        actualizarEstadoPreparacionDanza(asignacion.id, e.target.value)
+                                      }}
+                                      className={`text-xs rounded px-2 py-1 border focus:outline-none ${asignacion.estadoPreparacion === 'PREPARADO' ? 'bg-green-100 text-green-700' : asignacion.estadoPreparacion === 'NECESITA_AYUDA' ? 'bg-red-100 text-red-700' : 'bg-gray-100 text-gray-700'}`}
+                                    >
+                                      <option value="PENDIENTE">Pendiente</option>
+                                      <option value="EN_PRACTICA">En Práctica</option>
+                                      <option value="PREPARADO">Preparado</option>
+                                      <option value="NECESITA_AYUDA">Necesita Ayuda</option>
+                                    </select>
+                                  ) : (
+                                    <span className={`text-xs rounded px-2 py-1 border font-semibold ${asignacion.estadoPreparacion === 'PREPARADO' ? 'bg-green-100 text-green-700 border-green-200' : asignacion.estadoPreparacion === 'NECESITA_AYUDA' ? 'bg-red-100 text-red-700 border-red-200' : 'bg-gray-100 text-gray-700 border-gray-200'}`}>
+                                      {asignacion.estadoPreparacion === 'PENDIENTE' ? 'Pendiente' : asignacion.estadoPreparacion === 'EN_PRACTICA' ? 'En Práctica' : asignacion.estadoPreparacion === 'PREPARADO' ? 'Preparado' : 'Necesita Ayuda'}
+                                    </span>
+                                  )}
+                                </div>
+                                                              ))}
+                              </div>
+                            </div>
+                          ) : null
+                        })()}
                         <div className="flex flex-wrap items-center gap-4 mb-2">
                           {asignaciones.map((asig: Asignacion) => (
                             <div key={asig.id} className="flex items-center gap-2 text-xs sm:text-sm min-w-0">
@@ -741,16 +961,18 @@ export default function DetalleProgramacion() {
                           <Info className="h-5 w-5" />
                           <span className="break-words">Detalles</span>
                         </Link>
+                        
+                        {/* Botón para reproducir canción original */}
                         <button
                           className="flex items-center gap-2 px-3 py-2 sm:px-6 sm:py-3 bg-white border-2 border-green-200 rounded-xl shadow hover:bg-green-50 transition-all duration-200 font-semibold text-green-700 text-xs sm:text-base min-w-0 w-full sm:w-auto flex-1 truncate"
-                          title="Reproducir pista instrumental"
+                          title="Reproducir canción original"
                           onClick={async () => {
                             const res = await fetch(`/api/canciones/${cancion.id}/recursos`);
                             if (!res.ok) return;
                             const recursos = await res.json();
                             const recurso = (recursos as Array<{ tipo: string, plataforma: string, url: string }>).find((r) => r.tipo === 'CANCION_ORIGINAL' && r.plataforma === 'MP3_LOCAL');
                             if (!recurso) {
-                              setMensajeCard(prev => ({ ...prev, [cancionId]: 'No hay pista instrumental disponible para esta canción.' }));
+                              setMensajeCard(prev => ({ ...prev, [cancionId]: 'No hay canción original disponible para esta canción.' }));
                               if (timeoutRef.current[cancionId]) clearTimeout(timeoutRef.current[cancionId]);
                               timeoutRef.current[cancionId] = setTimeout(() => {
                                 setMensajeCard(prev => ({ ...prev, [cancionId]: '' }));
@@ -786,14 +1008,17 @@ export default function DetalleProgramacion() {
                           <Headphones className="h-5 w-5" />
                           <span className="break-words">Canción</span>
                         </button>
-                        {!(session?.user?.role === 'LIDER_DANZA' || session?.user?.role === 'DANZA') && <button
-                          className="flex items-center gap-2 px-3 py-2 sm:px-6 sm:py-3 bg-white border-2 border-green-200 rounded-xl shadow hover:bg-green-50 transition-all duration-200 font-semibold text-green-700 text-xs sm:text-base min-w-0 w-full sm:w-auto flex-1 truncate"
-                          title="Reproducir pista instrumental"
-                          onClick={async () => {
+
+                        {/* Botón para reproducir pista instrumental - solo para cantantes, músicos, líderes de alabanza y admin */}
+                        {(session?.user?.role === 'CANTANTE' || session?.user?.role === 'MUSICO' || session?.user?.role === 'LIDER_ALABANZA' || session?.user?.role === 'ADMINISTRADOR') && (
+                          <button
+                            className="flex items-center gap-2 px-3 py-2 sm:px-6 sm:py-3 bg-white border-2 border-green-200 rounded-xl shadow hover:bg-green-50 transition-all duration-200 font-semibold text-green-700 text-xs sm:text-base min-w-0 w-full sm:w-auto flex-1 truncate"
+                            title="Reproducir pista instrumental"
+                            onClick={async () => {
                             const res = await fetch(`/api/canciones/${cancion.id}/recursos`);
                             if (!res.ok) return;
                             const recursos = await res.json();
-                            const recurso = (recursos as Array<{ tipo: string, plataforma: string, url: string }>).find((r) => (r.tipo === 'PISTA_INSTRUMENTAL' || r.tipo === 'CANCION_ORIGINAL') && r.plataforma === 'MP3_LOCAL');
+                            const recurso = (recursos as Array<{ tipo: string, plataforma: string, url: string }>).find((r) => r.tipo === 'PISTA_INSTRUMENTAL' && r.plataforma === 'MP3_LOCAL');
                             if (!recurso) {
                               setMensajeCard(prev => ({ ...prev, [cancionId]: 'No hay pista instrumental disponible para esta canción.' }));
                               if (timeoutRef.current[cancionId]) clearTimeout(timeoutRef.current[cancionId]);
@@ -831,13 +1056,28 @@ export default function DetalleProgramacion() {
                           <Headphones className="h-5 w-5" />
                           <span className="break-words">Pista</span>
                         </button>
-                        }
+                        )}
+
+                        {/* Botón para ver video de danza */}
+                        {cancion.videoDanza && (
+                          <a
+                            href={cancion.videoDanza}
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            className="flex items-center gap-2 px-3 py-2 sm:px-6 sm:py-3 bg-white border-2 border-red-200 rounded-xl shadow hover:bg-red-50 transition-all duration-200 font-semibold text-red-700 text-xs sm:text-base min-w-0 w-full sm:w-auto flex-1 truncate"
+                            title="Ver video de danza en YouTube"
+                          >
+                            <Youtube className="h-5 w-5" />
+                            <span className="break-words">Video Danza</span>
+                          </a>
+                        )}
+                        
                         {/* Botón para asignar líder de danza */}
                         {(session?.user?.role === 'LIDER_DANZA') && (
                           <button
                             className="flex items-center gap-2 px-3 py-2 sm:px-6 sm:py-3 bg-gradient-to-r from-purple-500 to-pink-500 text-white rounded-xl shadow hover:from-purple-600 hover:to-pink-600 transition-all duration-200 font-semibold text-xs sm:text-base min-w-0 w-full sm:w-auto flex-1 truncate"
                             title="Asignar líder de danza"
-                            onClick={() => { setModalOpen(true); setModalCancionId(cancionId); }}
+                            onClick={() => abrirModalDanza(cancionId, cancion.titulo)}
                           >
                             <UserCheck className="h-5 w-5" />
                             <span className="break-words">Asignar líder</span>
@@ -896,18 +1136,20 @@ export default function DetalleProgramacion() {
                     <div key={cancionId} className="bg-gray-50 rounded-lg p-4 flex flex-col xl:flex-row md:items-center md:justify-between gap-4">
                       <div className="flex-1">
                         <p className="font-bold text-gray-900 text-base mb-1">{cancion.titulo} <span className="text-gray-500 font-normal">por {cancion.artista}</span> {cancion.tonalidad && (<span className="ml-2 bg-gray-100 text-gray-700 px-2 py-1 rounded text-xs">{cancion.tonalidad}</span>)}</p>
-                        {/* Mostrar líderes de danza asignados para esta canción */}
-                        {session?.user?.role === 'LIDER_ALABANZA' && lideresPorCancion[cancionId]?.lideres && lideresPorCancion[cancionId].lideres.length > 0 ? (
-                          <div className="mt-2 flex flex-wrap gap-2">
-                            <span className="text-xs font-semibold text-purple-700 bg-purple-50 px-2 py-1 rounded">Líder(es):</span>
-                            {lideresPorCancion[cancionId].lideres.map(lider => (
-                              <span key={lider.id} className="text-xs text-purple-900 bg-purple-100 px-2 py-1 rounded flex items-center gap-1">
-                                <UserCheck className="h-4 w-4" />{lider.nombre}
-                              </span>
-                            ))}
-                          </div>
-                        ) : (
-                          <div className="mt-2 text-xs text-gray-500">Sin líder asignado</div>
+                        {/* Mostrar líderes de danza asignados para esta canción - solo para roles autorizados */}
+                        {(session?.user?.role === 'LIDER_DANZA' || session?.user?.role === 'ADMINISTRADOR' || session?.user?.role === 'LIDER_ALABANZA' || session?.user?.role === 'DANZA') && (
+                          lideresPorCancion[cancionId]?.lideres && lideresPorCancion[cancionId].lideres.length > 0 ? (
+                            <div className="mt-2 flex flex-wrap gap-2">
+                              <span className="text-xs font-semibold text-purple-700 bg-purple-50 px-2 py-1 rounded">Líder(es):</span>
+                              {lideresPorCancion[cancionId].lideres.map(lider => (
+                                <span key={lider.id} className="text-xs text-purple-900 bg-purple-100 px-2 py-1 rounded flex items-center gap-1">
+                                  <UserCheck className="h-4 w-4" />{lider.nombre}
+                                </span>
+                              ))}
+                            </div>
+                          ) : (
+                            <div className="mt-2 text-xs text-gray-500">Sin líder asignado</div>
+                          )
                         )}
                         {asignaciones.map((asig: Asignacion) => (
                           <div key={asig.id} className="flex flex-col items-center gap-2 text-sm mb-1 sm:flex-row my-4">
@@ -1007,51 +1249,54 @@ export default function DetalleProgramacion() {
                           <Headphones className="h-5 w-5" />
                           <span>Canción</span>
                         </button>
-                        <button
-                          className="flex items-center gap-2 px-6 py-3 bg-white border-2 border-green-200 rounded-xl shadow hover:bg-green-50 transition-all duration-200 font-semibold text-green-700 text-base"
-                          title="Reproducir pista instrumental"
-                          onClick={async () => {
-                            const res = await fetch(`/api/canciones/${cancion.id}/recursos`);
-                            if (!res.ok) return;
-                            const recursos = await res.json();
-                            const recurso = (recursos as Array<{ tipo: string, plataforma: string, url: string }>).find((r) => r.tipo === 'PISTA_INSTRUMENTAL' && r.plataforma === 'MP3_LOCAL');
-                            if (!recurso) {
-                              setMensajeCard(prev => ({ ...prev, [cancionId]: 'No hay pista instrumental disponible para esta canción.' }));
-                              if (timeoutRef.current[cancionId]) clearTimeout(timeoutRef.current[cancionId]);
-                              timeoutRef.current[cancionId] = setTimeout(() => {
-                                setMensajeCard(prev => ({ ...prev, [cancionId]: '' }));
-                              }, 3500);
-                              return;
-                            }
-                            let url = recurso.url;
-                            if (url && (url.includes('r2.dev') || url.includes('cloudflarestorage.com'))) {
-                              let key = '';
-                              if (url.includes('r2.dev')) {
-                                const urlParts = url.split('/');
-                                const bucketIndex = urlParts.findIndex((part: string) => part.includes('r2.dev'));
-                                if (bucketIndex !== -1) {
-                                  key = urlParts.slice(bucketIndex + 2).join('/');
+                        {/* Botón para reproducir pista instrumental - solo para cantantes, músicos, líderes de alabanza y admin */}
+                        {(session?.user?.role === 'CANTANTE' || session?.user?.role === 'MUSICO' || session?.user?.role === 'LIDER_ALABANZA' || session?.user?.role === 'ADMINISTRADOR') && (
+                          <button
+                            className="flex items-center gap-2 px-6 py-3 bg-white border-2 border-green-200 rounded-xl shadow hover:bg-green-50 transition-all duration-200 font-semibold text-green-700 text-base"
+                            title="Reproducir pista instrumental"
+                            onClick={async () => {
+                              const res = await fetch(`/api/canciones/${cancion.id}/recursos`);
+                              if (!res.ok) return;
+                              const recursos = await res.json();
+                              const recurso = (recursos as Array<{ tipo: string, plataforma: string, url: string }>).find((r) => r.tipo === 'PISTA_INSTRUMENTAL' && r.plataforma === 'MP3_LOCAL');
+                              if (!recurso) {
+                                setMensajeCard(prev => ({ ...prev, [cancionId]: 'No hay pista instrumental disponible para esta canción.' }));
+                                if (timeoutRef.current[cancionId]) clearTimeout(timeoutRef.current[cancionId]);
+                                timeoutRef.current[cancionId] = setTimeout(() => {
+                                  setMensajeCard(prev => ({ ...prev, [cancionId]: '' }));
+                                }, 3500);
+                                return;
+                              }
+                              let url = recurso.url;
+                              if (url && (url.includes('r2.dev') || url.includes('cloudflarestorage.com'))) {
+                                let key = '';
+                                if (url.includes('r2.dev')) {
+                                  const urlParts = url.split('/');
+                                  const bucketIndex = urlParts.findIndex((part: string) => part.includes('r2.dev'));
+                                  if (bucketIndex !== -1) {
+                                    key = urlParts.slice(bucketIndex + 2).join('/');
+                                  }
+                                } else if (url.includes('cloudflarestorage.com')) {
+                                  const urlParts = url.split('/');
+                                  const bucketIndex = urlParts.findIndex((part: string) => part.includes('cloudflarestorage.com'));
+                                  if (bucketIndex !== -1) {
+                                    key = urlParts.slice(bucketIndex + 2).join('/');
+                                  }
                                 }
-                              } else if (url.includes('cloudflarestorage.com')) {
-                                const urlParts = url.split('/');
-                                const bucketIndex = urlParts.findIndex((part: string) => part.includes('cloudflarestorage.com'));
-                                if (bucketIndex !== -1) {
-                                  key = urlParts.slice(bucketIndex + 2).join('/');
+                                if (!key) key = url;
+                                const signedRes = await fetch(`/api/r2-signed-url?key=${encodeURIComponent(key)}`);
+                                if (signedRes.ok) {
+                                  const { url: signedUrl } = await signedRes.json();
+                                  url = signedUrl;
                                 }
                               }
-                              if (!key) key = url;
-                              const signedRes = await fetch(`/api/r2-signed-url?key=${encodeURIComponent(key)}`);
-                              if (signedRes.ok) {
-                                const { url: signedUrl } = await signedRes.json();
-                                url = signedUrl;
-                              }
-                            }
-                            reproducirRecurso(cancion.id, cancion.titulo, cancion.artista, 'PISTA_INSTRUMENTAL');
-                          }}
-                        >
-                          <Headphones className="h-5 w-5" />
-                          <span>Pista</span>
-                        </button>
+                              reproducirRecurso(cancion.id, cancion.titulo, cancion.artista, 'PISTA_INSTRUMENTAL');
+                            }}
+                          >
+                            <Headphones className="h-5 w-5" />
+                            <span>Pista</span>
+                          </button>
+                        )}
                       </div>
                     </div>
                   ))}

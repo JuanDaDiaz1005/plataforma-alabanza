@@ -3,7 +3,7 @@ import { getServerSession } from 'next-auth'
 import { prisma } from '@/lib/prisma'
 import { authOptions } from '@/lib/auth'
 
-// GET /api/programaciones/danza-asignaciones?usuarioId=xxx
+// GET /api/programaciones/danza-asignaciones?usuarioId=xxx OR ?programacionId=xxx
 export async function GET(request: NextRequest) {
   try {
     const session = await getServerSession(authOptions)
@@ -14,33 +14,51 @@ export async function GET(request: NextRequest) {
 
     const { searchParams } = new URL(request.url)
     const usuarioId = searchParams.get('usuarioId')
+    const programacionId = searchParams.get('programacionId')
 
-    if (!usuarioId) {
-      return NextResponse.json({ error: 'ID de usuario requerido' }, { status: 400 })
+    if (!usuarioId && !programacionId) {
+      return NextResponse.json({ error: 'ID de usuario o programación requerido' }, { status: 400 })
     }
 
-    // Verificar que el usuario solicitado es el mismo que la sesión o es líder de danza
-    if (session.user.id !== usuarioId && session.user.role !== 'LIDER_DANZA') {
-      return NextResponse.json({ error: 'Sin permisos' }, { status: 403 })
-    }
+    // Construir where clause según los parámetros
+    let whereClause: any = {}
 
-    // Obtener asignaciones de danza del usuario
-    const asignaciones = await prisma.liderDanzaAsignacion.findMany({
-      where: {
-        usuarioId: usuarioId,
-        programacion: {
-          fecha: {
-            gte: new Date() // Solo futuras programaciones
-          }
+    if (usuarioId) {
+      // Verificar que el usuario solicitado es el mismo que la sesión o es líder de danza
+      if (session.user.id !== usuarioId && session.user.role !== 'LIDER_DANZA' && session.user.role !== 'ADMINISTRADOR') {
+        return NextResponse.json({ error: 'Sin permisos' }, { status: 403 })
+      }
+      
+      whereClause.usuarioId = usuarioId
+      whereClause.programacion = {
+        fecha: {
+          gte: new Date() // Solo futuras programaciones
         }
-      },
+      }
+    }
+
+    if (programacionId) {
+      // Verificar permisos para ver asignaciones de la programación
+      if (session.user.role !== 'LIDER_DANZA' && session.user.role !== 'ADMINISTRADOR' && session.user.role !== 'LIDER_ALABANZA' && session.user.role !== 'DANZA') {
+        console.log(`API: Usuario ${session.user.id} con rol ${session.user.role} sin permisos para ver asignaciones de programación`)
+        return NextResponse.json({ error: 'Sin permisos' }, { status: 403 })
+      }
+      
+      console.log(`API: Usuario ${session.user.id} con rol ${session.user.role} consultando asignaciones de programación ${programacionId}`)
+      whereClause.programacionId = programacionId
+    }
+
+    // Obtener asignaciones de danza
+    const asignaciones = await prisma.liderDanzaAsignacion.findMany({
+      where: whereClause,
       include: {
         cancion: {
           select: {
             id: true,
             titulo: true,
             artista: true,
-            videoDanza: true
+            videoDanza: true,
+            estadoVideoDanza: true
           }
         },
         programacion: {
@@ -48,6 +66,13 @@ export async function GET(request: NextRequest) {
             id: true,
             fecha: true,
             tipoServicio: true
+          }
+        },
+        usuario: {
+          select: {
+            id: true,
+            nombre: true,
+            email: true
           }
         }
       },
@@ -58,27 +83,42 @@ export async function GET(request: NextRequest) {
       }
     })
 
+    console.log(`API: Encontradas ${asignaciones.length} asignaciones de danza para ${usuarioId ? 'usuario ' + usuarioId : 'programación ' + programacionId}`)
+
     // Mapear a la estructura esperada
     const asignacionesMapeadas = asignaciones.map(asignacion => ({
       id: asignacion.id,
+      usuarioId: asignacion.usuarioId,
+      cancionId: asignacion.cancionId,
+      estadoPreparacion: asignacion.estadoPreparacion,
+      notasPersonales: asignacion.notasPersonales,
+      fechaActualizacion: asignacion.fechaActualizacion,
+      usuario: {
+        id: asignacion.usuario.id,
+        nombre: asignacion.usuario.nombre,
+        email: asignacion.usuario.email
+      },
       cancion: {
         id: asignacion.cancion.id,
         titulo: asignacion.cancion.titulo,
         artista: asignacion.cancion.artista,
-        videoDanza: asignacion.cancion.videoDanza
+        videoDanza: asignacion.cancion.videoDanza,
+        estadoVideoDanza: asignacion.cancion.estadoVideoDanza
       },
       programacion: {
         id: asignacion.programacion.id,
         fecha: asignacion.programacion.fecha,
         tipoServicio: asignacion.programacion.tipoServicio
-      },
-      tipo: 'LIDER_DANZA',
-      fechaCreacion: asignacion.fechaCreacion
+      }
     }))
 
-    return NextResponse.json({
-      asignaciones: asignacionesMapeadas
-    })
+    // Si es para un usuario específico, devolver en el formato esperado por el dashboard
+    if (usuarioId) {
+      return NextResponse.json(asignacionesMapeadas)
+    }
+
+    // Si es para una programación, devolver directamente el array
+    return NextResponse.json(asignacionesMapeadas)
 
   } catch (error) {
     console.error('Error al obtener asignaciones de danza:', error)

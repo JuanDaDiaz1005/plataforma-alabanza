@@ -13,7 +13,9 @@ import {
   Plus,
   Edit,
   Trash2,
-  Eye
+  Eye,
+  AlertTriangle,
+  X
 } from 'lucide-react'
 
 interface Programacion {
@@ -71,10 +73,15 @@ export default function ServiciosPage() {
   const [totalPaginas, setTotalPaginas] = useState(1)
   const limite = 12
 
+  // Estados para modal de eliminación
+  const [programacionParaEliminar, setProgramacionParaEliminar] = useState<Programacion | null>(null)
+  const [mostrarModalEliminar, setMostrarModalEliminar] = useState(false)
+  const [eliminandoProgramacion, setEliminandoProgramacion] = useState(false)
+
   // Verificar permisos
   const puedeCrear = sesion?.user?.role === 'ADMINISTRADOR' || sesion?.user?.role === 'LIDER_ALABANZA'
   const puedeEditar = sesion?.user?.role === 'ADMINISTRADOR' || sesion?.user?.role === 'LIDER_ALABANZA'
-  const puedeEliminar = sesion?.user?.role === 'ADMINISTRADOR'
+  const puedeEliminar = sesion?.user?.role === 'ADMINISTRADOR' || sesion?.user?.role === 'LIDER_ALABANZA'
   const esDanza = sesion?.user?.role === 'DANZA' || sesion?.user?.role === 'LIDER_DANZA'
 
   // Cargar programaciones
@@ -144,14 +151,20 @@ export default function ServiciosPage() {
     setPaginaActual(1)
   }
 
-  // Eliminar programación
-  const eliminarProgramacion = async (id: string, fecha: string) => {
-    if (!confirm(`¿Estás seguro de eliminar la programación del ${formatearFecha(fecha)}?`)) {
-      return
-    }
+  // Manejar eliminación con modal
+  const manejarEliminarProgramacion = (programacion: Programacion) => {
+    setProgramacionParaEliminar(programacion)
+    setMostrarModalEliminar(true)
+  }
+
+  // Confirmar eliminación de programación
+  const confirmarEliminarProgramacion = async () => {
+    if (!programacionParaEliminar) return
+
+    setEliminandoProgramacion(true)
 
     try {
-      const response = await fetch(`/api/programaciones/${id}`, {
+      const response = await fetch(`/api/programaciones/${programacionParaEliminar.id}`, {
         method: 'DELETE'
       })
 
@@ -160,12 +173,15 @@ export default function ServiciosPage() {
         throw new Error(errorData.error || 'Error al eliminar la programación')
       }
 
-      // Recargar lista
+      setMostrarModalEliminar(false)
+      setProgramacionParaEliminar(null)
       cargarProgramaciones()
       
     } catch (error) {
       console.error('Error al eliminar:', error)
       alert(error instanceof Error ? error.message : 'Error al eliminar la programación')
+    } finally {
+      setEliminandoProgramacion(false)
     }
   }
 
@@ -447,7 +463,7 @@ export default function ServiciosPage() {
                       <button
                         onClick={(e) => {
                           e.stopPropagation()
-                          eliminarProgramacion(programacion.id, programacion.fecha)
+                          manejarEliminarProgramacion(programacion)
                         }}
                         className="p-2 bg-white shadow-sm border rounded-lg text-gray-500 hover:text-red-600 hover:bg-red-50 transition-colors"
                         title="Eliminar"
@@ -517,6 +533,66 @@ export default function ServiciosPage() {
               <span className="text-sm text-gray-600">
                 Página {paginaActual} de {totalPaginas} • {programaciones.length} servicios mostrados
               </span>
+            </div>
+          </div>
+        )}
+
+        {/* Modal de confirmar eliminación de programación */}
+        {mostrarModalEliminar && programacionParaEliminar && (
+          <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-50">
+            <div className="bg-white rounded-xl p-6 w-full max-w-md">
+              <div className="flex items-center gap-4 mb-6">
+                <div className="flex-shrink-0 w-12 h-12 bg-red-100 rounded-full flex items-center justify-center">
+                  <AlertTriangle className="h-6 w-6 text-red-600" />
+                </div>
+                <div>
+                  <h3 className="text-lg font-bold text-gray-900">Confirmar Eliminación</h3>
+                  <p className="text-sm text-gray-600">Esta acción no se puede deshacer</p>
+                </div>
+              </div>
+              
+              <div className="mb-6 p-4 bg-gray-50 rounded-lg">
+                <p className="text-sm text-gray-700 mb-3">
+                  ¿Estás seguro de que deseas eliminar esta programación?
+                </p>
+                <div className="bg-white p-3 rounded-lg border">
+                  <div className="flex items-center gap-3">
+                    <div className="bg-gradient-to-r from-blue-500 to-purple-600 p-2 rounded-lg">
+                      <Calendar className="h-4 w-4 text-white" />
+                    </div>
+                    <div>
+                      <p className="font-bold text-gray-900">
+                        {formatearTipoServicio(programacionParaEliminar.tipoServicio)}
+                      </p>
+                      <p className="text-sm text-gray-600">
+                        {formatearFecha(programacionParaEliminar.fecha)}
+                      </p>
+                    </div>
+                  </div>
+                </div>
+                <p className="text-xs text-red-600 mt-3">
+                  ⚠️ Se eliminarán también todas las asignaciones y comentarios asociados a este servicio.
+                </p>
+              </div>
+              
+              <div className="flex gap-3">
+                <button
+                  onClick={() => {
+                    setMostrarModalEliminar(false)
+                    setProgramacionParaEliminar(null)
+                  }}
+                  className="flex-1 px-4 py-3 border border-gray-300 text-gray-700 rounded-lg hover:bg-gray-50 transition-colors"
+                >
+                  Cancelar
+                </button>
+                <button
+                  onClick={confirmarEliminarProgramacion}
+                  disabled={eliminandoProgramacion}
+                  className="flex-1 px-4 py-3 bg-red-600 text-white rounded-lg hover:bg-red-700 transition-colors disabled:opacity-50"
+                >
+                  {eliminandoProgramacion ? 'Eliminando...' : 'Eliminar Programación'}
+                </button>
+              </div>
             </div>
           </div>
         )}

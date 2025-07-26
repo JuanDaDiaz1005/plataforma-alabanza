@@ -23,12 +23,21 @@ export async function PUT(
 
     const { id } = await params
     const body = await request.json()
-    const { videoDanza } = body
+    const { videoDanza, estadoVideoDanza } = body
 
     // Validar URL de YouTube si se proporciona
     if (videoDanza && !videoDanza.includes('youtube.com') && !videoDanza.includes('youtu.be')) {
       return NextResponse.json(
         { error: 'Debe ser una URL válida de YouTube' },
+        { status: 400 }
+      )
+    }
+
+    // Validar estado del video de danza si se proporciona
+    const estadosValidos = ['SIN_GRABAR', 'GRABADO', 'REGRABAR']
+    if (estadoVideoDanza && !estadosValidos.includes(estadoVideoDanza)) {
+      return NextResponse.json(
+        { error: 'Estado de video inválido. Debe ser: SIN_GRABAR, GRABADO o REGRABAR' },
         { status: 400 }
       )
     }
@@ -42,17 +51,27 @@ export async function PUT(
       return NextResponse.json({ error: 'Canción no encontrada' }, { status: 404 })
     }
 
-    // Actualizar solo el campo videoDanza
+    // Preparar datos para actualización
+    const datosActualizacion: any = {}
+    
+    if (videoDanza !== undefined) {
+      datosActualizacion.videoDanza = videoDanza || null
+    }
+    
+    if (estadoVideoDanza) {
+      datosActualizacion.estadoVideoDanza = estadoVideoDanza
+    }
+
+    // Actualizar campos de video de danza
     const cancionActualizada = await prisma.cancion.update({
       where: { id },
-      data: {
-        videoDanza: videoDanza || null
-      },
+      data: datosActualizacion,
       select: {
         id: true,
         titulo: true,
         artista: true,
-        videoDanza: true
+        videoDanza: true,
+        estadoVideoDanza: true
       }
     })
 

@@ -39,7 +39,9 @@ export async function GET(
                 duracionSegundos: true,
                 letra: true,
                 acordes: true,
-                tonalidad: true
+                tonalidad: true,
+                videoDanza: true,
+                estadoVideoDanza: true
               }
             }
           },
