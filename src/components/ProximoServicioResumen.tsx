@@ -47,6 +47,28 @@ export default function ProximoServicioResumen({
   esDanza = false,
   esLiderOAdmin = false
 }: ProximoServicioResumenProps) {
+  // Formatear fecha sin conversión de zona horaria
+  const formatearFecha = (fecha: string) => {
+    let fechaObj: Date;
+    
+    if (fecha.includes('T')) {
+      // Si viene con hora, extraer solo la fecha
+      const fechaSolo = fecha.split('T')[0];
+      const [year, month, day] = fechaSolo.split('-').map(Number);
+      fechaObj = new Date(year, month - 1, day);
+    } else {
+      // Si es solo fecha (YYYY-MM-DD)
+      const [year, month, day] = fecha.split('-').map(Number);
+      fechaObj = new Date(year, month - 1, day);
+    }
+    
+    return fechaObj.toLocaleDateString('es-ES', {
+      year: 'numeric',
+      month: 'long',
+      day: 'numeric',
+      weekday: 'long'
+    });
+  };
   // Filtrar asignaciones según el rol
   const asignacionesFiltradas = esLiderOAdmin 
     ? proximoServicio.asignaciones // Líderes y admin ven TODOS los roles
@@ -91,7 +113,7 @@ export default function ProximoServicioResumen({
           <div className="flex-1 space-y-3 sm:space-y-4 min-w-0">
             <div>
               <h4 className="text-base sm:text-lg font-bold text-gray-900 mb-2 capitalize break-words">
-                {proximoServicio.fecha}
+                {formatearFecha(proximoServicio.fecha)}
               </h4>
               <div className="flex flex-wrap items-center gap-2 sm:gap-3">
                 <span className={`bg-gradient-to-r ${colorGradiente} text-white px-3 sm:px-4 py-1.5 sm:py-2 rounded-full text-xs sm:text-sm font-medium shadow-lg`}>

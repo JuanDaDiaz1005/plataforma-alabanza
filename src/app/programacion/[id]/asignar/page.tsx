@@ -295,7 +295,21 @@ export default function AsignarCancion() {
             <h1 className="text-2xl font-bold text-gray-900">Nueva Asignación</h1>
             {programacion && (
               <p className="text-gray-600">
-                Programación: {programacion.tipoServicio} - {new Date(programacion.fecha).toLocaleDateString('es-ES')}
+                Programación: {programacion.tipoServicio} - {(() => {
+                  const fecha = programacion.fecha;
+                  let fechaObj: Date;
+                  
+                  if (fecha.includes('T')) {
+                    const fechaSolo = fecha.split('T')[0];
+                    const [year, month, day] = fechaSolo.split('-').map(Number);
+                    fechaObj = new Date(year, month - 1, day);
+                  } else {
+                    const [year, month, day] = fecha.split('-').map(Number);
+                    fechaObj = new Date(year, month - 1, day);
+                  }
+                  
+                  return fechaObj.toLocaleDateString('es-ES');
+                })()}
               </p>
             )}
           </div>

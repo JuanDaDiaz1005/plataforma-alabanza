@@ -1,6 +1,7 @@
 import Link from 'next/link';
 import { Calendar, Music } from 'lucide-react';
 import React from 'react';
+import { formatearFechaCompleta } from '@/lib/utils';
 
 interface Cancion {
   id: string;
@@ -32,15 +33,7 @@ export default function ServicioCard({
   href,
   esDanza
 }: ServicioCardProps) {
-  // Formatear fecha
-  const formatearFecha = (fecha: string) => {
-    return new Date(fecha).toLocaleDateString('es-ES', {
-      year: 'numeric',
-      month: 'long',
-      day: 'numeric',
-      weekday: 'long'
-    });
-  };
+
 
   // Formatear tipo de servicio
   const formatearTipoServicio = (tipo: string) => {
@@ -68,7 +61,7 @@ export default function ServicioCard({
                 <Calendar className="h-4 w-4 text-white" />
               </div>
               <p className="text-sm text-gray-600">
-                {formatearFecha(fecha)}
+                {formatearFechaCompleta(fecha)}
               </p>
             </div>
           </div>

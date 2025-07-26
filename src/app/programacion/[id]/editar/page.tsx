@@ -59,8 +59,9 @@ export default function EditarProgramacion() {
 
       const programacion = await response.json()
       
-      // Convertir fecha ISO a formato input date
-      const fechaLocal = new Date(programacion.fecha).toISOString().split('T')[0]
+      // Extraer solo la fecha sin conversión de zona horaria
+      const fechaIso = programacion.fecha
+      const fechaLocal = fechaIso.includes('T') ? fechaIso.split('T')[0] : fechaIso.slice(0, 10)
       
       setFormulario({
         fecha: fechaLocal,
@@ -94,9 +95,9 @@ export default function EditarProgramacion() {
         throw new Error('La fecha y tipo de servicio son requeridos')
       }
 
-      // Preparar datos para envío
+      // Preparar datos para envío (mantener como fecha local)
       const datosProgramacion = {
-        fecha: formulario.fecha + 'T00:00:00.000Z', // Convertir a ISO string
+        fecha: formulario.fecha, // Enviar solo la fecha sin conversión UTC
         tipoServicio: formulario.tipoServicio,
         notas: formulario.notas.trim() || null,
         activa: formulario.activa

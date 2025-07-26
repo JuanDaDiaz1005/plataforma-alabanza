@@ -115,9 +115,22 @@ export default function ServiciosPage() {
     }
   }
 
-  // Formatear fecha
+  // Formatear fecha sin conversión de zona horaria
   const formatearFecha = (fecha: string) => {
-    return new Date(fecha).toLocaleDateString('es-ES', {
+    let fechaObj: Date;
+    
+    if (fecha.includes('T')) {
+      // Si viene con hora, extraer solo la fecha
+      const fechaSolo = fecha.split('T')[0];
+      const [year, month, day] = fechaSolo.split('-').map(Number);
+      fechaObj = new Date(year, month - 1, day);
+    } else {
+      // Si es solo fecha (YYYY-MM-DD)
+      const [year, month, day] = fecha.split('-').map(Number);
+      fechaObj = new Date(year, month - 1, day);
+    }
+    
+    return fechaObj.toLocaleDateString('es-ES', {
       year: 'numeric',
       month: 'long',
       day: 'numeric',

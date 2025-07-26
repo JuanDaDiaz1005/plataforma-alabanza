@@ -114,11 +114,23 @@ export async function PUT(
       )
     }
 
+    // Procesar fecha sin conversión de zona horaria
+    let fechaProgramacion: Date
+    
+    if (datos.fecha.includes('T')) {
+      // Si viene con hora, usar tal como está
+      fechaProgramacion = new Date(datos.fecha)
+    } else {
+      // Si es solo fecha (YYYY-MM-DD), construir fecha local
+      const [year, month, day] = datos.fecha.split('-').map(Number)
+      fechaProgramacion = new Date(year, month - 1, day) // month es 0-indexado
+    }
+
     // Actualizar programación
     const programacionActualizada = await prisma.programacion.update({
       where: { id },
       data: {
-        fecha: new Date(datos.fecha),
+        fecha: fechaProgramacion,
         tipoServicio: datos.tipoServicio,
         notas: datos.notas || null,
         activa: datos.activa !== undefined ? datos.activa : undefined

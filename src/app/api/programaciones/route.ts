@@ -189,10 +189,26 @@ export async function POST(request: NextRequest) {
       )
     }
 
-    // Validar que la fecha no sea en el pasado
-    const fechaProgramacion = new Date(datos.fecha)
-    const ahora = new Date()
-    if (fechaProgramacion < ahora) {
+    // Procesar fecha sin conversión de zona horaria
+    let fechaProgramacion: Date
+    
+    if (datos.fecha.includes('T')) {
+      // Si viene con hora, usar tal como está
+      fechaProgramacion = new Date(datos.fecha)
+    } else {
+      // Si es solo fecha (YYYY-MM-DD), construir fecha local
+      const [year, month, day] = datos.fecha.split('-').map(Number)
+      fechaProgramacion = new Date(year, month - 1, day) // month es 0-indexado
+    }
+    
+    // Validar que la fecha no sea en el pasado (comparar solo fechas, no horas)
+    const hoy = new Date()
+    hoy.setHours(0, 0, 0, 0)
+    
+    const fechaComparar = new Date(fechaProgramacion)
+    fechaComparar.setHours(0, 0, 0, 0)
+    
+    if (fechaComparar < hoy) {
       return NextResponse.json(
         { error: 'La fecha de programación no puede ser en el pasado' },
         { status: 400 }

@@ -5,9 +5,25 @@ export function cn(...inputs: ClassValue[]) {
   return twMerge(clsx(inputs))
 }
 
-// Utilidades para fechas
+// Utilidades para fechas sin problemas de zona horaria
 export function formatearFecha(fecha: Date | string): string {
-  const fechaObj = fecha instanceof Date ? fecha : new Date(fecha)
+  let fechaObj: Date;
+  
+  if (fecha instanceof Date) {
+    fechaObj = fecha;
+  } else {
+    // Si es string, procesarlo sin conversión de zona horaria
+    if (fecha.includes('T')) {
+      // Si viene con hora, extraer solo la fecha
+      const fechaSolo = fecha.split('T')[0];
+      const [year, month, day] = fechaSolo.split('-').map(Number);
+      fechaObj = new Date(year, month - 1, day);
+    } else {
+      // Si es solo fecha (YYYY-MM-DD)
+      const [year, month, day] = fecha.split('-').map(Number);
+      fechaObj = new Date(year, month - 1, day);
+    }
+  }
   
   if (isNaN(fechaObj.getTime())) {
     return 'Fecha inválida'
@@ -20,8 +36,55 @@ export function formatearFecha(fecha: Date | string): string {
   }).format(fechaObj)
 }
 
+export function formatearFechaCompleta(fecha: Date | string): string {
+  let fechaObj: Date;
+  
+  if (fecha instanceof Date) {
+    fechaObj = fecha;
+  } else {
+    // Si es string, procesarlo sin conversión de zona horaria
+    if (fecha.includes('T')) {
+      // Si viene con hora, extraer solo la fecha
+      const fechaSolo = fecha.split('T')[0];
+      const [year, month, day] = fechaSolo.split('-').map(Number);
+      fechaObj = new Date(year, month - 1, day);
+    } else {
+      // Si es solo fecha (YYYY-MM-DD)
+      const [year, month, day] = fecha.split('-').map(Number);
+      fechaObj = new Date(year, month - 1, day);
+    }
+  }
+  
+  if (isNaN(fechaObj.getTime())) {
+    return 'Fecha inválida'
+  }
+  
+  return new Intl.DateTimeFormat('es-ES', {
+    year: 'numeric',
+    month: 'long',
+    day: 'numeric',
+    weekday: 'long'
+  }).format(fechaObj)
+}
+
 export function formatearFechaCorta(fecha: Date | string): string {
-  const fechaObj = fecha instanceof Date ? fecha : new Date(fecha)
+  let fechaObj: Date;
+  
+  if (fecha instanceof Date) {
+    fechaObj = fecha;
+  } else {
+    // Si es string, procesarlo sin conversión de zona horaria
+    if (fecha.includes('T')) {
+      // Si viene con hora, extraer solo la fecha
+      const fechaSolo = fecha.split('T')[0];
+      const [year, month, day] = fechaSolo.split('-').map(Number);
+      fechaObj = new Date(year, month - 1, day);
+    } else {
+      // Si es solo fecha (YYYY-MM-DD)
+      const [year, month, day] = fecha.split('-').map(Number);
+      fechaObj = new Date(year, month - 1, day);
+    }
+  }
   
   if (isNaN(fechaObj.getTime())) {
     return 'Fecha inválida'

@@ -69,17 +69,15 @@ export default function NuevaProgramacion() {
       }
 
       // Validar que la fecha no sea en el pasado
-      const fechaSeleccionada = new Date(formulario.fecha + 'T00:00:00')
-      const hoy = new Date()
-      hoy.setHours(0, 0, 0, 0)
+      const fechaHoy = `${new Date().getFullYear()}-${String(new Date().getMonth() + 1).padStart(2, '0')}-${String(new Date().getDate()).padStart(2, '0')}`
       
-      if (fechaSeleccionada < hoy) {
+      if (formulario.fecha < fechaHoy) {
         throw new Error('La fecha no puede ser en el pasado')
       }
 
-      // Preparar datos para envío
+      // Preparar datos para envío (mantener como fecha local)
       const datosProgramacion = {
-        fecha: formulario.fecha + 'T00:00:00.000Z', // Convertir a ISO string
+        fecha: formulario.fecha, // Enviar solo la fecha sin conversión UTC
         tipoServicio: formulario.tipoServicio,
         notas: formulario.notas.trim() || null
       }
@@ -109,8 +107,9 @@ export default function NuevaProgramacion() {
     }
   }
 
-  // Formatear fecha mínima (hoy)
-  const fechaMinima = new Date().toISOString().split('T')[0]
+  // Obtener fecha mínima (hoy) en zona horaria local
+  const hoy = new Date()
+  const fechaMinima = `${hoy.getFullYear()}-${String(hoy.getMonth() + 1).padStart(2, '0')}-${String(hoy.getDate()).padStart(2, '0')}`
 
   return (
     <Layout titulo="Nueva Programación">
