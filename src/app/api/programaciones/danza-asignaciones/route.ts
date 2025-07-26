@@ -21,7 +21,7 @@ export async function GET(request: NextRequest) {
     }
 
     // Construir where clause según los parámetros
-    let whereClause: any = {}
+    const whereClause: { usuarioId?: string; programacionId?: string; programacion?: { fecha: { gte: Date } } } = {}
 
     if (usuarioId) {
       // Verificar que el usuario solicitado es el mismo que la sesión o es líder de danza

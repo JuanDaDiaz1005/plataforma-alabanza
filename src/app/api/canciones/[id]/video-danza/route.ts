@@ -3,6 +3,7 @@ import { getServerSession } from 'next-auth'
 import { prisma } from '@/lib/prisma'
 import { puedeEditarVideoDanza } from '@/lib/utils'
 import { authOptions } from '@/lib/auth'
+import { EstadoVideoDanza } from '@prisma/client'
 
 // PUT /api/canciones/[id]/video-danza - Actualizar video de danza
 export async function PUT(
@@ -52,14 +53,14 @@ export async function PUT(
     }
 
     // Preparar datos para actualización
-    const datosActualizacion: any = {}
+    const datosActualizacion: { videoDanza?: string | null; estadoVideoDanza?: EstadoVideoDanza } = {}
     
     if (videoDanza !== undefined) {
       datosActualizacion.videoDanza = videoDanza || null
     }
     
     if (estadoVideoDanza) {
-      datosActualizacion.estadoVideoDanza = estadoVideoDanza
+      datosActualizacion.estadoVideoDanza = estadoVideoDanza as EstadoVideoDanza
     }
 
     // Actualizar campos de video de danza

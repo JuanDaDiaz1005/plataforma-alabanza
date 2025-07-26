@@ -152,7 +152,7 @@ export default function DashboardAdmin() {
             const todasAsignaciones = datosAsignaciones.asignaciones || []
             
             // Mapear al formato correcto para ProximoServicioResumen
-            const asignacionesMapeadas = todasAsignaciones.map((a: any) => ({
+            const asignacionesMapeadas = todasAsignaciones.map((a: { id: string; cancion: { id: string; titulo: string; artista: string }; usuario: { id: string; nombre: string; role?: string }; rolCancion: string; estadoPreparacion?: string }) => ({
               id: a.id,
               cancion: {
                 id: a.cancion.id,

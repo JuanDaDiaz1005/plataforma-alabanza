@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from 'next/server'
 import { getServerSession } from 'next-auth'
 import { prisma } from '@/lib/prisma'
 import { authOptions } from '@/lib/auth'
+import { EstadoPreparacion } from '@prisma/client'
 
 // GET /api/programaciones/[id]/danzas-lideres
 export async function GET(request: NextRequest, { params }: { params: Promise<{ id: string }> }) {
@@ -99,11 +100,20 @@ export async function PUT(request: NextRequest, { params }: { params: Promise<{ 
       return NextResponse.json({ error: 'Sin permisos' }, { status: 403 })
     }
 
+    // Validar estado de preparación si se proporciona
+    const estadosValidos = ['PENDIENTE', 'EN_PRACTICA', 'PREPARADO', 'NECESITA_AYUDA']
+    if (datos.estadoPreparacion && !estadosValidos.includes(datos.estadoPreparacion)) {
+      return NextResponse.json(
+        { error: 'Estado de preparación inválido. Debe ser: PENDIENTE, EN_PRACTICA, PREPARADO o NECESITA_AYUDA' },
+        { status: 400 }
+      )
+    }
+
     // Preparar datos para actualización
-    const datosActualizacion: any = {}
+    const datosActualizacion: { estadoPreparacion?: EstadoPreparacion; notasPersonales?: string | null } = {}
 
     if (datos.estadoPreparacion) {
-      datosActualizacion.estadoPreparacion = datos.estadoPreparacion
+      datosActualizacion.estadoPreparacion = datos.estadoPreparacion as EstadoPreparacion
     }
 
     if (datos.notasPersonales !== undefined) {

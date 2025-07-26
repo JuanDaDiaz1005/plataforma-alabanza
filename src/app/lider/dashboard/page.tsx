@@ -31,13 +31,14 @@ interface ProximoServicio {
   asignaciones: {
     id: string
     cancion: {
-      id: string // <-- Añadir id aquí
+      id: string
       titulo: string
       artista: string
     }
     usuario: {
+      id: string
       nombre: string
-      rangoVocal?: string
+      rolCancion: string
     }
     rolCancion: string
     estadoPreparacion: string
@@ -97,9 +98,26 @@ export default function DashboardLider() {
         const proxima = proximasProgramaciones[0] as {id: string, fecha: string, tipoServicio: string}
         
         // Cargar asignaciones del próximo servicio
-        const asignacionesRes = await fetch(`/api/programaciones/${proxima.id}/asignaciones`)
+        const asignacionesRes = await fetch(`/api/programaciones/${proxima.id}`)
         const asignacionesData = await asignacionesRes.json()
-        const asignaciones = (asignacionesData.asignaciones ?? []) as Array<{id: string, estadoPreparacion: string, usuario: {id: string, nombre: string, rangoVocal?: string}, cancion: {id: string, titulo: string, artista: string}, rolCancion: string}>
+        const asignacionesRaw = (asignacionesData.asignaciones ?? []) as Array<{
+          id: string, 
+          estadoPreparacion: string, 
+          usuario: {id: string, nombre: string, email: string}, 
+          cancion: {id: string, titulo: string, artista: string}, 
+          rolCancion: string
+        }>
+        
+        // Mapear asignaciones al formato esperado por el componente
+        const asignaciones = asignacionesRaw.map(asignacion => ({
+          ...asignacion,
+          usuario: {
+            id: asignacion.usuario.id,
+            nombre: asignacion.usuario.nombre,
+            rolCancion: asignacion.rolCancion
+          }
+        }))
+        
         const asignacionesPendientes = asignaciones.filter((a) => a.estadoPreparacion === 'PENDIENTE').length
 
         setProximoServicio({

@@ -558,7 +558,7 @@ export default function RecursosDanzaPage() {
                 <p className="text-sm text-gray-700 mb-2">
                   ¿Estás seguro de que deseas eliminar este recurso?
                 </p>
-                <p className="font-medium text-gray-900">"{recursoParaEliminar.titulo}"</p>
+                <p className="font-medium text-gray-900">&quot;{recursoParaEliminar.titulo}&quot;</p>
               </div>
               
               <div className="flex gap-3">

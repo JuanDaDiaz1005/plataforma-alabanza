@@ -12,11 +12,7 @@ import {
   ArrowRight,
   Youtube,
   Edit2,
-  Video,
   Clock,
-  CheckCircle2,
-  AlertCircle,
-  User,
   Star,
   ExternalLink
 } from 'lucide-react'
@@ -92,7 +88,6 @@ export default function DashboardDanza() {
   const [proximosServicios, setProximosServicios] = useState<ServicioDanza[]>([])
   const [cancionesConVideo, setCancionesConVideo] = useState<Asignacion['cancion'][]>([])
   const [cargando, setCargando] = useState(true)
-  const [lideresPorCancion, setLideresPorCancion] = useState<Record<string, { cancionId: string, titulo: string, lideres: Array<{ id: string, nombre: string }> }>>({})
   const [proximoServicioCompleto, setProximoServicioCompleto] = useState<ProximoServicioDanza | null>(null)
   
   // Estados para gestión de preparación de danza
@@ -273,13 +268,13 @@ export default function DashboardDanza() {
             // Filtrar asignaciones según el rol del usuario
             const asignacionesFiltradas = esLiderDanza 
               ? todasAsignaciones // Líder de danza ve TODAS las asignaciones
-              : todasAsignaciones.filter((a: any) => 
+              : todasAsignaciones.filter((a: { rolCancion: string; usuario: { role: string } }) => 
                   (a.rolCancion === 'DANZA' || a.rolCancion === 'LIDER_DANZA') ||
                   (a.usuario.role === 'DANZA' || a.usuario.role === 'LIDER_DANZA')
                 )
             
             // Mapear al formato correcto
-            const asignacionesMapeadas = asignacionesFiltradas.map((a: any) => ({
+            const asignacionesMapeadas = asignacionesFiltradas.map((a: { id: string; cancion: { id: string; titulo: string; artista: string }; usuario: { id: string; nombre: string; role: string }; rolCancion: string; estadoPreparacion?: string }) => ({
               id: a.id,
               cancion: {
                 id: a.cancion.id,
@@ -325,7 +320,7 @@ export default function DashboardDanza() {
               const proximosDosCultos = servicios.slice(0, 2) // Solo los primeros 2 servicios
               const idsProximosDosCultos = proximosDosCultos.map((s: ServicioDanza) => s.id)
               
-              asignacionesFiltradas = asignacionesFiltradas.filter((asignacion: any) => 
+              asignacionesFiltradas = asignacionesFiltradas.filter((asignacion: { programacion?: { id: string } }) => 
                 idsProximosDosCultos.includes(asignacion.programacion?.id)
               )
               
@@ -368,15 +363,7 @@ export default function DashboardDanza() {
     }
   }
 
-  const cargarLideres = async (programacionId: string) => {
-    const res = await fetch(`/api/programaciones/${programacionId}/danzas-lideres`)
-    if (res.ok) {
-      const data = await res.json()
-      const porCancion: Record<string, { cancionId: string, titulo: string, lideres: Array<{ id: string, nombre: string }> }> = {}
-      data.forEach((c: { cancionId: string; titulo: string; lideres: Array<{ id: string, nombre: string }> }) => { porCancion[c.cancionId] = c })
-      setLideresPorCancion(prev => ({ ...prev, ...porCancion }))
-    }
-  }
+  // Función removida - ya no necesitamos cargar líderes aquí
 
   useEffect(() => {
     if (puedeAcceder) {
@@ -385,14 +372,7 @@ export default function DashboardDanza() {
     }
   }, [puedeAcceder])
 
-  // Cargar líderes cuando se cargan los servicios
-  useEffect(() => {
-    if (proximosServicios.length > 0) {
-      proximosServicios.forEach(servicio => {
-        cargarLideres(servicio.id)
-      })
-    }
-  }, [proximosServicios])
+  // useEffect removido - ya no necesitamos cargar líderes
 
   const formatearFecha = (fecha: string) => {
     return new Date(fecha).toLocaleDateString('es-ES', {

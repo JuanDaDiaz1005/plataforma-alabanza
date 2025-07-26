@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from 'next/server'
 import { getServerSession } from 'next-auth'
 import { prisma } from '@/lib/prisma'
 import { authOptions } from '@/lib/auth'
+import { CategoriaRecursoDanza } from '@prisma/client'
 
 // GET /api/recursos-danza - Listar recursos de danza
 export async function GET(request: NextRequest) {
@@ -20,6 +21,12 @@ export async function GET(request: NextRequest) {
     const { searchParams } = new URL(request.url)
     const busqueda = searchParams.get('busqueda')
     const categoria = searchParams.get('categoria')
+
+    // Validar categoría si se proporciona
+    const categoriasValidas = ['TUTORIAL', 'PREDICA', 'COREOGRAFIA', 'TECNICA', 'OTRO']
+    const categoriaValida = categoria && categoriasValidas.includes(categoria.toUpperCase()) 
+      ? categoria.toUpperCase() as CategoriaRecursoDanza 
+      : undefined
 
     // Usar la nueva tabla RecursoDanza
     const whereClause = {
@@ -40,8 +47,8 @@ export async function GET(request: NextRequest) {
           }
         ]
       }),
-      ...(categoria && {
-        categoria: categoria.toUpperCase()
+      ...(categoriaValida && {
+        categoria: categoriaValida
       })
     }
 
