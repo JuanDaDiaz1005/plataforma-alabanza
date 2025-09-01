@@ -104,7 +104,7 @@ export default function ServiciosPage() {
       }
 
       const data = await response.json()
-      setProgramaciones(data.programaciones)
+      setProgramaciones(data.programaciones.reverse())
       setTotalPaginas(data.pagination.totalPaginas)
       
     } catch (error) {
