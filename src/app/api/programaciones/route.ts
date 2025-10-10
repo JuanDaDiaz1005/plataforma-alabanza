@@ -109,6 +109,7 @@ export async function GET(request: NextRequest) {
     // Obtener programaciones
     const [programaciones, total] = await Promise.all([
       prisma.programacion.findMany({
+        orderBy: { fecha: 'desc' },
         where: filtros,
         include: {
           asignaciones: {
@@ -135,7 +136,6 @@ export async function GET(request: NextRequest) {
             }
           }
         },
-        orderBy: { fecha: 'asc' },
         skip,
         take: limite
       }),

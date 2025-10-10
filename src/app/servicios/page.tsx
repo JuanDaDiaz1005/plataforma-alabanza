@@ -6,16 +6,12 @@ import Link from 'next/link'
 import Layout from '@/components/Layout'
 import { 
   Calendar, 
-  Search, 
   Filter,
   Music,
-  PlayCircle,
   Plus,
   Edit,
   Trash2,
-  Eye,
   AlertTriangle,
-  X
 } from 'lucide-react'
 
 interface Programacion {
@@ -104,7 +100,7 @@ export default function ServiciosPage() {
       }
 
       const data = await response.json()
-      setProgramaciones(data.programaciones.reverse())
+      setProgramaciones(data.programaciones)
       setTotalPaginas(data.pagination.totalPaginas)
       
     } catch (error) {
