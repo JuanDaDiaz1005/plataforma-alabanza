@@ -34,7 +34,7 @@ function getR2SignedUrl({ key, contentType = 'audio/mpeg', expiresIn = 900 }: { 
 // Endpoint GET para obtener una URL firmada para subir audio
 export async function GET(request: NextRequest) {
   const session = await getServerSession(authOptions)
-  if (!session || (session.user.role !== 'ADMINISTRADOR' && session.user.role !== 'LIDER_ALABANZA')) {
+  if (!session || (session.user.role !== 'ADMINISTRADOR' && session.user.role !== 'LIDER_ALABANZA' && session.user.role !== 'MUSICO')) {
     return NextResponse.json({ error: 'No autorizado' }, { status: 401 })
   }
 
@@ -51,7 +51,7 @@ export async function GET(request: NextRequest) {
 
 export async function POST(request: NextRequest) {
   const session = await getServerSession(authOptions)
-  if (!session || (session.user.role !== 'ADMINISTRADOR' && session.user.role !== 'LIDER_ALABANZA')) {
+  if (!session || (session.user.role !== 'ADMINISTRADOR' && session.user.role !== 'LIDER_ALABANZA' && session.user.role !== 'MUSICO')) {
     return NextResponse.json({ error: 'No autorizado' }, { status: 401 })
   }
 

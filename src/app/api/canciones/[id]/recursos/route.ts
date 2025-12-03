@@ -49,7 +49,7 @@ export async function POST(
     const session = await getServerSession(authOptions)
     
     // Solo administradores y líderes pueden crear recursos
-    if (!session || (session.user.role !== 'ADMINISTRADOR' && session.user.role !== 'LIDER_ALABANZA')) {
+    if (!session || (session.user.role !== 'ADMINISTRADOR' && session.user.role !== 'LIDER_ALABANZA' && session.user.role !== 'MUSICO')) {
       return NextResponse.json({ error: 'No autorizado' }, { status: 401 })
     }
 

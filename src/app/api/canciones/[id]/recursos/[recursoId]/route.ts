@@ -13,7 +13,7 @@ export async function PUT(
     const session = await getServerSession(authOptions)
     
     // Solo administradores y líderes pueden actualizar recursos
-    if (!session || (session.user.role !== 'ADMINISTRADOR' && session.user.role !== 'LIDER_ALABANZA')) {
+    if (!session || (session.user.role !== 'ADMINISTRADOR' && session.user.role !== 'LIDER_ALABANZA' && session.user.role !== 'MUSICO')) {
       return NextResponse.json({ error: 'No autorizado' }, { status: 401 })
     }
 
@@ -82,7 +82,7 @@ export async function DELETE(
     const session = await getServerSession(authOptions)
     
     // Solo administradores y líderes pueden eliminar recursos
-    if (!session || (session.user.role !== 'ADMINISTRADOR' && session.user.role !== 'LIDER_ALABANZA')) {
+    if (!session || (session.user.role !== 'ADMINISTRADOR' && session.user.role !== 'LIDER_ALABANZA' && session.user.role !== 'MUSICO')) {
       return NextResponse.json({ error: 'No autorizado' }, { status: 401 })
     }
 
