@@ -179,7 +179,7 @@ export default function DetalleCancion({ params }: { params: Promise<{ id: strin
   }
 
   // Permisos
-  const puedeEditar = session?.user?.role === 'ADMINISTRADOR' || session?.user?.role === 'LIDER_ALABANZA'
+  const puedeEditar = session?.user?.role === 'ADMINISTRADOR' || session?.user?.role === 'LIDER_ALABANZA' || session?.user?.role === 'MUSICO'
 
   if (cargando) {
     return (
